@@ -18,6 +18,13 @@ in_gcc_libs = $(foreach lib, $(libexecsub_LTLIBRARIES), $(gcc_build_dir)/$(lib))
 # Can be removed when libiberty becomes a normal convenience library
 Wc=-Wc,
 
+if !COMBINED_TREE
+# Filter out -fsanitize=address if we aren't in a combined tree with
+# GCC and binutils.
+override CFLAGS := $(filter-out -fsanitize=address,$(CFLAGS))
+override LDFLAGS := $(filter-out -fsanitize=address,$(LDFLAGS))
+endif
+
 liblto_plugin_la_SOURCES = lto-plugin.c
 liblto_plugin_la_LIBADD = \
 	$(if $(wildcard ../libiberty/pic/libiberty.a),$(Wc)../libiberty/pic/libiberty.a,)

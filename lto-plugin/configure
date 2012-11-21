@@ -597,7 +597,9 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='am__EXEEXT_FALSE
+ac_subst_vars='COMBINED_TREE_FALSE
+COMBINED_TREE_TRUE
+am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
@@ -10558,7 +10560,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10561 "configure"
+#line 10563 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10664,7 +10666,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10667 "configure"
+#line 10669 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13322,5 +13324,15 @@ fi
 if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
+fi
+
+
+# Check if this is a combined tree with GCC and binutils.
+ if test -e ${ac_top_srcdir}/ld/ldmain.c -o -e ${ac_top_srcdir}/gold/version.cc; then
+  COMBINED_TREE_TRUE=
+  COMBINED_TREE_FALSE='#'
+else
+  COMBINED_TREE_TRUE='#'
+  COMBINED_TREE_FALSE=
 fi
 

@@ -16,3 +16,7 @@ AC_HEADER_SYS_WAIT
 AC_CONFIG_FILES(Makefile)
 AC_CONFIG_HEADERS(config.h)
 AC_OUTPUT
+
+# Check if this is a combined tree with GCC and binutils.
+AM_CONDITIONAL(COMBINED_TREE,
+  test -e ${ac_top_srcdir}/ld/ldmain.c -o -e ${ac_top_srcdir}/gold/version.cc)

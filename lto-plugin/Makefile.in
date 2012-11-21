@@ -535,6 +535,11 @@ uninstall-am: uninstall-libexecsubLTLIBRARIES
 	uninstall-libexecsubLTLIBRARIES
 
 
+# Filter out -fsanitize=address if we aren't in a combined tree with
+# GCC and binutils.
+@COMBINED_TREE_FALSE@override CFLAGS := $(filter-out -fsanitize=address,$(CFLAGS))
+@COMBINED_TREE_FALSE@override LDFLAGS := $(filter-out -fsanitize=address,$(LDFLAGS))
+
 all-local: $(in_gcc_libs)
 
 $(in_gcc_libs) : $(gcc_build_dir)/%: %

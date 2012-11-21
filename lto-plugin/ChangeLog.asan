@@ -1,0 +1,8 @@
+2012-11-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.am (CFLAGS): Filter out -fsanitize=address if not
+	in a combined tree of GCC and binutils.
+	(LDFLAGS): Likewise.
+	* configure.ac (COMBINED_TREE): New AM_CONDITIONAL.
+	* Makefile.in: Regenerated.
+	* configure: Likewise.
