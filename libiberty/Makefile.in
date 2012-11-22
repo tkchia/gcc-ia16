@@ -63,6 +63,10 @@ PERL = @PERL@
 
 PICFLAG = @PICFLAG@
 
+# Filter out -fsanitize=address if we are in GCC tree, but aren't in a
+# combined tree with binutils.
+@COMBINED_TREE_FALSE@override CFLAGS := $(filter-out -fsanitize=address,$(CFLAGS))
+
 MAKEOVERRIDES =
 
 TARGETLIB = ./libiberty.a

@@ -679,6 +679,20 @@ AC_SUBST(pexecute)
 
 libiberty_AC_FUNC_STRNCMP
 
+# Check if this is in GCC tree, but aren't in a combined tree with
+# binutils.
+if test -e ${srcdir}/../gcc/gcc.c; then
+  if test -e ${srcdir}/../ld/ldmain.c -o \
+	  -e ${top_srcdir}/../gold/version.cc; then
+    COMBINED_TREE_FALSE='#'
+  else
+    COMBINED_TREE_FALSE=''
+  fi
+else
+  COMBINED_TREE_FALSE='#'
+fi
+AC_SUBST(COMBINED_TREE_FALSE)
+
 # Install a library built with a cross compiler in $(tooldir) rather
 # than $(libdir).
 if test -z "${with_cross_host}"; then

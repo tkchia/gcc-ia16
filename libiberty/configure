@@ -590,6 +590,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 INSTALL_DEST
+COMBINED_TREE_FALSE
 pexecute
 target_header_dir
 CHECK
@@ -6924,6 +6925,20 @@ if test $ac_cv_func_strncmp_works = no ; then
  ;;
 esac
 
+fi
+
+
+# Check if this is in GCC tree, but aren't in a combined tree with
+# binutils.
+if test -e ${srcdir}/../gcc/gcc.c; then
+  if test -e ${srcdir}/../ld/ldmain.c -o \
+	  -e ${top_srcdir}/../gold/version.cc; then
+    COMBINED_TREE_FALSE='#'
+  else
+    COMBINED_TREE_FALSE=''
+  fi
+else
+  COMBINED_TREE_FALSE='#'
 fi
 
 

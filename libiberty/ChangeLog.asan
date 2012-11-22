@@ -1,0 +1,6 @@
+2012-11-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.in (CFLAGS): Filter out -fsanitize=address if in GCC
+	tree, but not in a combined tree with binutils.
+	* configure.ac (COMBINED_TREE_FALSE): New AC_SUBST.
+	* configure: Regenerated.
