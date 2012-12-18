@@ -1,0 +1,8 @@
+2012-12-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.tpl (CXX_FOR_TARGET_FLAG_TO_PASS): Add
+	"RAW_CXX_FOR_TARGET=$(RAW_CXX_FOR_TARGET)" if we are building
+	libstdc++-v3.
+	(target_modules): Remove 'CXX=$$(RAW_CXX_FOR_TARGET)'
+	'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'.
+	* Makefile.in: Regenerated.

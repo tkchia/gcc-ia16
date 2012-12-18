@@ -576,6 +576,7 @@ CXX_FOR_TARGET_FLAG_TO_PASS = \
 # really work, for C++ host programs can't depend on the current-stage
 # C++ target library.
 CXX_FOR_TARGET_FLAG_TO_PASS = \
+	"RAW_CXX_FOR_TARGET=$(RAW_CXX_FOR_TARGET)" \
 	$(shell if echo "$(CXX_FOR_TARGET)" | grep " -funconfigured-" > /dev/null; then :; else echo '"CXX_FOR_TARGET=$(CXX_FOR_TARGET)"'; fi)
 @endif target-libstdc++-v3
 
@@ -1283,7 +1284,7 @@ maybe-[+make_target+]-[+module+]: [+make_target+]-[+module+]
 
 [+ all prefix="target-" subdir="$(TARGET_SUBDIR)"
        exports="$(RAW_CXX_TARGET_EXPORTS)"
-       args="$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'" +]
+       args="$(EXTRA_TARGET_FLAGS)" +]
 [+ ELSE +]
 [+ configure prefix="target-" subdir="$(TARGET_SUBDIR)"
 	     check_multilibs=true
@@ -1315,11 +1316,7 @@ ELSE normal_cxx +]
 	$(NORMAL_TARGET_EXPORTS) \[+
 ENDIF raw_cxx +]
 	(cd $(TARGET_SUBDIR)/[+module+] && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS) [+
-	    IF raw_cxx 
-	      +] 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)' [+ 
-	    ENDIF raw_cxx 
-	  +] [+extra_make_flags+] check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS) [+extra_make_flags+] check)
 [+ ENDIF no_check +]
 @endif target-[+module+]
 

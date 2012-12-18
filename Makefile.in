@@ -671,6 +671,7 @@ CXX_FOR_TARGET_FLAG_TO_PASS = \
 # really work, for C++ host programs can't depend on the current-stage
 # C++ target library.
 CXX_FOR_TARGET_FLAG_TO_PASS = \
+	"RAW_CXX_FOR_TARGET=$(RAW_CXX_FOR_TARGET)" \
 	$(shell if echo "$(CXX_FOR_TARGET)" | grep " -funconfigured-" > /dev/null; then :; else echo '"CXX_FOR_TARGET=$(CXX_FOR_TARGET)"'; fi)
 @endif target-libstdc++-v3
 
@@ -31102,7 +31103,7 @@ all-target-libstdc++-v3: configure-target-libstdc++-v3
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(RAW_CXX_TARGET_EXPORTS)  \
 	(cd $(TARGET_SUBDIR)/libstdc++-v3 && \
-	  $(MAKE) $(BASE_FLAGS_TO_PASS) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+	  $(MAKE) $(BASE_FLAGS_TO_PASS) $(EXTRA_TARGET_FLAGS)   \
 		$(TARGET-target-libstdc++-v3))
 @endif target-libstdc++-v3
 
@@ -31130,7 +31131,7 @@ all-stage1-target-libstdc++-v3: configure-stage1-target-libstdc++-v3
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'  \
+		$(EXTRA_TARGET_FLAGS)  \
 		  \
 		TFLAGS="$(STAGE1_TFLAGS)" \
 		$(TARGET-stage1-target-libstdc++-v3)
@@ -31145,7 +31146,7 @@ clean-stage1-target-libstdc++-v3:
 	  $(MAKE) stage1-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libstdc++-v3 && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'  \
+	$(MAKE) $(EXTRA_TARGET_FLAGS)  \
 	  clean
 @endif target-libstdc++-v3-bootstrap
 
@@ -31173,7 +31174,7 @@ all-stage2-target-libstdc++-v3: configure-stage2-target-libstdc++-v3
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGE2_TFLAGS)" \
 		$(TARGET-stage2-target-libstdc++-v3)
 
@@ -31187,7 +31188,7 @@ clean-stage2-target-libstdc++-v3:
 	  $(MAKE) stage2-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libstdc++-v3 && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libstdc++-v3-bootstrap
 
 
@@ -31214,7 +31215,7 @@ all-stage3-target-libstdc++-v3: configure-stage3-target-libstdc++-v3
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGE3_TFLAGS)" \
 		$(TARGET-stage3-target-libstdc++-v3)
 
@@ -31228,7 +31229,7 @@ clean-stage3-target-libstdc++-v3:
 	  $(MAKE) stage3-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libstdc++-v3 && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libstdc++-v3-bootstrap
 
 
@@ -31255,7 +31256,7 @@ all-stage4-target-libstdc++-v3: configure-stage4-target-libstdc++-v3
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGE4_TFLAGS)" \
 		$(TARGET-stage4-target-libstdc++-v3)
 
@@ -31269,7 +31270,7 @@ clean-stage4-target-libstdc++-v3:
 	  $(MAKE) stage4-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libstdc++-v3 && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libstdc++-v3-bootstrap
 
 
@@ -31296,7 +31297,7 @@ all-stageprofile-target-libstdc++-v3: configure-stageprofile-target-libstdc++-v3
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGEprofile_TFLAGS)" \
 		$(TARGET-stageprofile-target-libstdc++-v3)
 
@@ -31310,7 +31311,7 @@ clean-stageprofile-target-libstdc++-v3:
 	  $(MAKE) stageprofile-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libstdc++-v3 && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libstdc++-v3-bootstrap
 
 
@@ -31337,7 +31338,7 @@ all-stagefeedback-target-libstdc++-v3: configure-stagefeedback-target-libstdc++-
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGEfeedback_TFLAGS)" \
 		$(TARGET-stagefeedback-target-libstdc++-v3)
 
@@ -31351,7 +31352,7 @@ clean-stagefeedback-target-libstdc++-v3:
 	  $(MAKE) stagefeedback-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libstdc++-v3 && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libstdc++-v3-bootstrap
 
 
@@ -31370,7 +31371,7 @@ check-target-libstdc++-v3:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(RAW_CXX_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libstdc++-v3 && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libstdc++-v3
 
@@ -32076,7 +32077,7 @@ all-target-libsanitizer: configure-target-libsanitizer
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(RAW_CXX_TARGET_EXPORTS)  \
 	(cd $(TARGET_SUBDIR)/libsanitizer && \
-	  $(MAKE) $(BASE_FLAGS_TO_PASS) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+	  $(MAKE) $(BASE_FLAGS_TO_PASS) $(EXTRA_TARGET_FLAGS)   \
 		$(TARGET-target-libsanitizer))
 @endif target-libsanitizer
 
@@ -32104,7 +32105,7 @@ all-stage1-target-libsanitizer: configure-stage1-target-libsanitizer
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'  \
+		$(EXTRA_TARGET_FLAGS)  \
 		  \
 		TFLAGS="$(STAGE1_TFLAGS)" \
 		$(TARGET-stage1-target-libsanitizer)
@@ -32119,7 +32120,7 @@ clean-stage1-target-libsanitizer:
 	  $(MAKE) stage1-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libsanitizer && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'  \
+	$(MAKE) $(EXTRA_TARGET_FLAGS)  \
 	  clean
 @endif target-libsanitizer-bootstrap
 
@@ -32147,7 +32148,7 @@ all-stage2-target-libsanitizer: configure-stage2-target-libsanitizer
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGE2_TFLAGS)" \
 		$(TARGET-stage2-target-libsanitizer)
 
@@ -32161,7 +32162,7 @@ clean-stage2-target-libsanitizer:
 	  $(MAKE) stage2-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libsanitizer && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libsanitizer-bootstrap
 
 
@@ -32188,7 +32189,7 @@ all-stage3-target-libsanitizer: configure-stage3-target-libsanitizer
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGE3_TFLAGS)" \
 		$(TARGET-stage3-target-libsanitizer)
 
@@ -32202,7 +32203,7 @@ clean-stage3-target-libsanitizer:
 	  $(MAKE) stage3-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libsanitizer && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libsanitizer-bootstrap
 
 
@@ -32229,7 +32230,7 @@ all-stage4-target-libsanitizer: configure-stage4-target-libsanitizer
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGE4_TFLAGS)" \
 		$(TARGET-stage4-target-libsanitizer)
 
@@ -32243,7 +32244,7 @@ clean-stage4-target-libsanitizer:
 	  $(MAKE) stage4-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libsanitizer && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libsanitizer-bootstrap
 
 
@@ -32270,7 +32271,7 @@ all-stageprofile-target-libsanitizer: configure-stageprofile-target-libsanitizer
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGEprofile_TFLAGS)" \
 		$(TARGET-stageprofile-target-libsanitizer)
 
@@ -32284,7 +32285,7 @@ clean-stageprofile-target-libsanitizer:
 	  $(MAKE) stageprofile-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libsanitizer && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libsanitizer-bootstrap
 
 
@@ -32311,7 +32312,7 @@ all-stagefeedback-target-libsanitizer: configure-stagefeedback-target-libsanitiz
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGEfeedback_TFLAGS)" \
 		$(TARGET-stagefeedback-target-libsanitizer)
 
@@ -32325,7 +32326,7 @@ clean-stagefeedback-target-libsanitizer:
 	  $(MAKE) stagefeedback-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libsanitizer && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libsanitizer-bootstrap
 
 
@@ -32344,7 +32345,7 @@ check-target-libsanitizer:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(RAW_CXX_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libsanitizer && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libsanitizer
 
@@ -33050,7 +33051,7 @@ all-target-libvtv: configure-target-libvtv
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(RAW_CXX_TARGET_EXPORTS)  \
 	(cd $(TARGET_SUBDIR)/libvtv && \
-	  $(MAKE) $(BASE_FLAGS_TO_PASS) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+	  $(MAKE) $(BASE_FLAGS_TO_PASS) $(EXTRA_TARGET_FLAGS)   \
 		$(TARGET-target-libvtv))
 @endif target-libvtv
 
@@ -33078,7 +33079,7 @@ all-stage1-target-libvtv: configure-stage1-target-libvtv
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'  \
+		$(EXTRA_TARGET_FLAGS)  \
 		  \
 		TFLAGS="$(STAGE1_TFLAGS)" \
 		$(TARGET-stage1-target-libvtv)
@@ -33093,7 +33094,7 @@ clean-stage1-target-libvtv:
 	  $(MAKE) stage1-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libvtv && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'  \
+	$(MAKE) $(EXTRA_TARGET_FLAGS)  \
 	  clean
 @endif target-libvtv-bootstrap
 
@@ -33121,7 +33122,7 @@ all-stage2-target-libvtv: configure-stage2-target-libvtv
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGE2_TFLAGS)" \
 		$(TARGET-stage2-target-libvtv)
 
@@ -33135,7 +33136,7 @@ clean-stage2-target-libvtv:
 	  $(MAKE) stage2-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libvtv && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libvtv-bootstrap
 
 
@@ -33162,7 +33163,7 @@ all-stage3-target-libvtv: configure-stage3-target-libvtv
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGE3_TFLAGS)" \
 		$(TARGET-stage3-target-libvtv)
 
@@ -33176,7 +33177,7 @@ clean-stage3-target-libvtv:
 	  $(MAKE) stage3-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libvtv && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libvtv-bootstrap
 
 
@@ -33203,7 +33204,7 @@ all-stage4-target-libvtv: configure-stage4-target-libvtv
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGE4_TFLAGS)" \
 		$(TARGET-stage4-target-libvtv)
 
@@ -33217,7 +33218,7 @@ clean-stage4-target-libvtv:
 	  $(MAKE) stage4-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libvtv && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libvtv-bootstrap
 
 
@@ -33244,7 +33245,7 @@ all-stageprofile-target-libvtv: configure-stageprofile-target-libvtv
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGEprofile_TFLAGS)" \
 		$(TARGET-stageprofile-target-libvtv)
 
@@ -33258,7 +33259,7 @@ clean-stageprofile-target-libvtv:
 	  $(MAKE) stageprofile-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libvtv && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libvtv-bootstrap
 
 
@@ -33285,7 +33286,7 @@ all-stagefeedback-target-libvtv: configure-stagefeedback-target-libvtv
 		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)" \
 		LIBCFLAGS_FOR_TARGET="$(LIBCFLAGS_FOR_TARGET)" \
-		$(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+		$(EXTRA_TARGET_FLAGS)   \
 		TFLAGS="$(STAGEfeedback_TFLAGS)" \
 		$(TARGET-stagefeedback-target-libvtv)
 
@@ -33299,7 +33300,7 @@ clean-stagefeedback-target-libvtv:
 	  $(MAKE) stagefeedback-start; \
 	fi; \
 	cd $(TARGET_SUBDIR)/libvtv && \
-	$(MAKE) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   clean
+	$(MAKE) $(EXTRA_TARGET_FLAGS)   clean
 @endif target-libvtv-bootstrap
 
 
@@ -33318,7 +33319,7 @@ check-target-libvtv:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(RAW_CXX_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libvtv && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libvtv
 
@@ -33775,7 +33776,7 @@ check-target-libcilkrts:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libcilkrts && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libcilkrts
 
@@ -34232,7 +34233,7 @@ check-target-libssp:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libssp && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libssp
 
@@ -34689,7 +34690,7 @@ check-target-newlib:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/newlib && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-newlib
 
@@ -36115,7 +36116,7 @@ check-target-libbacktrace:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libbacktrace && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libbacktrace
 
@@ -36572,7 +36573,7 @@ check-target-libquadmath:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libquadmath && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libquadmath
 
@@ -37029,7 +37030,7 @@ check-target-libgfortran:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libgfortran && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libgfortran
 
@@ -37486,7 +37487,7 @@ check-target-libobjc:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libobjc && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libobjc
 
@@ -37943,7 +37944,7 @@ check-target-libgo:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libgo && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libgo
 
@@ -38792,7 +38793,7 @@ check-target-winsup:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/winsup && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-winsup
 
@@ -39701,7 +39702,7 @@ check-target-libffi:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libffi && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libffi
 
@@ -40129,7 +40130,7 @@ all-target-libjava: configure-target-libjava
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(RAW_CXX_TARGET_EXPORTS)  \
 	(cd $(TARGET_SUBDIR)/libjava && \
-	  $(MAKE) $(BASE_FLAGS_TO_PASS) $(EXTRA_TARGET_FLAGS) 'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   \
+	  $(MAKE) $(BASE_FLAGS_TO_PASS) $(EXTRA_TARGET_FLAGS)   \
 		$(TARGET-target-libjava))
 @endif target-libjava
 
@@ -40148,7 +40149,7 @@ check-target-libjava:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(RAW_CXX_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libjava && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  'CXX=$$(RAW_CXX_FOR_TARGET)' 'CXX_FOR_TARGET=$$(RAW_CXX_FOR_TARGET)'   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libjava
 
@@ -40605,7 +40606,7 @@ check-target-zlib:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/zlib && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-zlib
 
@@ -41062,7 +41063,7 @@ check-target-boehm-gc:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/boehm-gc && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-boehm-gc
 
@@ -41519,7 +41520,7 @@ check-target-rda:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/rda && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-rda
 
@@ -41976,7 +41977,7 @@ check-target-libada:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libada && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libada
 
@@ -42950,7 +42951,7 @@ check-target-libgomp:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libgomp && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libgomp
 
@@ -43407,7 +43408,7 @@ check-target-libitm:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libitm && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libitm
 
@@ -43864,7 +43865,7 @@ check-target-libatomic:
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(NORMAL_TARGET_EXPORTS) \
 	(cd $(TARGET_SUBDIR)/libatomic && \
-	  $(MAKE) $(TARGET_FLAGS_TO_PASS)   check)
+	  $(MAKE) $(TARGET_FLAGS_TO_PASS)  check)
 
 @endif target-libatomic
 
