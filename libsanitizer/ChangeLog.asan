@@ -1,0 +1,12 @@
+2012-12-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.am (AM_MAKEFLAGS): Restore CC and CXX.
+	* asan/Makefile.am: Likewise.
+	* interception/Makefile.am: Likewise.
+	* sanitizer_common/Makefile.am: Likewise.
+	* tsan/Makefile.am: Likewise.
+	* Makefile.in: Regenerated.
+	* asan/Makefile.in: Likewise.
+	* interception/Makefile.in: Likewise.
+	* sanitizer_common/Makefile.in: Likewise.
+	* tsan/Makefile.in: Likewise.
