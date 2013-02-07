@@ -342,7 +342,8 @@ enable_lto = @enable_lto@
 
 # Compiler and flags needed for plugin support
 PLUGINCC = @CXX@
-PLUGINCFLAGS = @CXXFLAGS@
+# Filter out -fsanitize=address
+PLUGINCFLAGS = $(filter-out -fsanitize=address,@CXXFLAGS@)
 
 # Libs and linker options needed for plugin support
 PLUGINLIBS = @pluginlibs@

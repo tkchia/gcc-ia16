@@ -1,0 +1,4 @@
+2012-11-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR testsuite/55440
+	* Makefile.in (PLUGINCFLAGS): Filter out -fsanitize=address.
