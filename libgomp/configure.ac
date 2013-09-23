@@ -193,6 +193,15 @@ AC_LINK_IFELSE(
    [],
    [AC_MSG_ERROR([Pthreads are required to build libgomp])])])
 
+plugin_support=yes
+AC_CHECK_LIB(dl, dlsym, , [plugin_support=no])
+AC_CHECK_HEADER(dirent.h, , [plugin_support=no])
+
+if test x$plugin_support = xyes; then
+  AC_DEFINE(PLUGIN_SUPPORT, 1,
+    [Define if all infrastructure, needed for plugins, is supported.])
+fi
+
 # Check for functions needed.
 AC_CHECK_FUNCS(getloadavg clock_gettime strtoull)
 

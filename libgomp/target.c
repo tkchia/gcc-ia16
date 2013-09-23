@@ -31,6 +31,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef PLUGIN_SUPPORT
+# include <dlfcn.h>
+# include <dirent.h>
+#endif
+
+static void gomp_target_init (void);
+
+static pthread_once_t gomp_is_initialized = PTHREAD_ONCE_INIT;
+
 /* Forward declaration for a node in the tree.  */
 typedef struct splay_tree_node_s *splay_tree_node;
 typedef struct splay_tree_s *splay_tree;
@@ -51,6 +60,10 @@ struct target_mem_desc {
   struct target_mem_desc *prev;
   /* Number of items in following list.  */
   size_t list_count;
+
+  /* Corresponding target device descriptor.  */
+  struct gomp_device_descr *device_descr;
+
   /* List of splay keys to remove (or decrease refcount)
      at the end of region.  */
   splay_tree_key list[];
@@ -71,6 +84,12 @@ struct splay_tree_key_s {
   bool copy_from;
 };
 
+/* Array of descriptors of all available devices.  */
+static struct gomp_device_descr *devices;
+
+/* Total number of available devices.  */
+static int num_devices;
+
 /* The comparison function.  */
 
 static int
@@ -88,33 +107,55 @@ splay_compare (splay_tree_key x, splay_tree_key y)
 
 #include "splay-tree.h"
 
+/* This structure describes accelerator device.
+   It contains name of the corresponding libgomp plugin, function handlers for
+   interaction with the device, ID-number of the device, and information about
+   mapped memory.  */
+struct gomp_device_descr
+{
+  /* This is the ID number of device.  It could be specified in DEVICE-clause of
+     TARGET construct.  */
+  int id;
+
+  /* Plugin file handler.  */
+  void *plugin_handle;
+
+  /* Function handlers.  */
+  bool (*device_available_func) (void);
+
+  /* Splay tree containing information about mapped memory regions.  */
+  struct splay_tree_s dev_splay_tree;
+
+  /* Mutex for operating with the splay tree and other shared structures.  */
+  gomp_mutex_t dev_env_lock;
+};
+
 attribute_hidden int
 gomp_get_num_devices (void)
 {
-  /* FIXME: Scan supported accelerators when called the first time.  */
-  return 0;
+  (void) pthread_once (&gomp_is_initialized, gomp_target_init);
+  return num_devices;
 }
 
-static int
-resolve_device (int device)
+static struct gomp_device_descr *
+resolve_device (int device_id)
 {
-  if (device == -1)
+  if (device_id == -1)
     {
       struct gomp_task_icv *icv = gomp_icv (false);
-      device = icv->default_device_var;
+      device_id = icv->default_device_var;
     }
+  if (device_id >= gomp_get_num_devices ()
+      && device_id != 257)
+    return NULL;
+
   /* FIXME: Temporary hack for testing non-shared address spaces on host.  */
-  if (device == 257)
-    return 257;
-  if (device >= gomp_get_num_devices ())
-    return -1;
-  return -1;
+  if (device_id == 257)
+    return &devices[0];
+
+  return &devices[device_id];
 }
 
-/* These variables would be per-accelerator (which doesn't have shared address
-   space.  */
-static struct splay_tree_s dev_splay_tree;
-static gomp_mutex_t dev_env_lock;
 
 /* Handle the case where splay_tree_lookup found oldn for newn.
    Helper function of gomp_map_vars.  */
@@ -138,8 +179,9 @@ gomp_map_vars_existing (splay_tree_key oldn, splay_tree_key newn,
 }
 
 static struct target_mem_desc *
-gomp_map_vars (size_t mapnum, void **hostaddrs, size_t *sizes,
-	       unsigned char *kinds, bool is_target)
+gomp_map_vars (struct gomp_device_descr *devicep, size_t mapnum,
+	       void **hostaddrs, size_t *sizes, unsigned char *kinds,
+	       bool is_target)
 {
   size_t i, tgt_align, tgt_size, not_found_cnt = 0;
   struct splay_tree_key_s cur_node;
@@ -147,6 +189,7 @@ gomp_map_vars (size_t mapnum, void **hostaddrs, size_t *sizes,
     = gomp_malloc (sizeof (*tgt) + sizeof (tgt->list[0]) * mapnum);
   tgt->list_count = mapnum;
   tgt->refcount = 1;
+  tgt->device_descr = devicep;
 
   if (mapnum == 0)
     return tgt;
@@ -160,7 +203,7 @@ gomp_map_vars (size_t mapnum, void **hostaddrs, size_t *sizes,
       tgt_size = mapnum * sizeof (void *);
     }
 
-  gomp_mutex_lock (&dev_env_lock);
+  gomp_mutex_lock (&devicep->dev_env_lock);
   for (i = 0; i < mapnum; i++)
     {
       cur_node.host_start = (uintptr_t) hostaddrs[i];
@@ -168,7 +211,8 @@ gomp_map_vars (size_t mapnum, void **hostaddrs, size_t *sizes,
 	cur_node.host_end = cur_node.host_start + sizes[i];
       else
 	cur_node.host_end = cur_node.host_start + sizeof (void *);
-      splay_tree_key n = splay_tree_lookup (&dev_splay_tree, &cur_node);
+      splay_tree_key n = splay_tree_lookup (&devicep->dev_splay_tree,
+					    &cur_node);
       if (n)
 	{
 	  tgt->list[i] = n;
@@ -216,7 +260,7 @@ gomp_map_vars (size_t mapnum, void **hostaddrs, size_t *sizes,
 	    else
 	      k->host_end = k->host_start + sizeof (void *);
 	    splay_tree_key n
-	      = splay_tree_lookup (&dev_splay_tree, k);
+	      = splay_tree_lookup (&devicep->dev_splay_tree, k);
 	    if (n)
 	      {
 		tgt->list[i] = n;
@@ -236,7 +280,7 @@ gomp_map_vars (size_t mapnum, void **hostaddrs, size_t *sizes,
 		tgt->refcount++;
 		array->left = NULL;
 		array->right = NULL;
-		splay_tree_insert (&dev_splay_tree, array);
+		splay_tree_insert (&devicep->dev_splay_tree, array);
 		switch (kinds[i] & 7)
 		  {
 		  case 0: /* ALLOC */
@@ -258,16 +302,19 @@ gomp_map_vars (size_t mapnum, void **hostaddrs, size_t *sizes,
 		    /* Add bias to the pointer value.  */
 		    cur_node.host_start += sizes[i];
 		    cur_node.host_end = cur_node.host_start + 1;
-		    n = splay_tree_lookup (&dev_splay_tree, &cur_node);
+		    n = splay_tree_lookup (&devicep->dev_splay_tree,
+					   &cur_node);
 		    if (n == NULL)
 		      {
 			/* Could be possibly zero size array section.  */
 			cur_node.host_end--;
-			n = splay_tree_lookup (&dev_splay_tree, &cur_node);
+			n = splay_tree_lookup (&devicep->dev_splay_tree,
+					       &cur_node);
 			if (n == NULL)
 			  {
 			    cur_node.host_start--;
-			    n = splay_tree_lookup (&dev_splay_tree, &cur_node);
+			    n = splay_tree_lookup (&devicep->dev_splay_tree,
+						   &cur_node);
 			    cur_node.host_start++;
 			  }
 		      }
@@ -304,7 +351,7 @@ gomp_map_vars (size_t mapnum, void **hostaddrs, size_t *sizes,
 	}
     }
 
-  gomp_mutex_unlock (&dev_env_lock);
+  gomp_mutex_unlock (&devicep->dev_env_lock);
   return tgt;
 }
 
@@ -323,6 +370,8 @@ gomp_unmap_tgt (struct target_mem_desc *tgt)
 static void
 gomp_unmap_vars (struct target_mem_desc *tgt)
 {
+  struct gomp_device_descr *devicep = tgt->device_descr;
+
   if (tgt->list_count == 0)
     {
       free (tgt);
@@ -330,7 +379,7 @@ gomp_unmap_vars (struct target_mem_desc *tgt)
     }
 
   size_t i;
-  gomp_mutex_lock (&dev_env_lock);
+  gomp_mutex_lock (&devicep->dev_env_lock);
   for (i = 0; i < tgt->list_count; i++)
     if (tgt->list[i]->refcount > 1)
       tgt->list[i]->refcount--;
@@ -342,7 +391,7 @@ gomp_unmap_vars (struct target_mem_desc *tgt)
 	  memcpy ((void *) k->host_start,
 		  (void *) (k->tgt->tgt_start + k->tgt_offset),
 		  k->host_end - k->host_start);
-	splay_tree_remove (&dev_splay_tree, k);
+	splay_tree_remove (&devicep->dev_splay_tree, k);
 	if (k->tgt->refcount > 1)
 	  k->tgt->refcount--;
 	else
@@ -353,26 +402,30 @@ gomp_unmap_vars (struct target_mem_desc *tgt)
     tgt->refcount--;
   else
     gomp_unmap_tgt (tgt);
-  gomp_mutex_unlock (&dev_env_lock);
+  gomp_mutex_unlock (&devicep->dev_env_lock);
 }
 
 static void
-gomp_update (size_t mapnum, void **hostaddrs, size_t *sizes,
-	     unsigned char *kinds)
+gomp_update (struct gomp_device_descr *devicep, size_t mapnum,
+	     void **hostaddrs, size_t *sizes, unsigned char *kinds)
 {
   size_t i;
   struct splay_tree_key_s cur_node;
 
+  if (!devicep)
+    return;
+
   if (mapnum == 0)
     return;
 
-  gomp_mutex_lock (&dev_env_lock);
+  gomp_mutex_lock (&devicep->dev_env_lock);
   for (i = 0; i < mapnum; i++)
     if (sizes[i])
       {
 	cur_node.host_start = (uintptr_t) hostaddrs[i];
 	cur_node.host_end = cur_node.host_start + sizes[i];
-	splay_tree_key n = splay_tree_lookup (&dev_splay_tree, &cur_node);
+	splay_tree_key n = splay_tree_lookup (&devicep->dev_splay_tree,
+					      &cur_node);
 	if (n)
 	  {
 	    if (n->host_start > cur_node.host_start
@@ -401,7 +454,7 @@ gomp_update (size_t mapnum, void **hostaddrs, size_t *sizes,
 		      (void *) cur_node.host_start,
 		      (void *) cur_node.host_end);
       }
-  gomp_mutex_unlock (&dev_env_lock);
+  gomp_mutex_unlock (&devicep->dev_env_lock);
 }
 
 /* Called when encountering a target directive.  If DEVICE
@@ -419,28 +472,26 @@ GOMP_target (int device, void (*fn) (void *), const void *openmp_target,
 	     size_t mapnum, void **hostaddrs, size_t *sizes,
 	     unsigned char *kinds)
 {
-  device = resolve_device (device);
-  if (device == -1)
+  struct gomp_device_descr *devicep = resolve_device (device);
+  if (devicep == NULL)
     {
       /* Host fallback.  */
       fn (hostaddrs);
       return;
     }
-  if (device == 257)
-    {
-      struct target_mem_desc *tgt
-	= gomp_map_vars (mapnum, hostaddrs, sizes, kinds, true);
-      fn ((void *) tgt->tgt_start);
-      gomp_unmap_vars (tgt);
-    }
+
+  struct target_mem_desc *tgt
+    = gomp_map_vars (devicep, mapnum, hostaddrs, sizes, kinds, true);
+  fn ((void *) tgt->tgt_start);
+  gomp_unmap_vars (tgt);
 }
 
 void
 GOMP_target_data (int device, const void *openmp_target, size_t mapnum,
 		  void **hostaddrs, size_t *sizes, unsigned char *kinds)
 {
-  device = resolve_device (device);
-  if (device == -1)
+  struct gomp_device_descr *devicep = resolve_device (device);
+  if (devicep == NULL)
     {
       /* Host fallback.  */
       struct gomp_task_icv *icv = gomp_icv (false);
@@ -451,21 +502,18 @@ GOMP_target_data (int device, const void *openmp_target, size_t mapnum,
 	     new #pragma omp target data, otherwise GOMP_target_end_data
 	     would get out of sync.  */
 	  struct target_mem_desc *tgt
-	    = gomp_map_vars (0, NULL, NULL, NULL, false);
+	    = gomp_map_vars (NULL, 0, NULL, NULL, NULL, false);
 	  tgt->prev = icv->target_data;
 	  icv->target_data = tgt;
 	}
       return;
     }
 
-  if (device == 257)
-    {
-      struct target_mem_desc *tgt
-	= gomp_map_vars (mapnum, hostaddrs, sizes, kinds, false);
-      struct gomp_task_icv *icv = gomp_icv (true);
-      tgt->prev = icv->target_data;
-      icv->target_data = tgt;
-    }
+  struct target_mem_desc *tgt
+    = gomp_map_vars (devicep, mapnum, hostaddrs, sizes, kinds, false);
+  struct gomp_task_icv *icv = gomp_icv (true);
+  tgt->prev = icv->target_data;
+  icv->target_data = tgt;
 }
 
 void
@@ -484,12 +532,11 @@ void
 GOMP_target_update (int device, const void *openmp_target, size_t mapnum,
 		    void **hostaddrs, size_t *sizes, unsigned char *kinds)
 {
-  device = resolve_device (device);
-  if (device == -1)
+  struct gomp_device_descr *devicep = resolve_device (device);
+  if (devicep == NULL)
     return;
 
-  if (device == 257)
-    gomp_update (mapnum, hostaddrs, sizes, kinds);
+  gomp_update (devicep, mapnum, hostaddrs, sizes, kinds);
 }
 
 void
@@ -503,3 +550,145 @@ GOMP_teams (unsigned int num_teams, unsigned int thread_limit)
     }
   (void) num_teams;
 }
+
+#ifdef PLUGIN_SUPPORT
+
+/* This function checks if the given string FNAME matches
+   "libgomp-plugin-*.so.1".  */
+static bool
+gomp_check_plugin_file_name (const char *fname)
+{
+  const char *prefix = "libgomp-plugin-";
+  const char *suffix = ".so.1";
+  if (!fname)
+    return false;
+  if (strncmp (fname, prefix, strlen (prefix)) != 0)
+    return false;
+  if (strncmp (fname + strlen (fname) - strlen (suffix), suffix,
+	       strlen (suffix)) != 0)
+    return false;
+  return true;
+}
+
+/* This function tries to load plugin for DEVICE.  Name of plugin is passed
+   in PLUGIN_NAME.
+   Plugin handle and handles of the found functions are stored in the
+   corresponding fields of DEVICE.
+   The function returns TRUE on success and FALSE otherwise.  */
+static bool
+gomp_load_plugin_for_device (struct gomp_device_descr *device,
+			     const char *plugin_name)
+{
+  if (!device || !plugin_name)
+    return false;
+
+  device->plugin_handle = dlopen (plugin_name, RTLD_LAZY);
+  if (!device->plugin_handle)
+    return false;
+
+  /* Clear any existing error.  */
+  dlerror ();
+
+  /* Check if all required functions are available in the plugin and store
+     their handlers.
+     TODO: check for other routines as well.  */
+  device->device_available_func = dlsym (device->plugin_handle,
+					 "device_available");
+  if (dlerror () != NULL)
+    {
+      dlclose (device->plugin_handle);
+      return false;
+    }
+
+  return true;
+}
+
+/* This functions scans folder, specified in environment variable
+   LIBGOMP_PLUGIN_PATH, and loads all suitable libgomp plugins from this folder.
+   For a plugin to be suitable, its name should be "libgomp-plugin-*.so.1" and
+   it should implement a certain set of functions.
+   Result of this function is properly initialized variable NUM_DEVICES and
+   array DEVICES, containing all plugins and their callback handles.  */
+static void
+gomp_find_available_plugins (void)
+{
+  char *plugin_path = NULL;
+  DIR *dir = NULL;
+  struct dirent *ent;
+  char plugin_name[PATH_MAX];
+
+  num_devices = 0;
+  devices = NULL;
+
+  plugin_path = getenv ("LIBGOMP_PLUGIN_PATH");
+  if (!plugin_path)
+    return;
+
+  dir = opendir (plugin_path);
+  if (!dir)
+    return;
+
+  while ((ent = readdir (dir)) != NULL)
+    {
+      struct gomp_device_descr current_device;
+      if (!gomp_check_plugin_file_name (ent->d_name))
+	continue;
+      if (strlen (plugin_path) + 1 + strlen (ent->d_name) >= PATH_MAX)
+	continue;
+      strcpy (plugin_name, plugin_path);
+      strcat (plugin_name, "/");
+      strcat (plugin_name, ent->d_name);
+      if (!gomp_load_plugin_for_device (&current_device, plugin_name))
+	continue;
+      devices = realloc (devices, (num_devices + 1)
+				  * sizeof (struct gomp_device_descr));
+      if (devices == NULL)
+	{
+	  num_devices = 0;
+	  closedir (dir);
+	  return;
+	}
+
+      devices[num_devices] = current_device;
+      devices[num_devices].id = num_devices + 1;
+      devices[num_devices].dev_splay_tree.root = NULL;
+      gomp_mutex_init (&devices[num_devices].dev_env_lock);
+      num_devices++;
+    }
+  closedir (dir);
+
+  /* FIXME: Temporary hack for testing non-shared address spaces on host.
+     We create device 257 just to check memory mapping.  */
+  if (num_devices == 0)
+    {
+      num_devices = 1;
+      devices = malloc (sizeof (struct gomp_device_descr));
+      if (devices == NULL)
+	{
+	  num_devices = 0;
+	  return;
+	}
+      devices[0].plugin_handle = NULL;
+      devices[0].device_available_func = NULL;
+      devices[0].dev_splay_tree.root = NULL;
+      gomp_mutex_init (&devices[0].dev_env_lock);
+    }
+  devices[0].id = 257;
+}
+
+/* This function initializes runtime needed for offloading.
+   It loads plugins, sets up a connection with devices, etc.  */
+static void
+gomp_target_init (void)
+{
+  gomp_find_available_plugins ();
+}
+
+#else /* PLUGIN_SUPPORT */
+/* If dlfcn.h is unavailable we always fallback to host execution.
+   GOMP_target* routines are just stubs for this case.  */
+static void
+gomp_target_init (void)
+{
+}
+#endif /* PLUGIN_SUPPORT */
