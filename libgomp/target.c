@@ -145,8 +145,9 @@ resolve_device (int device_id)
       struct gomp_task_icv *icv = gomp_icv (false);
       device_id = icv->default_device_var;
     }
-  if (device_id >= gomp_get_num_devices ()
-      && device_id != 257)
+  if (device_id < 0
+      || (device_id >= gomp_get_num_devices ()
+	  && device_id != 257))
     return NULL;
 
   /* FIXME: Temporary hack for testing non-shared address spaces on host.  */
@@ -240,11 +241,18 @@ gomp_map_vars (struct gomp_device_descr *devicep, size_t mapnum,
       tgt->tgt_start = (tgt->tgt_start + tgt_align - 1) & ~(tgt_align - 1);
       tgt->tgt_end = tgt->tgt_start + tgt_size;
     }
+  else
+    {
+      tgt->to_free = NULL;
+      tgt->tgt_start = 0;
+      tgt->tgt_end = 0;
+    }
 
   tgt_size = 0;
   if (is_target)
     tgt_size = mapnum * sizeof (void *);
 
+  tgt->array = NULL;
   if (not_found_cnt)
     {
       tgt->array = gomp_malloc (not_found_cnt * sizeof (*tgt->array));
@@ -274,6 +282,7 @@ gomp_map_vars (struct gomp_device_descr *devicep, size_t mapnum,
 		k->tgt = tgt;
 		k->tgt_offset = tgt_size;
 		tgt_size += k->host_end - k->host_start;
+		k->copy_from = false;
 		if ((kinds[i] & 7) == 2 || (kinds[i] & 7) == 3)
 		  k->copy_from = true;
 		k->refcount = 1;
@@ -476,13 +485,33 @@ GOMP_target (int device, void (*fn) (void *), const void *openmp_target,
   if (devicep == NULL)
     {
       /* Host fallback.  */
+      struct gomp_thread old_thr, *thr = gomp_thread ();
+      old_thr = *thr;
+      memset (thr, '\0', sizeof (*thr));
+      if (gomp_places_list)
+	{
+	  thr->place = old_thr.place;
+	  thr->ts.place_partition_len = gomp_places_list_len;
+	}
       fn (hostaddrs);
+      gomp_free_thread (thr);
+      *thr = old_thr;
       return;
     }
 
   struct target_mem_desc *tgt
     = gomp_map_vars (devicep, mapnum, hostaddrs, sizes, kinds, true);
+  struct gomp_thread old_thr, *thr = gomp_thread ();
+  old_thr = *thr;
+  memset (thr, '\0', sizeof (*thr));
+  if (gomp_places_list)
+    {
+      thr->place = old_thr.place;
+      thr->ts.place_partition_len = gomp_places_list_len;
+    }
   fn ((void *) tgt->tgt_start);
+  gomp_free_thread (thr);
+  *thr = old_thr;
   gomp_unmap_vars (tgt);
 }
 
