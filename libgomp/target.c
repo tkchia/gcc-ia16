@@ -651,11 +651,11 @@ gomp_find_available_plugins (void)
 
   plugin_path = getenv ("LIBGOMP_PLUGIN_PATH");
   if (!plugin_path)
-    return;
+    goto out;
 
   dir = opendir (plugin_path);
   if (!dir)
-    return;
+    goto out;
 
   while ((ent = readdir (dir)) != NULL)
     {
@@ -675,7 +675,7 @@ gomp_find_available_plugins (void)
 	{
 	  num_devices = 0;
 	  closedir (dir);
-	  return;
+	  goto out;
 	}
 
       devices[num_devices] = current_device;
@@ -686,6 +686,7 @@ gomp_find_available_plugins (void)
     }
   closedir (dir);
 
+ out:
   /* FIXME: Temporary hack for testing non-shared address spaces on host.
      We create device 257 just to check memory mapping.  */
   if (num_devices == 0)
