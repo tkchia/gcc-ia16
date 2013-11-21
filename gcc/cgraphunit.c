@@ -211,6 +211,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-nested.h"
 #include "gimplify.h"
 #include "dbgcnt.h"
+#include "lto-section-names.h"
 
 /* Queue of cgraph nodes scheduled to be added into cgraph.  This is a
    secondary queue used during optimization to accommodate passes that
@@ -2087,7 +2088,18 @@ ipa_passes (void)
     targetm.asm_out.lto_start ();
 
   if (!in_lto_p)
-    ipa_write_summaries ();
+    {
+      if (flag_openmp)
+	{
+	  section_name_prefix = OMP_SECTION_NAME_PREFIX;
+	  ipa_write_summaries (true);
+	}
+      if (flag_lto)
+	{
+	  section_name_prefix = LTO_SECTION_NAME_PREFIX;
+	  ipa_write_summaries (false);
+	}
+    }
 
   if (flag_generate_lto)
     targetm.asm_out.lto_end ();
@@ -2178,7 +2190,7 @@ compile (void)
   cgraph_state = CGRAPH_STATE_IPA;
 
   /* If LTO is enabled, initialize the streamer hooks needed by GIMPLE.  */
-  if (flag_lto)
+  if (flag_lto || flag_openmp)
     lto_streamer_hooks_init ();
 
   /* Don't run the IPA passes if there was any error or sorry messages.  */

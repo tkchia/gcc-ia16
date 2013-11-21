@@ -243,6 +243,9 @@ void
 lto_set_symtab_encoder_in_partition (lto_symtab_encoder_t encoder,
 				     symtab_node *node)
 {
+  /* Ignore not needed nodes.  */
+  if (!node->need_dump)
+    return;
   int index = lto_symtab_encoder_encode (encoder, node);
   encoder->nodes[index].in_partition = true;
 }
@@ -802,6 +805,17 @@ add_references (lto_symtab_encoder_t encoder, symtab_node *node)
       add_node_to (encoder, dyn_cast <cgraph_node *> (ref->referred), false);
     else
       lto_symtab_encoder_encode (encoder, ref->referred);
+}
+
+/* Select what needs to be dumped. In lto case dump everything.
+   In omp target case only dump stuff makrked with attribute.  */
+void
+select_what_to_dump (bool is_omp)
+{
+  struct symtab_node *snode;
+  FOR_EACH_SYMBOL(snode)
+    snode->need_dump = !is_omp || lookup_attribute ("omp declare target",
+						    DECL_ATTRIBUTES (snode->decl));
 }
 
 /* Find all symbols we want to stream into given partition and insert them

@@ -4013,7 +4013,7 @@ inline_generate_summary (void)
 
   /* When not optimizing, do not bother to analyze.  Inlining is still done
      because edge redirection needs to happen there.  */
-  if (!optimize && !flag_lto && !flag_wpa)
+  if (!optimize && !flag_lto && !flag_wpa && !flag_openmp)
     return;
 
   function_insertion_hook_holder =
@@ -4329,11 +4329,6 @@ void
 inline_free_summary (void)
 {
   struct cgraph_node *node;
-  if (!inline_edge_summary_vec.exists ())
-    return;
-  FOR_EACH_DEFINED_FUNCTION (node)
-    if (!node->alias)
-      reset_inline_summary (node);
   if (function_insertion_hook_holder)
     cgraph_remove_function_insertion_hook (function_insertion_hook_holder);
   function_insertion_hook_holder = NULL;
@@ -4348,6 +4343,11 @@ inline_free_summary (void)
   node_duplication_hook_holder = NULL;
   if (edge_duplication_hook_holder)
     cgraph_remove_edge_duplication_hook (edge_duplication_hook_holder);
+  if (!inline_edge_summary_vec.exists ())
+    return;
+  FOR_EACH_DEFINED_FUNCTION (node)
+    if (!node->alias)
+      reset_inline_summary (node);
   edge_duplication_hook_holder = NULL;
   vec_free (inline_summary_vec);
   inline_edge_summary_vec.release ();

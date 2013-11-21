@@ -893,6 +893,7 @@ bool referenced_from_this_partition_p (struct symtab_node *,
 bool reachable_from_this_partition_p (struct cgraph_node *,
 				      lto_symtab_encoder_t);
 lto_symtab_encoder_t compute_ltrans_boundary (lto_symtab_encoder_t encoder);
+void select_what_to_dump (bool);
 
 
 /* In lto-symtab.c.  */

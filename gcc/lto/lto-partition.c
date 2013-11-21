@@ -134,6 +134,7 @@ add_symbol_to_partition_1 (ltrans_partition part, symtab_node *node)
   gcc_assert (c != SYMBOL_EXTERNAL
 	      && (c == SYMBOL_DUPLICATE || !symbol_partitioned_p (node)));
 
+  node->need_dump = true;
   lto_set_symtab_encoder_in_partition (part->encoder, node);
 
   if (symbol_partitioned_p (node))
@@ -893,6 +894,8 @@ lto_promote_cross_file_statics (void)
   unsigned i, n_sets;
 
   gcc_assert (flag_wpa);
+
+  select_what_to_dump (false);
 
   /* First compute boundaries.  */
   n_sets = ltrans_partitions.length ();

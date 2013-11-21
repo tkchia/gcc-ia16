@@ -22,7 +22,12 @@ along with GCC; see the file COPYING3.  If not see
    name for the functions and static_initializers.  For other types of
    sections a '.' and the section type are appended.  */
 #define LTO_SECTION_NAME_PREFIX ".gnu.lto_"
+#define OMP_SECTION_NAME_PREFIX ".gnu.target_lto_"
 
 /* Segment name for LTO sections.  This is only used for Mach-O.  */
 
 #define LTO_SEGMENT_NAME "__GNU_LTO"
+
+/* Can be either OMP_SECTION_NAME_PREFIX when we stream pragma omp target
+   stuff, or LTO_SECTION_NAME_PREFIX for lto case.  */
+extern const char  *section_name_prefix;
