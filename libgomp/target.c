@@ -171,11 +171,6 @@ gomp_map_vars_existing (splay_tree_key oldn, splay_tree_key newn,
 		"[%p..%p) is already mapped",
 		(void *) newn->host_start, (void *) newn->host_end,
 		(void *) oldn->host_start, (void *) oldn->host_end);
-  if (((kind & 7) == 2 || (kind & 7) == 3)
-      && !oldn->copy_from
-      && oldn->host_start == newn->host_start
-      && oldn->host_end == newn->host_end)
-    oldn->copy_from = true;
   oldn->refcount++;
 }
 
