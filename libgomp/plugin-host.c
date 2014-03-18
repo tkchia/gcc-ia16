@@ -33,14 +33,53 @@
 #include <stdlib.h>
 #include <string.h>
 
-bool
-device_available (void)
+const int TARGET_TYPE_HOST = 0;
+
+int
+get_type (void)
 {
 #ifdef DEBUG
   printf ("libgomp plugin: %s:%s\n", __FILE__, __FUNCTION__);
 #endif
 
-  return true;
+  return TARGET_TYPE_HOST;
+}
+
+int
+get_num_devices (void)
+{
+#ifdef DEBUG
+  printf ("libgomp plugin: %s:%s\n", __FILE__, __FUNCTION__);
+#endif
+
+  return 1;
+}
+
+void
+offload_register (void *host_table, void *target_data)
+{
+#ifdef DEBUG
+  printf ("libgomp plugin: %s:%s (%p, %p)\n", __FILE__, __FUNCTION__,
+	  host_table, target_data);
+#endif
+}
+
+void
+device_init (void)
+{
+#ifdef DEBUG
+  printf ("libgomp plugin: %s:%s\n", __FILE__, __FUNCTION__);
+#endif
+}
+
+int
+device_get_table (void *table)
+{
+#ifdef DEBUG
+  printf ("libgomp plugin: %s:%s (%p)\n", __FILE__, __FUNCTION__, table);
+#endif
+
+  return 0;
 }
 
 void *
@@ -81,4 +120,17 @@ void *device_host2dev (void *dest, const void *src, size_t n)
 #endif
 
   return memcpy (dest, src, n);
+}
+
+void
+device_run (void *fn_ptr, void *vars)
+{
+#ifdef DEBUG
+  printf ("libgomp plugin: %s:%s (%p, %p)\n", __FILE__, __FUNCTION__, fn_ptr,
+	  vars);
+#endif
+
+  void (*fn)(void *) = (void (*)(void *)) fn_ptr;
+
+  fn (vars);
 }
