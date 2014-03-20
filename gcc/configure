@@ -610,6 +610,9 @@ ISLINC
 ISLLIBS
 GMPINC
 GMPLIBS
+accel_dir_suffix
+real_target_noncanonical
+tool_prefix
 target_cpu_default
 fortran_target_objs
 cxx_target_objs
@@ -761,6 +764,8 @@ LN
 LN_S
 AWK
 SET_MAKE
+enable_as_accelerator
+enable_accelerator
 REPORT_BUGS_TEXI
 REPORT_BUGS_TO
 PKGVERSION
@@ -901,6 +906,9 @@ with_specs
 with_pkgversion
 with_bugurl
 enable_languages
+enable_accelerator
+enable_as_accelerator_for
+enable_offload_targets
 with_multilib_list
 enable_rpath
 with_libiconv_prefix
@@ -1610,6 +1618,11 @@ Optional Features:
                           GNU Objective-C runtime
   --disable-shared        don't provide a shared libgcc
   --enable-languages=LIST specify which front-ends to build
+  --enable-accelerator    build accelerator [ARG={no,device-triplet}]
+  --enable-as-accelerator-for
+                          build compiler as accelerator target for given host
+  --enable-offload-targets=LIST
+                          enable offloading to devices from LIST
   --disable-rpath         do not hardcode runtime library paths
   --enable-sjlj-exceptions
                           arrange to use setjmp/longjmp exception handling
@@ -3193,6 +3206,11 @@ esac
 
 
 
+
+# Used for constructing correct paths for offload compilers.
+real_target_noncanonical=${target_noncanonical}
+tool_prefix=$target_noncanonical
+accel_dir_suffix=
 
 # Determine the target- and build-specific subdirectories
 
@@ -7389,6 +7407,69 @@ esac
 else
   enable_languages=c
 fi
+
+
+offload_targets=
+# Check whether --enable-accelerator was given.
+if test "${enable_accelerator+set}" = set; then :
+  enableval=$enable_accelerator;
+  case $enable_accelerator in
+  no) ;;
+  *)
+    offload_targets=$enable_accelerator
+    ;;
+  esac
+
+else
+  enable_accelerator=no
+fi
+
+
+
+# Check whether --enable-as-accelerator-for was given.
+if test "${enable_as_accelerator_for+set}" = set; then :
+  enableval=$enable_as_accelerator_for;
+  if test $enable_accelerator = no; then
+    echo "--enable-as-accelerator-for requires --enable-accelerator"
+    exit 1;
+  fi
+
+$as_echo "#define ACCEL_COMPILER 1" >>confdefs.h
+
+  enable_as_accelerator=yes
+  tool_prefix=${enable_as_accelerator_for}-accel-${enable_accelerator}
+  accel_dir_suffix=/accel/${target_noncanonical}
+  real_target_noncanonical=${enable_as_accelerator_for}
+
+else
+  enable_as_accelerator=no
+fi
+
+
+
+# Check whether --enable-offload-targets was given.
+if test "${enable_offload_targets+set}" = set; then :
+  enableval=$enable_offload_targets;
+  if test x$enable_offload_targets = x; then
+    as_fn_error "no offload targets specified" "$LINENO" 5
+  else
+    if test x$offload_targets = x; then
+      offload_targets=$enable_offload_targets
+    else
+      offload_targets=$offload_targets,$enable_offload_targets
+    fi
+  fi
+
+else
+  enable_accelerator=no
+fi
+
+
+offload_targets=`echo $offload_targets | sed -e 's#,#:#'`
+
+cat >>confdefs.h <<_ACEOF
+#define OFFLOAD_TARGETS "$offload_targets"
+_ACEOF
 
 
 
@@ -18033,7 +18114,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 18036 "configure"
+#line 18117 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18139,7 +18220,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 18142 "configure"
+#line 18223 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -27803,6 +27884,9 @@ fi
 
 
 # Substitute configuration variables
+
+
+
 
 
 

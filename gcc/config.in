@@ -1,5 +1,12 @@
 /* config.in.  Generated from configure.ac by autoheader.  */
 
+/* Define if this compiler should be built and used as the target device
+   compiler for OpenACC. */
+#ifndef USED_FOR_TARGET
+#undef ACCEL_COMPILER
+#endif
+
+
 /* Define if building universal (internal helper macro) */
 #ifndef USED_FOR_TARGET
 #undef AC_APPLE_UNIVERSAL_BUILD
@@ -1771,6 +1778,12 @@
 /* Define if host mkdir takes a single argument. */
 #ifndef USED_FOR_TARGET
 #undef MKDIR_TAKES_ONE_ARG
+#endif
+
+
+/* Define to hold the list of target names suitable for offloading. */
+#ifndef USED_FOR_TARGET
+#undef OFFLOAD_TARGETS
 #endif
 
 

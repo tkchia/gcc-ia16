@@ -38,6 +38,11 @@ AC_CANONICAL_TARGET
 # Determine the noncanonical target name, for directory use.
 ACX_NONCANONICAL_TARGET
 
+# Used for constructing correct paths for offload compilers.
+real_target_noncanonical=${target_noncanonical}
+tool_prefix=$target_noncanonical
+accel_dir_suffix=
+
 # Determine the target- and build-specific subdirectories
 GCC_TOPLEV_SUBDIRS
 
@@ -882,6 +887,55 @@ AC_ARG_ENABLE(languages,
 		;;
 esac],
 [enable_languages=c])
+
+offload_targets=
+AC_ARG_ENABLE(accelerator,
+[AS_HELP_STRING([--enable-accelerator], [build accelerator @<:@ARG={no,device-triplet}@:>@])],
+[
+  case $enable_accelerator in
+  no) ;;
+  *)
+    offload_targets=$enable_accelerator
+    ;;
+  esac
+], [enable_accelerator=no])
+AC_SUBST(enable_accelerator)
+
+AC_ARG_ENABLE(as-accelerator-for,
+[AS_HELP_STRING([--enable-as-accelerator-for], [build compiler as accelerator target for given host])],
+[
+  if test $enable_accelerator = no; then
+    echo "--enable-as-accelerator-for requires --enable-accelerator"
+    exit 1;
+  fi
+  AC_DEFINE(ACCEL_COMPILER, 1,
+   [Define if this compiler should be built and used as the target
+    device compiler for OpenACC.])
+  enable_as_accelerator=yes
+  tool_prefix=${enable_as_accelerator_for}-accel-${enable_accelerator}
+  accel_dir_suffix=/accel/${target_noncanonical}
+  real_target_noncanonical=${enable_as_accelerator_for}
+], [enable_as_accelerator=no])
+AC_SUBST(enable_as_accelerator)
+
+AC_ARG_ENABLE(offload-targets,
+[AS_HELP_STRING([--enable-offload-targets=LIST],
+ [enable offloading to devices from LIST])],
+[
+  if test x$enable_offload_targets = x; then
+    AC_MSG_ERROR([no offload targets specified])
+  else
+    if test x$offload_targets = x; then
+      offload_targets=$enable_offload_targets
+    else
+      offload_targets=$offload_targets,$enable_offload_targets
+    fi
+  fi
+], [enable_accelerator=no])
+AC_SUBST(enable_accelerator)
+offload_targets=`echo $offload_targets | sed -e 's#,#:#'`
+AC_DEFINE_UNQUOTED(OFFLOAD_TARGETS, "$offload_targets",
+ [Define to hold the list of target names suitable for offloading.])
 
 AC_ARG_WITH(multilib-list,
 [AS_HELP_STRING([--with-multilib-list], [select multilibs (AArch64, SH and x86-64 only)])],
@@ -5488,6 +5542,9 @@ AC_SUBST(c_target_objs)
 AC_SUBST(cxx_target_objs)
 AC_SUBST(fortran_target_objs)
 AC_SUBST(target_cpu_default)
+AC_SUBST(tool_prefix)
+AC_SUBST(real_target_noncanonical)
+AC_SUBST(accel_dir_suffix)
 
 AC_SUBST_FILE(language_hooks)
 
