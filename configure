@@ -673,6 +673,12 @@ LDFLAGS
 CFLAGS
 CC
 EXTRA_CONFIGARGS_LIBJAVA
+accel_target_os
+accel_target_vendor
+accel_target_cpu
+accel_target_alias
+accel_target
+accel_target_noncanonical
 target_subdir
 host_subdir
 build_subdir
@@ -2773,7 +2779,7 @@ host_libs="intl libiberty opcodes bfd readline tcl tk itcl libgui zlib libbacktr
 # binutils, gas and ld appear in that order because it makes sense to run
 # "make check" in that particular order.
 # If --enable-gold is used, "gold" may replace "ld".
-host_tools="texinfo flex bison binutils gas ld fixincludes gcc cgen sid sim gdb gprof etc expect dejagnu m4 utils guile fastjar gnattools"
+host_tools="texinfo flex bison binutils gas ld fixincludes accel-gcc gcc cgen sid sim gdb gprof etc expect dejagnu m4 utils guile fastjar gnattools"
 
 # libgcj represents the runtime libraries only used by gcj.
 libgcj="target-libffi \
@@ -2970,6 +2976,26 @@ case "${ENABLE_ACCELERATOR}" in
     skipdirs="${skipdirs} accel-gcc"
     ;;
 esac
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking accelerator target system type" >&5
+$as_echo_n "checking accelerator target system type... " >&6; }
+
+accel_target_alias=$accel_target_noncanonical
+case "$accel_target_alias" in
+NONE)
+  accel_target=NONE
+  ;;
+*)
+  accel_target=`$ac_config_sub $accel_target_alias`
+  ;;
+esac
+
+accel_target_cpu=`echo $accel_target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+accel_target_vendor=`echo $accel_target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+accel_target_os=`echo $accel_target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $accel_target" >&5
+$as_echo "$accel_target" >&6; }
+
 
 # Handle --enable-gold, --enable-ld.
 # --disable-gold [--enable-ld]
@@ -6713,7 +6739,15 @@ done
 configdirs_all="$configdirs"
 configdirs=
 for i in ${configdirs_all} ; do
-  if test -f ${srcdir}/$i/configure ; then
+  case $i in
+    accel-gcc)
+      confsrcdir=gcc
+      ;;
+    *)
+      confsrcdir=$i
+      ;;
+  esac
+  if test -f ${srcdir}/${confsrcdir}/configure ; then
     configdirs="${configdirs} $i"
   fi
 done
@@ -8176,7 +8210,6 @@ case " $configdirs " in
     test $host = $build && RUNTEST='$$s/$(HOST_SUBDIR)/dejagnu/runtest'
     ;;
 esac
-
 
 # Host tools.
 ncn_tool_prefix=

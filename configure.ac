@@ -141,7 +141,7 @@ host_libs="intl libiberty opcodes bfd readline tcl tk itcl libgui zlib libbacktr
 # binutils, gas and ld appear in that order because it makes sense to run
 # "make check" in that particular order.
 # If --enable-gold is used, "gold" may replace "ld".
-host_tools="texinfo flex bison binutils gas ld fixincludes gcc cgen sid sim gdb gprof etc expect dejagnu m4 utils guile fastjar gnattools"
+host_tools="texinfo flex bison binutils gas ld fixincludes accel-gcc gcc cgen sid sim gdb gprof etc expect dejagnu m4 utils guile fastjar gnattools"
 
 # libgcj represents the runtime libraries only used by gcj.
 libgcj="target-libffi \
@@ -316,6 +316,8 @@ case "${ENABLE_ACCELERATOR}" in
     skipdirs="${skipdirs} accel-gcc"
     ;;
 esac
+
+ACX_CANONICAL_ACCEL_TARGET
 
 # Handle --enable-gold, --enable-ld.
 # --disable-gold [--enable-ld]
@@ -2168,7 +2170,15 @@ done
 configdirs_all="$configdirs"
 configdirs=
 for i in ${configdirs_all} ; do
-  if test -f ${srcdir}/$i/configure ; then
+  case $i in
+    accel-gcc)
+      confsrcdir=gcc
+      ;;
+    *)
+      confsrcdir=$i
+      ;;
+  esac
+  if test -f ${srcdir}/${confsrcdir}/configure ; then
     configdirs="${configdirs} $i"
   fi
 done
@@ -3238,7 +3248,6 @@ case " $configdirs " in
     test $host = $build && RUNTEST='$$s/$(HOST_SUBDIR)/dejagnu/runtest'
     ;;
 esac
-
 
 # Host tools.
 NCN_STRICT_CHECK_TOOLS(AR, ar)

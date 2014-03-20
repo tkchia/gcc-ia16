@@ -61,6 +61,36 @@ AC_DEFUN([ACX_NONCANONICAL_TARGET],
 AC_SUBST(target_noncanonical)
 ]) []dnl # ACX_NONCANONICAL_TARGET
 
+AC_DEFUN([ACX_CANONICAL_ACCEL_TARGET],
+[AC_REQUIRE([AC_CONFIG_AUX_DIR_DEFAULT])dnl
+AC_MSG_CHECKING(accelerator target system type)
+
+dnl Set accel_target_alias.
+accel_target_alias=$accel_target_noncanonical
+case "$accel_target_alias" in
+NONE)
+  accel_target=NONE
+  ;;
+*)
+  accel_target=`$ac_config_sub $accel_target_alias`
+  ;;
+esac
+
+dnl Set the other accel_target vars.
+changequote(<<, >>)dnl
+accel_target_cpu=`echo $accel_target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+accel_target_vendor=`echo $accel_target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+accel_target_os=`echo $accel_target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
+changequote([, ])dnl
+AC_MSG_RESULT($accel_target)
+AC_SUBST(accel_target_noncanonical)dnl
+AC_SUBST(accel_target)dnl
+AC_SUBST(accel_target_alias)dnl
+AC_SUBST(accel_target_cpu)dnl
+AC_SUBST(accel_target_vendor)dnl
+AC_SUBST(accel_target_os)dnl
+])
+
 dnl ####
 dnl # GCC_TOPLEV_SUBDIRS
 dnl # GCC & friends build 'build', 'host', and 'target' tools.  These must
