@@ -746,6 +746,7 @@ ospace_frag'
 ac_user_opts='
 enable_option_checking
 with_build_libsubdir
+enable_accelerator
 enable_gold
 enable_ld
 enable_libquadmath
@@ -1465,6 +1466,9 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-accelerator[=ARG]
+                          build accelerator
+                          [ARG={no,auto-device-triplet,device-triplet}]
   --enable-gold[=ARG]     build gold [ARG={default,yes,no}]
   --enable-ld[=ARG]       build ld [ARG={default,yes,no}]
   --disable-libquadmath   do not build libquadmath directory
@@ -2932,6 +2936,39 @@ fi
 case ${with_newlib} in
   no) skipdirs="${skipdirs} target-newlib" ;;
   yes) skipdirs=`echo " ${skipdirs} " | sed -e 's/ target-newlib / /'` ;;
+esac
+
+# Handle --enable-accelerator.  This is in top-level because both libgomp and
+# GCC proper need this information.
+# --disable-accelerator
+#   Default.  Do not build accelerator pieces, only support host execution.
+# --enable-accelerator=auto-device-triplet
+#   If possible, build accelerator pieces for 'device-triplet'.
+# --enable-accelerator=device-triplet
+#   Build accelerator pieces for 'device-triplet'.
+# Check whether --enable-accelerator was given.
+if test "${enable_accelerator+set}" = set; then :
+  enableval=$enable_accelerator; ENABLE_ACCELERATOR=$enableval
+else
+  ENABLE_ACCELERATOR=no
+fi
+
+accel_target_noncanonical=NONE
+case "${ENABLE_ACCELERATOR}" in
+  yes)
+    as_fn_error "--enable-accelerators must name accelerator" "$LINENO" 5
+    skipdirs="${skipdirs} accel-gcc"
+    ;;
+  no)
+    skipdirs="${skipdirs} accel-gcc"
+    ;;
+  auto-nvptx*|nvptx*)
+    accel_target_noncanonical=`echo "$ENABLE_ACCELERATOR" | sed -e s/auto-//g`
+    ;;
+  *)
+    as_fn_error "unrecognized accelerator" "$LINENO" 5
+    skipdirs="${skipdirs} accel-gcc"
+    ;;
 esac
 
 # Handle --enable-gold, --enable-ld.
