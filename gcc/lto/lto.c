@@ -2119,7 +2119,7 @@ lto_section_with_id (const char *name, unsigned HOST_WIDE_INT *id)
 {
   const char *s;
 
-  if (strncmp (name, LTO_SECTION_NAME_PREFIX, strlen (LTO_SECTION_NAME_PREFIX)))
+  if (strncmp (name, section_name_prefix, strlen (section_name_prefix)))
     return 0;
   s = strrchr (name, '.');
   return s && sscanf (s, "." HOST_WIDE_INT_PRINT_HEX_PURE, id) == 1;
@@ -2892,6 +2892,10 @@ read_cgraph_and_symbols (unsigned nfiles, const char **fnames)
   init_cgraph ();
 
   timevar_push (TV_IPA_LTO_DECL_IN);
+
+#ifdef ACCEL_COMPILER
+    section_name_prefix = OMP_SECTION_NAME_PREFIX;
+#endif
 
   real_file_decl_data
     = decl_data = ggc_cleared_vec_alloc<lto_file_decl_data_ptr> (nfiles + 1);
