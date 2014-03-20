@@ -49,6 +49,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "lto-section-names.h"
 #include "collect-utils.h"
 
+#define OFFLOAD_FUNC_TABLE_SECTION_NAME ".offload_func_table_section"
+#define OFFLOAD_TARGET_NAMES_ENV	"OFFLOAD_TARGET_NAMES"
+
 enum lto_mode_d {
   LTO_MODE_NONE,			/* Not doing LTO.  */
   LTO_MODE_LTO,				/* Normal LTO.  */
@@ -63,6 +66,7 @@ static char *flto_out;
 static unsigned int nr;
 static char **input_names;
 static char **output_names;
+static char **offload_names;
 static char *makefile;
 
 const char tool_name[] = "lto-wrapper";
@@ -358,6 +362,184 @@ merge_and_complain (struct cl_decoded_option **decoded_options,
     }
 }
 
+/* Auxiliary function that frees elements of PTR and PTR itself.
+   N is number of elements to be freed.
+   If PTR is NULL, nothing is freed.  If an element is NULL, subsequent elements
+   are not freed.  */
+static void**
+free_array_of_ptrs (void **ptr, unsigned n)
+{
+  unsigned i;
+  if (!ptr)
+    return NULL;
+  for (i = 0; i < n; i++)
+    {
+      if (!ptr[i])
+	break;
+      free (ptr[i]);
+    }
+  free (ptr);
+  return NULL;
+}
+
+/* Parse STR, saving found tokens into PVALUES and return their number.
+   Tokens are assumed to be delimited by ':'.  If APPEND is non-null,
+   append it to every token we find.  */
+
+static unsigned
+parse_env_var (const char *str, char ***pvalues, const char *append)
+{
+  const char *curval, *nextval;
+  char **values;
+  unsigned num = 1, i;
+
+  curval = strchr (str, ':');
+  while (curval)
+    {
+      num++;
+      curval = strchr (curval + 1, ':');
+    }
+
+  values = (char**) xmalloc (num * sizeof (char*));
+  curval = str;
+  nextval = strchrnul (curval, ':');
+
+  int append_len = append ? strlen (append) : 0;
+  for (i = 0; i < num; i++)
+    {
+      int l = nextval - curval;
+      values[i] = (char*) xmalloc (l + 1 + append_len);
+      memcpy (values[i], curval, l);
+      values[i][l] = 0;
+      if (append)
+	strcat (values[i], append);
+      curval = nextval + 1;
+      nextval = strchrnul (curval, ':');
+    }
+  *pvalues = values;
+  return num;
+}
+
+/* Check whether NAME can be accessed in MODE.  This is like access,
+   except that it never considers directories to be executable.  */
+
+static int
+access_check (const char *name, int mode)
+{
+  if (mode == X_OK)
+    {
+      struct stat st;
+
+      if (stat (name, &st) < 0
+	  || S_ISDIR (st.st_mode))
+	return -1;
+    }
+
+  return access (name, mode);
+}
+
+/* Prepare target image for target NAME.
+   Firstly, we execute COMPILER, passing all input files to it to produce DSO.
+   When target DSO is ready, we pass it to objcopy to place its image into a
+   special data section.  After that we rename target image's symbols to values,
+   expected by the host side, and return the name of the resultant file.  */
+
+static char*
+prepare_target_image (const char *target, const char *compiler_path,
+		      unsigned in_argc, char *in_argv[])
+{
+  const char **argv;
+  struct obstack argv_obstack;
+  unsigned i;
+  char *filename = NULL;
+  char *suffix = XALLOCAVEC (char, strlen ("/accel//mkoffload") + 1 + strlen (target));
+  const char *compiler = NULL;
+
+  strcpy (suffix, "/accel/");
+  strcat (suffix, target);
+  strcat (suffix, "/mkoffload");
+
+  char **paths;
+  int n_paths = parse_env_var (compiler_path, &paths, suffix);
+
+  for (int i = 0; i < n_paths; i++)
+    if (access_check (paths[i], X_OK) == 0)
+      {
+	compiler = paths[i];
+	break;
+      }
+
+  if (compiler == NULL)
+    goto out;
+
+  /* Generate temp file name.  */
+  filename = make_temp_file (".target.o");
+
+  /* --------------------------------------  */
+  /* Run gcc for target.  */
+  obstack_init (&argv_obstack);
+  obstack_ptr_grow (&argv_obstack, compiler);
+  obstack_ptr_grow (&argv_obstack, "-o");
+  obstack_ptr_grow (&argv_obstack, filename);
+
+  for (i = 1; i < in_argc; ++i)
+    if (strncmp (in_argv[i], "-fresolution=", sizeof ("-fresolution=") - 1))
+      obstack_ptr_grow (&argv_obstack, in_argv[i]);
+  obstack_ptr_grow (&argv_obstack, NULL);
+
+  argv = XOBFINISH (&argv_obstack, const char **);
+  fork_execute (argv[0], CONST_CAST (char **, argv), true);
+  obstack_free (&argv_obstack, NULL);
+
+ out:
+  free_array_of_ptrs ((void**) paths, n_paths);
+  return filename;
+}
+
+
+/* The main routine dealing with openmp offloading.
+   The routine builds a target image for each offloading target.
+   IN_ARGC and IN_ARGV specify input files.  As all of them could contain
+   omp-sections, we pass them all to target compilers.
+   Env-variable OFFLOAD_TARGET_NAMES_ENV describes for which targets we should
+   build images.
+   This function stores the names of the object files in the OFFLOAD_NAMES
+   array.  */
+
+static void
+compile_images_for_openmp_targets (unsigned in_argc, char *in_argv[])
+{
+  char *target_names;
+  char **names;
+  unsigned num_targets;
+
+  /* Obtain names of offload targets and corresponding compilers.  */
+  target_names = getenv (OFFLOAD_TARGET_NAMES_ENV);
+  if (!target_names)
+    return;
+
+  num_targets = parse_env_var (target_names, &names, NULL);
+
+  const char *compiler_path = getenv ("COMPILER_PATH");
+  if (compiler_path == NULL)
+    goto out;
+
+  /* Prepare an image for each target.  The array is terminated by a NULL
+     entry.  */
+  offload_names = XCNEWVEC (char *, num_targets + 1);
+  for (unsigned i = 0; i < num_targets; i++)
+    {
+      offload_names[i] = prepare_target_image (names[i], compiler_path,
+					       in_argc, in_argv);
+      if (!offload_names[i])
+	fatal_perror ("Problem with building target image for %s.\n", names[i]);
+    }
+
+ out:
+  free_array_of_ptrs ((void**) names, num_targets);
+}
+
+
 /* Execute gcc. ARGC is the number of arguments. ARGV contains the arguments. */
 
 static void
@@ -378,6 +560,7 @@ run_gcc (unsigned argc, char *argv[])
   unsigned int decoded_options_count;
   struct obstack argv_obstack;
   int new_head_argc;
+  bool have_offload = false;
 
   /* Get the driver and options.  */
   collect_gcc = getenv ("COLLECT_GCC");
@@ -433,6 +616,11 @@ run_gcc (unsigned argc, char *argv[])
 	  close (fd);
 	  continue;
 	}
+      /* We may choose not to write out this .opts section in the future.  In
+	 that case we'll have to use something else to look for.  */
+      if (simple_object_find_section (sobj, OMP_SECTION_NAME_PREFIX "." "opts",
+				      &offset, &length, &errmsg, &err))
+	have_offload = true;
       lseek (fd, file_offset + offset, SEEK_SET);
       data = (char *)xmalloc (length);
       read (fd, data, length);
@@ -836,6 +1024,19 @@ cont:
 	  makefile = NULL;
 	  for (i = 0; i < nr; ++i)
 	    maybe_unlink (input_names[i]);
+	}
+      if (have_offload)
+	{
+	  compile_images_for_openmp_targets (argc, argv);
+	  if (offload_names)
+	    {
+	      for (i = 0; offload_names[i]; i++)
+		{
+		  fputs (offload_names[i], stdout);
+		  putc ('\n', stdout);
+		}
+	      free_array_of_ptrs ((void **)offload_names, i);
+	    }
 	}
       for (i = 0; i < nr; ++i)
 	{
