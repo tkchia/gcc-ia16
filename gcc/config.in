@@ -151,6 +151,12 @@
 #endif
 
 
+/* Define this to enable support for offloading. */
+#ifndef USED_FOR_TARGET
+#undef ENABLE_OFFLOADING
+#endif
+
+
 /* Define to enable plugin support. */
 #ifndef USED_FOR_TARGET
 #undef ENABLE_PLUGIN

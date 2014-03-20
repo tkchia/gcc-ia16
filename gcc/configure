@@ -7471,6 +7471,11 @@ cat >>confdefs.h <<_ACEOF
 #define OFFLOAD_TARGETS "$offload_targets"
 _ACEOF
 
+if test x$offload_targets != x; then
+
+$as_echo "#define ENABLE_OFFLOADING 1" >>confdefs.h
+
+fi
 
 
 # Check whether --with-multilib-list was given.

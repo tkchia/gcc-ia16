@@ -64,6 +64,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "optabs.h"
 #include "cfgloop.h"
 #include "target.h"
+#include "common/common-target.h"
 #include "omp-low.h"
 #include "gimple-low.h"
 #include "tree-cfgcleanup.h"
@@ -8151,19 +8152,22 @@ expand_omp_target (struct omp_region *region)
     }
 
   gimple g;
-  /* FIXME: This will be address of
-     extern char __OPENMP_TARGET__[] __attribute__((visibility ("hidden")))
-     symbol, as soon as the linker plugin is able to create it for us.  */
-  tree openmp_target = build_zero_cst (ptr_type_node);
+  tree openmp_target
+    = build_decl (UNKNOWN_LOCATION, VAR_DECL,
+		  get_identifier ("__OPENMP_TARGET__"), ptr_type_node);
+  TREE_PUBLIC (openmp_target) = 1;
+  DECL_EXTERNAL (openmp_target) = 1;
   if (kind == GF_OMP_TARGET_KIND_REGION)
     {
       tree fnaddr = build_fold_addr_expr (child_fn);
-      g = gimple_build_call (builtin_decl_explicit (start_ix), 7,
-			     device, fnaddr, openmp_target, t1, t2, t3, t4);
+      g = gimple_build_call (builtin_decl_explicit (start_ix), 7, device,
+			     fnaddr, build_fold_addr_expr (openmp_target),
+			     t1, t2, t3, t4);
     }
   else
-    g = gimple_build_call (builtin_decl_explicit (start_ix), 6,
-			   device, openmp_target, t1, t2, t3, t4);
+    g = gimple_build_call (builtin_decl_explicit (start_ix), 6, device,
+			   build_fold_addr_expr (openmp_target),
+			   t1, t2, t3, t4);
   gimple_set_location (g, gimple_location (entry_stmt));
   gsi_insert_before (&gsi, g, GSI_SAME_STMT);
   if (kind != GF_OMP_TARGET_KIND_REGION)
@@ -11956,6 +11960,139 @@ simple_ipa_opt_pass *
 make_pass_omp_simd_clone (gcc::context *ctxt)
 {
   return new pass_omp_simd_clone (ctxt);
+}
+
+/* Helper function for omp_finish_file routine.
+   Takes decls from V_DECLS and adds their addresses and sizes to
+   constructor-vector V_CTOR.  It will be later used as DECL_INIT for decl
+   representing a global symbol for OpenMP descriptor.  */
+static void
+add_decls_addresses_to_decl_constructor (vec<tree, va_gc> *v_decls,
+					 vec<constructor_elt, va_gc> *v_ctor)
+{
+  unsigned len = vec_safe_length (v_decls);
+  for (unsigned i = 0; i < len; i++)
+    {
+      tree it = (*v_decls)[i];
+      bool is_function = TREE_CODE (it) != VAR_DECL;
+
+      CONSTRUCTOR_APPEND_ELT (v_ctor, NULL_TREE, build_fold_addr_expr (it));
+      if (!is_function)
+	CONSTRUCTOR_APPEND_ELT (v_ctor, NULL_TREE,
+				fold_convert (const_ptr_type_node,
+					      DECL_SIZE_UNIT (it)));
+    }
+}
+
+/* Create new symbol containing (address, size) pairs for omp-marked
+   functions and global variables.  */
+void
+omp_finish_file (void)
+{
+  struct cgraph_node *node;
+  struct varpool_node *vnode;
+  const char *funcs_section_name = ".offload_func_table_section";
+  const char *vars_section_name = ".offload_var_table_section";
+  vec<tree, va_gc> *v_funcs, *v_vars;
+
+  vec_alloc (v_vars, 0);
+  vec_alloc (v_funcs, 0);
+
+  /* Collect all omp-target functions.  */
+  FOR_EACH_DEFINED_FUNCTION (node)
+    {
+      /* TODO: This check could fail on functions, created by omp
+	 parallel/task pragmas.  It's better to name outlined for offloading
+	 functions in some different way and to check here the function name.
+	 It could be something like "*_omp_tgtfn" in contrast with "*_omp_fn"
+	 for functions from omp parallel/task pragmas.  */
+      if (!lookup_attribute ("omp declare target",
+			     DECL_ATTRIBUTES (node->decl))
+	  || !DECL_ARTIFICIAL (node->decl))
+	continue;
+      vec_safe_push (v_funcs, node->decl);
+    }
+  /* Collect all omp-target global variables.  */
+  FOR_EACH_DEFINED_VARIABLE (vnode)
+    {
+      if (!lookup_attribute ("omp declare target",
+			     DECL_ATTRIBUTES (vnode->decl))
+	  || TREE_CODE (vnode->decl) != VAR_DECL
+	  || DECL_SIZE (vnode->decl) == 0)
+	continue;
+
+      vec_safe_push (v_vars, vnode->decl);
+    }
+  unsigned num_vars = vec_safe_length (v_vars);
+  unsigned num_funcs = vec_safe_length (v_funcs);
+
+  if (num_vars == 0 && num_funcs == 0)
+    return;
+
+#ifdef ACCEL_COMPILER
+  /* Decls are placed in reversed order in fat-objects, so we need to
+     revert them back if we compile target.  */
+  for (unsigned i = 0; i < num_funcs / 2; i++)
+    {
+      tree it = (*v_funcs)[i];
+      (*v_funcs)[i] = (*v_funcs)[num_funcs - i - 1];
+      (*v_funcs)[num_funcs - i - 1] = it;
+    }
+  for (unsigned i = 0; i < num_vars / 2; i++)
+    {
+      tree it = (*v_vars)[i];
+      (*v_vars)[i] = (*v_vars)[num_vars - i - 1];
+      (*v_vars)[num_vars - i - 1] = it;
+    }
+#endif
+
+  if (targetm_common.have_named_sections)
+    {
+      vec<constructor_elt, va_gc> *v_f, *v_v;
+      vec_alloc (v_f, num_funcs);
+      vec_alloc (v_v, num_vars * 2);
+
+      add_decls_addresses_to_decl_constructor (v_funcs, v_f);
+      add_decls_addresses_to_decl_constructor (v_vars, v_v);
+
+      tree vars_decl_type = build_array_type_nelts (pointer_sized_int_node,
+						    num_vars * 2);
+      tree funcs_decl_type = build_array_type_nelts (pointer_sized_int_node,
+						     num_funcs);
+      TYPE_ALIGN (vars_decl_type) = TYPE_ALIGN (pointer_sized_int_node);
+      TYPE_ALIGN (funcs_decl_type) = TYPE_ALIGN (pointer_sized_int_node);
+      tree ctor_v = build_constructor (vars_decl_type, v_v);
+      tree ctor_f = build_constructor (funcs_decl_type, v_f);
+      TREE_CONSTANT (ctor_v) = TREE_CONSTANT (ctor_f) = 1;
+      TREE_STATIC (ctor_v) = TREE_STATIC (ctor_f) = 1;
+      tree funcs_decl = build_decl (UNKNOWN_LOCATION, VAR_DECL,
+				    get_identifier (".omp_func_table"),
+				    funcs_decl_type);
+      tree vars_decl = build_decl (UNKNOWN_LOCATION, VAR_DECL,
+				   get_identifier (".omp_var_table"),
+				   vars_decl_type);
+      TREE_STATIC (funcs_decl) = TREE_STATIC (vars_decl) = 1;
+      DECL_INITIAL (funcs_decl) = ctor_f;
+      DECL_INITIAL (vars_decl) = ctor_v;
+      set_decl_section_name (funcs_decl, funcs_section_name);
+      set_decl_section_name (vars_decl, vars_section_name);
+
+      varpool_assemble_decl (varpool_node_for_decl (vars_decl));
+      varpool_assemble_decl (varpool_node_for_decl (funcs_decl));
+   }
+  else
+    {
+      for (unsigned i = 0; i < num_funcs; i++)
+	{
+	  tree it = (*v_funcs)[i];
+	  targetm.record_offload_symbol (it);
+	}
+      for (unsigned i = 0; i < num_vars; i++)
+	{
+	  tree it = (*v_vars)[i];
+	  targetm.record_offload_symbol (it);
+	}
+    }
 }
 
 #include "gt-omp-low.h"

@@ -936,6 +936,10 @@ AC_SUBST(enable_accelerator)
 offload_targets=`echo $offload_targets | sed -e 's#,#:#'`
 AC_DEFINE_UNQUOTED(OFFLOAD_TARGETS, "$offload_targets",
  [Define to hold the list of target names suitable for offloading.])
+if test x$offload_targets != x; then
+  AC_DEFINE(ENABLE_OFFLOADING, 1,
+    [Define this to enable support for offloading.])
+fi
 
 AC_ARG_WITH(multilib-list,
 [AS_HELP_STRING([--with-multilib-list], [select multilibs (AArch64, SH and x86-64 only)])],
