@@ -4214,3 +4214,11 @@ then
 		target_cpu_default=$target_cpu_default2
 	fi
 fi
+
+case ${target} in
+x86_64-*-*)
+	if test x$enable_as_accelerator = xyes; then
+		extra_programs="mkoffload\$(exeext)"
+	fi
+	;;
+esac

@@ -3897,3 +3897,17 @@ DEPFILES = \
   $(foreach obj,$(ALL_HOST_OBJS),\
     $(dir $(obj))$(DEPDIR)/$(patsubst %.o,%.Po,$(notdir $(obj))))
 -include $(DEPFILES)
+
+
+mkoffload.o: $(srcdir)/config/intelmic/mkoffload.c | insn-modes.h
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	  -DSTANDARD_EXEC_PREFIX=\"$(libdir)/gcc/\" \
+	  -DSTANDARD_LIBEXEC_PREFIX=\"$(libexecdir)/gcc/\" \
+	  -DDEFAULT_TARGET_VERSION=\"$(version)\" \
+	  -DDEFAULT_TARGET_MACHINE=\"$(target_noncanonical)\" \
+	  -DSTANDARD_BINDIR_PREFIX=\"$(bindir)/\" \
+	  -DLIBEXECSUBDIR=\"$(libexecsubdir)\" \
+	  $< $(OUTPUT_OPTION)
+
+mkoffload$(exeext): mkoffload.o collect-utils.o libcommon-target.a $(LIBIBERTY) $(LIBDEPS)
+	$(COMPILER) -o $@ mkoffload.o collect-utils.o libcommon-target.a $(LIBIBERTY) $(LIBS)
