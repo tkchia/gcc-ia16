@@ -219,6 +219,30 @@ static tree scan_omp_1_op (tree *, int *, void *);
       *handled_ops_p = false; \
       break;
 
+/* Holds a decl for __OPENMP_TARGET__.  */
+static GTY(()) tree offload_symbol_decl;
+
+/* Get the __OPENMP_TARGET__ symbol.  */
+static tree
+get_offload_symbol_decl (void)
+{
+  if (!offload_symbol_decl)
+    {
+      tree decl = build_decl (UNKNOWN_LOCATION, VAR_DECL,
+			      get_identifier ("__OPENMP_TARGET__"),
+			      ptr_type_node);
+      TREE_ADDRESSABLE (decl) = 1;
+      TREE_PUBLIC (decl) = 1;
+      DECL_EXTERNAL (decl) = 1;
+      DECL_WEAK (decl) = 1;
+      DECL_ATTRIBUTES (decl)
+	= tree_cons (get_identifier ("weak"),
+		     NULL_TREE, DECL_ATTRIBUTES (decl));
+      offload_symbol_decl = decl;
+    }
+  return offload_symbol_decl;
+}
+
 /* Convenience function for calling scan_omp_1_op on tree operands.  */
 
 static inline tree
@@ -8152,11 +8176,7 @@ expand_omp_target (struct omp_region *region)
     }
 
   gimple g;
-  tree openmp_target
-    = build_decl (UNKNOWN_LOCATION, VAR_DECL,
-		  get_identifier ("__OPENMP_TARGET__"), ptr_type_node);
-  TREE_PUBLIC (openmp_target) = 1;
-  DECL_EXTERNAL (openmp_target) = 1;
+  tree openmp_target = get_offload_symbol_decl ();
   if (kind == GF_OMP_TARGET_KIND_REGION)
     {
       tree fnaddr = build_fold_addr_expr (child_fn);
