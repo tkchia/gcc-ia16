@@ -307,6 +307,38 @@ esac
 # Collect host-machine-specific information.
 . ${srcdir}/config.host
 
+offload_targets=
+AC_ARG_ENABLE(accelerator,
+[AS_HELP_STRING([--enable-accelerator], [build accelerator @<:@ARG={no,device-triplet}@:>@])],
+[
+  case $enable_accelerator in
+  no) ;;
+  *)
+    offload_targets=$enable_accelerator
+    ;;
+  esac
+], [])
+AC_SUBST(enable_accelerator)
+
+AC_ARG_ENABLE(offload-targets,
+[AS_HELP_STRING([--enable-offload-targets=LIST],
+ [enable offloading to devices from LIST])],
+[
+  if test x$enable_offload_targets = x; then
+    AC_MSG_ERROR([no offload targets specified])
+  else
+    if test x$offload_targets = x; then
+      offload_targets=$enable_offload_targets
+    else
+      offload_targets=$offload_targets,$enable_offload_targets
+    fi
+  fi
+], [enable_accelerator=no])
+AC_SUBST(enable_accelerator)
+if test x$offload_targets != x; then
+  extra_parts="${extra_parts} crtompbegin.o crtompend.o"
+fi
+
 # Check if Solaris/x86 linker supports ZERO terminator unwind entries.
 # This is after config.host so we can augment tmake_file.
 # Link with -nostartfiles -nodefaultlibs since neither are present while

@@ -566,6 +566,7 @@ sfp_machine_header
 set_use_emutls
 set_have_cc_tls
 vis_hide
+enable_accelerator
 fixed_point
 enable_decimal_float
 decimal_float
@@ -664,6 +665,8 @@ with_build_libsubdir
 enable_decimal_float
 with_system_libunwind
 enable_sjlj_exceptions
+enable_accelerator
+enable_offload_targets
 enable_tls
 '
       ac_precious_vars='build_alias
@@ -1301,6 +1304,9 @@ Optional Features:
 			to use
   --enable-sjlj-exceptions
                           force use of builtin_setjmp for exceptions
+  --enable-accelerator    build accelerator [ARG={no,device-triplet}]
+  --enable-offload-targets=LIST
+                          enable offloading to devices from LIST
   --enable-tls            Use thread-local storage [default=yes]
 
 Optional Packages:
@@ -4356,6 +4362,43 @@ esac
 
 # Collect host-machine-specific information.
 . ${srcdir}/config.host
+
+offload_targets=
+# Check whether --enable-accelerator was given.
+if test "${enable_accelerator+set}" = set; then :
+  enableval=$enable_accelerator;
+  case $enable_accelerator in
+  no) ;;
+  *)
+    offload_targets=$enable_accelerator
+    ;;
+  esac
+
+fi
+
+
+
+# Check whether --enable-offload-targets was given.
+if test "${enable_offload_targets+set}" = set; then :
+  enableval=$enable_offload_targets;
+  if test x$enable_offload_targets = x; then
+    as_fn_error "no offload targets specified" "$LINENO" 5
+  else
+    if test x$offload_targets = x; then
+      offload_targets=$enable_offload_targets
+    else
+      offload_targets=$offload_targets,$enable_offload_targets
+    fi
+  fi
+
+else
+  enable_accelerator=no
+fi
+
+
+if test x$offload_targets != x; then
+  extra_parts="${extra_parts} crtompbegin.o crtompend.o"
+fi
 
 # Check if Solaris/x86 linker supports ZERO terminator unwind entries.
 # This is after config.host so we can augment tmake_file.

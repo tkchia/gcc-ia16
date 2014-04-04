@@ -975,6 +975,12 @@ crtbegin$(objext): $(srcdir)/crtstuff.c
 crtend$(objext): $(srcdir)/crtstuff.c
 	$(crt_compile) $(CRTSTUFF_T_CFLAGS) -c $< -DCRT_END
 
+crtompbegin$(objext): $(srcdir)/ompstuff.c
+	$(crt_compile) $(CRTSTUFF_T_CFLAGS) -c $< -DCRT_BEGIN
+
+crtompend$(objext): $(srcdir)/ompstuff.c
+	$(crt_compile) $(CRTSTUFF_T_CFLAGS) -c $< -DCRT_END
+
 # These are versions of crtbegin and crtend for shared libraries.
 crtbeginS$(objext): $(srcdir)/crtstuff.c
 	$(crt_compile) $(CRTSTUFF_T_CFLAGS_S) -c $< -DCRT_BEGIN -DCRTSTUFFS_O

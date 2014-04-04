@@ -49,7 +49,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "lto-section-names.h"
 #include "collect-utils.h"
 
-#define OFFLOAD_FUNC_TABLE_SECTION_NAME ".offload_func_table_section"
 #define OFFLOAD_TARGET_NAMES_ENV	"OFFLOAD_TARGET_NAMES"
 
 enum lto_mode_d {
@@ -67,6 +66,7 @@ static unsigned int nr;
 static char **input_names;
 static char **output_names;
 static char **offload_names;
+static const char *ompbegin, *ompend;
 static char *makefile;
 
 const char tool_name[] = "lto-wrapper";
@@ -532,13 +532,71 @@ compile_images_for_openmp_targets (unsigned in_argc, char *in_argv[])
       offload_names[i] = prepare_target_image (names[i], compiler_path,
 					       in_argc, in_argv);
       if (!offload_names[i])
-	fatal_perror ("Problem with building target image for %s.\n", names[i]);
+	fatal_error ("Problem with building target image for %s.\n", names[i]);
     }
 
  out:
   free_array_of_ptrs ((void**) names, num_targets);
 }
 
+/* Copy a file from SRC to DEST.  */
+static void
+copy_file (const char *dest, const char *src)
+{
+  FILE *d = fopen (dest, "wb");
+  FILE *s = fopen (src, "rb");
+  char buffer[512];
+  while (!feof (s))
+    {
+      size_t len = fread (buffer, 1, 512, s);
+      if (ferror (s) != 0)
+	fatal_error ("reading input file");
+      if (len > 0)
+	{
+	  fwrite (buffer, 1, len, d);
+	  if (ferror (d) != 0)
+	    fatal_error ("writing output file");
+	}
+    }
+}
+
+/* Find the omp_begin.o and omp_end.o files in LIBRARY_PATH, make copies
+   and store the names of the copies in ompbegin and ompend.  */
+
+static void
+find_ompbeginend (void)
+{
+  char **paths;
+  const char *library_path = getenv ("LIBRARY_PATH");
+  if (library_path == NULL)
+    return;
+  int n_paths = parse_env_var (library_path, &paths, "/crtompbegin.o");
+
+  int i;
+  for (i = 0; i < n_paths; i++)
+    if (access_check (paths[i], R_OK) == 0)
+      {
+	size_t len = strlen (paths[i]);
+	char *tmp = xstrdup (paths[i]);
+	strcpy (paths[i] + len - 7, "end.o");
+	if (access_check (paths[i], R_OK) != 0)
+	  fatal_error ("installation error, can't find crtompend.o");
+	/* The linker will delete the filenames we give it, so make
+	   copies.  */
+	const char *omptmp1 = make_temp_file (".o");
+	const char *omptmp2 = make_temp_file (".o");
+	copy_file (omptmp1, tmp);
+	ompbegin = omptmp1;
+	copy_file (omptmp2, paths[i]);
+	ompend = omptmp2;
+	free (tmp);
+	break;
+      }
+  if (i == n_paths)
+    fatal_error ("installation error, can't find crtompbegin.o");
+
+  free_array_of_ptrs ((void**) paths, n_paths);
+}
 
 /* Execute gcc. ARGC is the number of arguments. ARGV contains the arguments. */
 
@@ -1030,6 +1088,7 @@ cont:
 	  compile_images_for_openmp_targets (argc, argv);
 	  if (offload_names)
 	    {
+	      find_ompbeginend ();
 	      for (i = 0; offload_names[i]; i++)
 		{
 		  fputs (offload_names[i], stdout);
@@ -1038,11 +1097,22 @@ cont:
 	      free_array_of_ptrs ((void **)offload_names, i);
 	    }
 	}
+      if (ompbegin)
+	{
+	  fputs (ompbegin, stdout);
+	  putc ('\n', stdout);
+	}
+
       for (i = 0; i < nr; ++i)
 	{
 	  fputs (output_names[i], stdout);
 	  putc ('\n', stdout);
 	  free (input_names[i]);
+	}
+      if (ompend)
+	{
+	  fputs (ompend, stdout);
+	  putc ('\n', stdout);
 	}
       nr = 0;
       free (output_names);

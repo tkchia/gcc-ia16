@@ -31,3 +31,6 @@ along with GCC; see the file COPYING3.  If not see
 /* Can be either OMP_SECTION_NAME_PREFIX when we stream pragma omp target
    stuff, or LTO_SECTION_NAME_PREFIX for lto case.  */
 extern const char  *section_name_prefix;
+
+#define OFFLOAD_VAR_TABLE_SECTION_NAME "__gnu_offload_vars"
+#define OFFLOAD_FUNC_TABLE_SECTION_NAME "__gnu_offload_funcs"

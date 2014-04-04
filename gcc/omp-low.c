@@ -72,7 +72,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "ipa-prop.h"
 #include "tree-nested.h"
 #include "tree-eh.h"
-
+#include "lto-section-names.h"
 
 /* Lowering of OpenMP parallel and workshare constructs proceeds in two
    phases.  The first phase scans the function looking for OMP statements
@@ -12011,8 +12011,8 @@ omp_finish_file (void)
 {
   struct cgraph_node *node;
   struct varpool_node *vnode;
-  const char *funcs_section_name = ".offload_func_table_section";
-  const char *vars_section_name = ".offload_var_table_section";
+  const char *funcs_section_name = OFFLOAD_FUNC_TABLE_SECTION_NAME;
+  const char *vars_section_name = OFFLOAD_VAR_TABLE_SECTION_NAME;
   vec<tree, va_gc> *v_funcs, *v_vars;
 
   vec_alloc (v_vars, 0);
