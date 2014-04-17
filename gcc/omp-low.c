@@ -222,6 +222,9 @@ static tree scan_omp_1_op (tree *, int *, void *);
 /* Holds a decl for __OPENMP_TARGET__.  */
 static GTY(()) tree offload_symbol_decl;
 
+/* Holds offload tables with decls.  */
+vec<tree, va_gc> *offload_funcs, *offload_vars;
+
 /* Get the __OPENMP_TARGET__ symbol.  */
 static tree
 get_offload_symbol_decl (void)
@@ -8049,6 +8052,9 @@ expand_omp_target (struct omp_region *region)
       DECL_STRUCT_FUNCTION (child_fn)->curr_properties = cfun->curr_properties;
       cgraph_add_new_function (child_fn, true);
 
+      /* Add the new function to the offload table.  */
+      vec_safe_push (offload_funcs, child_fn);
+
       /* Fix the callgraph edges for child_cfun.  Those for cfun will be
 	 fixed in a following pass.  */
       push_cfun (child_cfun);
@@ -12015,62 +12021,14 @@ add_decls_addresses_to_decl_constructor (vec<tree, va_gc> *v_decls,
 void
 omp_finish_file (void)
 {
-  struct cgraph_node *node;
-  struct varpool_node *vnode;
   const char *funcs_section_name = OFFLOAD_FUNC_TABLE_SECTION_NAME;
   const char *vars_section_name = OFFLOAD_VAR_TABLE_SECTION_NAME;
-  vec<tree, va_gc> *v_funcs, *v_vars;
 
-  vec_alloc (v_vars, 0);
-  vec_alloc (v_funcs, 0);
+  unsigned num_funcs = vec_safe_length (offload_funcs);
+  unsigned num_vars = vec_safe_length (offload_vars);
 
-  /* Collect all omp-target functions.  */
-  FOR_EACH_DEFINED_FUNCTION (node)
-    {
-      /* TODO: This check could fail on functions, created by omp
-	 parallel/task pragmas.  It's better to name outlined for offloading
-	 functions in some different way and to check here the function name.
-	 It could be something like "*_omp_tgtfn" in contrast with "*_omp_fn"
-	 for functions from omp parallel/task pragmas.  */
-      if (!lookup_attribute ("omp declare target",
-			     DECL_ATTRIBUTES (node->decl))
-	  || !DECL_ARTIFICIAL (node->decl))
-	continue;
-      vec_safe_push (v_funcs, node->decl);
-    }
-  /* Collect all omp-target global variables.  */
-  FOR_EACH_DEFINED_VARIABLE (vnode)
-    {
-      if (!lookup_attribute ("omp declare target",
-			     DECL_ATTRIBUTES (vnode->decl))
-	  || TREE_CODE (vnode->decl) != VAR_DECL
-	  || DECL_SIZE (vnode->decl) == 0)
-	continue;
-
-      vec_safe_push (v_vars, vnode->decl);
-    }
-  unsigned num_vars = vec_safe_length (v_vars);
-  unsigned num_funcs = vec_safe_length (v_funcs);
-
-  if (num_vars == 0 && num_funcs == 0)
+  if (num_funcs == 0 && num_vars == 0)
     return;
-
-#ifdef ACCEL_COMPILER
-  /* Decls are placed in reversed order in fat-objects, so we need to
-     revert them back if we compile target.  */
-  for (unsigned i = 0; i < num_funcs / 2; i++)
-    {
-      tree it = (*v_funcs)[i];
-      (*v_funcs)[i] = (*v_funcs)[num_funcs - i - 1];
-      (*v_funcs)[num_funcs - i - 1] = it;
-    }
-  for (unsigned i = 0; i < num_vars / 2; i++)
-    {
-      tree it = (*v_vars)[i];
-      (*v_vars)[i] = (*v_vars)[num_vars - i - 1];
-      (*v_vars)[num_vars - i - 1] = it;
-    }
-#endif
 
   if (targetm_common.have_named_sections)
     {
@@ -12078,8 +12036,8 @@ omp_finish_file (void)
       vec_alloc (v_f, num_funcs);
       vec_alloc (v_v, num_vars * 2);
 
-      add_decls_addresses_to_decl_constructor (v_funcs, v_f);
-      add_decls_addresses_to_decl_constructor (v_vars, v_v);
+      add_decls_addresses_to_decl_constructor (offload_funcs, v_f);
+      add_decls_addresses_to_decl_constructor (offload_vars, v_v);
 
       tree vars_decl_type = build_array_type_nelts (pointer_sized_int_node,
 						    num_vars * 2);
@@ -12110,12 +12068,12 @@ omp_finish_file (void)
     {
       for (unsigned i = 0; i < num_funcs; i++)
 	{
-	  tree it = (*v_funcs)[i];
+	  tree it = (*offload_funcs)[i];
 	  targetm.record_offload_symbol (it);
 	}
       for (unsigned i = 0; i < num_vars; i++)
 	{
-	  tree it = (*v_vars)[i];
+	  tree it = (*offload_vars)[i];
 	  targetm.record_offload_symbol (it);
 	}
     }

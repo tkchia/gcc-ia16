@@ -29,4 +29,6 @@ extern tree omp_reduction_init (tree, tree);
 extern bool make_gimple_omp_edges (basic_block, struct omp_region **, int *);
 extern void omp_finish_file (void);
 
+extern vec<tree, va_gc> *offload_funcs, *offload_vars;
+
 #endif /* GCC_OMP_LOW_H */
