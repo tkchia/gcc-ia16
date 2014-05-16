@@ -157,6 +157,7 @@ target_libraries="target-libgcc \
 		target-newlib \
 		target-libgomp \
 		target-libcilkrts \
+		target-liboffloadmic \
 		target-libatomic \
 		target-libitm \
 		target-libstdc++-v3 \
@@ -471,6 +472,17 @@ ENABLE_LIBSTDCXX=default)
   noconfigdirs="$noconfigdirs target-libstdc++-v3"
 fi]
 
+AC_ARG_ENABLE([liboffloadmic],
+  AC_HELP_STRING([[--enable-liboffloadmic[=ARG]]],
+                 [build liboffloadmic @<:@ARG={no,host,target}@:>@]),
+  [case "$enableval" in
+    no | host | target)
+      enable_liboffloadmic=$enableval ;;
+    *)
+      AC_MSG_ERROR([--enable-liboffloadmic=no/host/target]) ;;
+  esac],
+  [enable_liboffloadmic=no])
+
 # Save it here so that, even in case of --enable-libgcj, if the Java
 # front-end isn't enabled, we still get libgcj disabled.
 libgcj_saved=$libgcj
@@ -550,6 +562,22 @@ if test -d ${srcdir}/libcilkrts; then
 	then
 	    AC_MSG_RESULT([no])
 	    noconfigdirs="$noconfigdirs target-libcilkrts"
+	else
+	    AC_MSG_RESULT([yes])
+	fi
+    fi
+fi
+
+# Disable liboffloadmic on unsupported systems.
+if test -d ${srcdir}/liboffloadmic; then
+    if test x$enable_liboffloadmic != xno; then
+	AC_MSG_CHECKING([for liboffloadmic support])
+	if (srcdir=${srcdir}/liboffloadmic; \
+		. ${srcdir}/configure.tgt; \
+		test -n "$UNSUPPORTED")
+	then
+	    AC_MSG_RESULT([no])
+	    noconfigdirs="$noconfigdirs target-liboffloadmic"
 	else
 	    AC_MSG_RESULT([yes])
 	fi
@@ -2100,7 +2128,7 @@ case ,${enable_languages},:${enable_objc_gc} in
     ;;
 esac
 
-# Disable libcilkrts, libitm, libsanitizer, libvtv if we're not building C++
+# Disable libcilkrts, libitm, libsanitizer, libvtv, liboffloadmic if we're not building C++
 case ,${enable_languages}, in
   *,c++,*)
     # Disable libcilkrts, libitm, libsanitizer if we're not building libstdc++
@@ -2112,7 +2140,7 @@ case ,${enable_languages}, in
     esac
     ;;
   *)
-    noconfigdirs="$noconfigdirs target-libcilkrts target-libitm target-libsanitizer target-libvtv"
+    noconfigdirs="$noconfigdirs target-libcilkrts target-liboffloadmic target-libitm target-libsanitizer target-libvtv"
     ;;
 esac
 
