@@ -893,7 +893,7 @@ bool referenced_from_this_partition_p (struct symtab_node *,
 bool reachable_from_this_partition_p (struct cgraph_node *,
 				      lto_symtab_encoder_t);
 lto_symtab_encoder_t compute_ltrans_boundary (lto_symtab_encoder_t encoder);
-void select_what_to_dump (bool);
+void select_what_to_dump (void);
 
 
 /* In lto-symtab.c.  */
@@ -908,6 +908,9 @@ extern void lto_write_options (void);
 
 /* Statistics gathered during LTO, WPA and LTRANS.  */
 extern struct lto_stats_d lto_stats;
+
+/* Regular or offload mode of LTO.  */
+extern bool offload_lto_mode;
 
 /* Section names corresponding to the values of enum lto_section_type.  */
 extern const char *lto_section_name[];

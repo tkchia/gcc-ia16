@@ -895,7 +895,7 @@ lto_promote_cross_file_statics (void)
 
   gcc_assert (flag_wpa);
 
-  select_what_to_dump (false);
+  select_what_to_dump ();
 
   /* First compute boundaries.  */
   n_sets = ltrans_partitions.length ();

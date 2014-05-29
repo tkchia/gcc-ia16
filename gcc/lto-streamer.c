@@ -48,6 +48,7 @@ struct lto_stats_d lto_stats;
 static bitmap_obstack lto_obstack;
 static bool lto_obstack_initialized;
 
+bool offload_lto_mode = false;
 const char *section_name_prefix = LTO_SECTION_NAME_PREFIX;
 
 /* Return a string representing LTO tag TAG.  */

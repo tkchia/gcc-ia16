@@ -328,6 +328,12 @@ referenced_from_other_partition_p (symtab_node *node, lto_symtab_encoder_t encod
 
   for (i = 0; node->iterate_referring (i, ref); i++)
     {
+      /* Ignore references from non-target functions in offload lto mode.  */
+      if (offload_lto_mode
+	  && !lookup_attribute ("omp declare target",
+				DECL_ATTRIBUTES (ref->referring->decl)))
+	continue;
+
       if (ref->referring->in_other_partition
           || !lto_symtab_encoder_in_partition_p (encoder, ref->referring))
 	return true;
@@ -346,9 +352,17 @@ reachable_from_other_partition_p (struct cgraph_node *node, lto_symtab_encoder_t
   if (node->global.inlined_to)
     return false;
   for (e = node->callers; e; e = e->next_caller)
-    if (e->caller->in_other_partition
-	|| !lto_symtab_encoder_in_partition_p (encoder, e->caller))
-      return true;
+    {
+      /* Ignore references from non-target functions in offload lto mode.  */
+      if (offload_lto_mode
+	  && !lookup_attribute ("omp declare target",
+				DECL_ATTRIBUTES (e->caller->decl)))
+	continue;
+
+      if (e->caller->in_other_partition
+	  || !lto_symtab_encoder_in_partition_p (encoder, e->caller))
+	return true;
+    }
   return false;
 }
 
@@ -807,15 +821,16 @@ add_references (lto_symtab_encoder_t encoder, symtab_node *node)
       lto_symtab_encoder_encode (encoder, ref->referred);
 }
 
-/* Select what needs to be dumped. In lto case dump everything.
-   In omp target case only dump stuff makrked with attribute.  */
+/* Select what needs to be streamed out.  In regular lto mode stream everything.
+   In offload lto mode stream only stuff marked with an attribute.  */
 void
-select_what_to_dump (bool is_omp)
+select_what_to_dump (void)
 {
   struct symtab_node *snode;
-  FOR_EACH_SYMBOL(snode)
-    snode->need_dump = !is_omp || lookup_attribute ("omp declare target",
-						    DECL_ATTRIBUTES (snode->decl));
+  FOR_EACH_SYMBOL (snode)
+    snode->need_dump = !offload_lto_mode
+		       || lookup_attribute ("omp declare target",
+					    DECL_ATTRIBUTES (snode->decl));
 }
 
 /* Find all symbols we want to stream into given partition and insert them

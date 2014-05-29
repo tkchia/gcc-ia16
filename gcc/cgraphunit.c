@@ -2091,13 +2091,15 @@ ipa_passes (void)
     {
       if (flag_openmp)
 	{
+	  offload_lto_mode = true;
 	  section_name_prefix = OMP_SECTION_NAME_PREFIX;
-	  ipa_write_summaries (true);
+	  ipa_write_summaries ();
 	}
       if (flag_lto)
 	{
+	  offload_lto_mode = false;
 	  section_name_prefix = LTO_SECTION_NAME_PREFIX;
-	  ipa_write_summaries (false);
+	  ipa_write_summaries ();
 	}
     }
 
