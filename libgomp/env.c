@@ -1418,12 +1418,19 @@ omp_get_team_num (void)
   return 0;
 }
 
+#ifdef ACCEL_COMPILER
 int
 omp_is_initial_device (void)
 {
-  /* Hardcoded to 1 on host, should be 0 on MIC, HSAIL, PTX.  */
+  return 0;
+}
+#else // ACCEL_COMPILER
+int
+omp_is_initial_device (void)
+{
   return 1;
 }
+#endif // ACCEL_COMPILER
 
 ialias (omp_set_dynamic)
 ialias (omp_set_nested)

@@ -282,6 +282,17 @@ else
   multilib_arg=
 fi
 
+# If this option is set we should use target implementation of omp functions
+AC_ARG_ENABLE(as-accelerator-for,
+[AS_HELP_STRING([--enable-as-accelerator-for], [implement target variant of omp functions])],
+[
+  AC_DEFINE(ACCEL_COMPILER, 1,
+   [Define if this compiler should be built and used as the target
+    device compiler for OpenACC.])
+  enable_as_accelerator=yes
+], [enable_as_accelerator=no])
+AC_SUBST(enable_as_accelerator)
+
 # Set up the set of libraries that we need to link against for libgomp.
 # Note that the GOMP_SELF_SPEC in gcc.c may force -pthread,
 # which will force linkage against -lpthread (or equivalent for the system).

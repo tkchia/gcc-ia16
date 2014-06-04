@@ -616,6 +616,7 @@ OMP_LOCK_SIZE
 USE_FORTRAN_FALSE
 USE_FORTRAN_TRUE
 link_gomp
+enable_as_accelerator
 XLDFLAGS
 XCFLAGS
 config_path
@@ -770,6 +771,7 @@ enable_maintainer_mode
 enable_linux_futex
 enable_tls
 enable_symvers
+enable_as_accelerator_for
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1421,6 +1423,8 @@ Optional Features:
   --enable-tls            Use thread-local storage [default=yes]
   --enable-symvers=STYLE  enables symbol versioning of the shared library
                           [default=yes]
+  --enable-as-accelerator-for
+                          implement target variant of omp functions
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -11094,7 +11098,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11097 "configure"
+#line 11101 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11200,7 +11204,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11203 "configure"
+#line 11207 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -16215,6 +16219,21 @@ if test ${multilib} = yes; then
 else
   multilib_arg=
 fi
+
+# If this option is set we should use target implementation of omp functions
+# Check whether --enable-as-accelerator-for was given.
+if test "${enable_as_accelerator_for+set}" = set; then :
+  enableval=$enable_as_accelerator_for;
+
+$as_echo "#define ACCEL_COMPILER 1" >>confdefs.h
+
+  enable_as_accelerator=yes
+
+else
+  enable_as_accelerator=no
+fi
+
+
 
 # Set up the set of libraries that we need to link against for libgomp.
 # Note that the GOMP_SELF_SPEC in gcc.c may force -pthread,

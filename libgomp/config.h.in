@@ -1,5 +1,9 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define if this compiler should be built and used as the target device
+   compiler for OpenACC. */
+#undef ACCEL_COMPILER
+
 /* Define to 1 if the target assembler supports .symver directive. */
 #undef HAVE_AS_SYMVER_DIRECTIVE
 
