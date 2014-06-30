@@ -31,6 +31,14 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I .. -I ../config
 
+# Build plugin for Intel MIC
+if LIBOFFLOADMIC_HOST
+  SUBDIRS = . ../libgomp/plugins/intelmic
+endif
+if LIBOFFLOADMIC_TARGET
+  SUBDIRS =
+endif
+
 # Directories.
 build_dir = $(top_builddir)
 coi_inc_dir = $(top_srcdir)/include/coi

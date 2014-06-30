@@ -26,39 +26,33 @@
 # <http://www.gnu.org/licenses/>.
 
 
-# MAKEFILE PARAMETERS
-#
-# root_dir - path to root directory of libgomp-plugin-mic
-# build_dir - path to build directory
-# compiler_host - host compiler
-# compiler_target - target compiler
-# options_host - additional options for host compiler
-# options_target - additional options for target compiler
-# liboffload_src_dir - path to the directory with liboffload sources
-# liboffload_host_dir - path to host liboffload directory
-# liboffload_target_dir - path to target liboffload directory
-
+ACLOCAL_AMFLAGS = -I ../../.. -I ../../../config
 
 # Directories
-root_dir?=.
-source_dir=$(root_dir)
-build_dir?=$(root_dir)/build
+build_dir=$(top_builddir)
+source_dir=$(top_srcdir)
+libgomp_dir=$(build_dir)/../..
+liboffload_src_dir=$(top_srcdir)/../../../liboffloadmic
+liboffload_host_dir=$(top_builddir)/../../../liboffloadmic
+#liboffload_target_dir=$(top_builddir)/../../../liboffload/target
+liboffload_target_dir=$(LIBOFFLOAD_TARGET_PATH)
 
 # Compilers
-compiler_host?=g++
-compiler_target?=g++
+compiler_host=$(CXX)
+# FORNOW
+compiler_target=$(CXX)
 
 # Make targets
-.PHONY: all info plugin clean
+.PHONY: all plugin clean
 
-all: info plugin
+all-local: plugin
 
 $(build_dir):
 	@mkdir -p $@
 	@echo "Created $@ directory"
 
 $(build_dir)/offload_target_main: $(source_dir)/offload_target_main.cpp | $(build_dir)
-	$(compiler_target) $(options_target) -I$(liboffload_src_dir)/include/coi/ -I$(liboffload_src_dir)/runtime/ -DHOST_LIBRARY=0 -DLINUX -DOFFLOAD_DEBUG=1 -L$(liboffload_target_dir) -loffload -rdynamic -Wl,--unresolved-symbols=ignore-in-shared-libs $(liboffload_target_dir)/ofldbegin.o $< $(liboffload_target_dir)/ofldend.o -o $@
+	$(compiler_target) -I$(liboffload_src_dir)/include/coi/ -I$(libgomp_dir) -I$(liboffload_src_dir)/runtime/ -DHOST_LIBRARY=0 -DLINUX -DOFFLOAD_DEBUG=1 -L$(liboffload_target_dir) -loffloadmic -rdynamic -Wl,--unresolved-symbols=ignore-in-shared-libs $(liboffload_target_dir)/ofldbegin.o $< $(liboffload_target_dir)/ofldend.o -o $@
 
 $(build_dir)/main_target_image.h: $(build_dir)/offload_target_main | $(build_dir)
 	@echo -n "const int image_size = " > $@
@@ -75,7 +69,7 @@ $(build_dir)/main_target_image.h: $(build_dir)/offload_target_main | $(build_dir
 	@echo "};" >> $@
 
 $(build_dir)/libgomp-plugin-mic.so.1: $(source_dir)/libgomp-plugin-mic.cpp $(build_dir)/main_target_image.h | $(build_dir)
-	$(compiler_host) $(options_host) -I$(build_dir) -I$(liboffload_src_dir)/include/coi/ -I$(liboffload_src_dir)/runtime/ -DHOST_LIBRARY=1 -DLINUX -DOFFLOAD_DEBUG=1 -DTIMING_SUPPORT -L$(liboffload_host_dir) -loffload -fPIC -shared $< -o $@
+	$(compiler_host) -I$(build_dir) -I$(libgomp_dir) -I$(liboffload_src_dir)/include/coi/ -I$(liboffload_src_dir)/runtime/ -DHOST_LIBRARY=1 -DLINUX -DOFFLOAD_DEBUG=1 -DTIMING_SUPPORT -L$(liboffload_host_dir)/.libs -loffloadmic -fPIC -shared $< -o $@
 
 plugin: $(build_dir)/libgomp-plugin-mic.so.1 | $(build_dir)
 
@@ -83,13 +77,3 @@ clean:
 	@rm -rf $(build_dir)
 	@echo "Remove $(build_dir) directory"
 
-info:
-	@echo "root_dir = $(root_dir)"
-	@echo "build_dir = $(build_dir)"
-	@echo "compiler_host = $(compiler_host)"
-	@echo "compiler_target = $(compiler_target)"
-	@echo "options_host = $(options_host)"
-	@echo "options_target = $(options_target)"
-	@echo "liboffload_src_dir = $(liboffload_src_dir)"
-	@echo "liboffload_host_dir = $(liboffload_host_dir)"
-	@echo "liboffload_target_dir = $(liboffload_target_dir)"

@@ -26,30 +26,24 @@
 #    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Process this file with autoconf to produce a configure script, like so:
-# aclocal -I .. -I ../config && autoconf && automake
+# aclocal  -I ../../.. -I ../../../config && autoconf && automake
 
 AC_PREREQ([2.64])
-AC_INIT([MIC Offload Runtime Library], [1.0], ,[liboffloadmic])
+AC_INIT([Intel MIC Offload Plugin], [1.0], ,[libgomp-plugin-mic])
+
+AC_CONFIG_AUX_DIR(../../..)
 
 AC_CANONICAL_SYSTEM
 target_alias=${target_alias-$host_alias}
 AC_SUBST(target_alias)
 
-AM_INIT_AUTOMAKE(foreign no-dist)
+AM_INIT_AUTOMAKE([1.9.0 foreign no-dist])
+
 AM_MAINTAINER_MODE
 
 AC_PROG_CC
 AC_PROG_CXX
-AC_CONFIG_FILES([Makefile liboffloadmic.spec])
-AC_CONFIG_SUBDIRS(../libgomp/plugins/intelmic)
-AC_FUNC_ALLOCA
-AC_CHECK_HEADERS([mm_malloc.h], [], [AC_MSG_ERROR(["Couldn't find mm_malloc.h"])])
-
-# Get target configure.
-. ${srcdir}/configure.tgt
-if test -n "$UNSUPPORTED"; then
-  AC_MSG_ERROR([Configuration ${target} is unsupported.])
-fi
+AC_CONFIG_FILES([Makefile])
 
 AC_MSG_CHECKING([for --enable-version-specific-runtime-libs])
 AC_ARG_ENABLE([version-specific-runtime-libs],
@@ -96,18 +90,6 @@ AC_LIBTOOL_DLOPEN
 AM_PROG_LIBTOOL
 AC_SUBST(toolexecdir)
 AC_SUBST(toolexeclibdir)
-
-AC_SUBST(lt_cv_dlopen_libs)
-
-if test $enable_shared = yes; then
-  link_offloadmic="-loffloadmic %{static: $LIBS}"
-else
-  link_offloadmic="-loffloadmic $LIBS"
-fi
-AC_SUBST(link_offloadmic)
-
-AM_CONDITIONAL(LIBOFFLOADMIC_HOST, [test x"$enable_liboffloadmic" = xhost])
-AM_CONDITIONAL(LIBOFFLOADMIC_TARGET, [test x"$enable_liboffloadmic" = xtarget])
 
 # Must be last
 AC_OUTPUT
