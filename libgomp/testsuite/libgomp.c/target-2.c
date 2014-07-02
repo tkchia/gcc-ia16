@@ -1,3 +1,5 @@
+// { dg-options "-flto" }
+
 extern
 #ifdef __cplusplus
 "C"

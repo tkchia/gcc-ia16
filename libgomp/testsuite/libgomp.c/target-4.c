@@ -1,3 +1,5 @@
+// { dg-options "-flto" }
+
 #include <omp.h>
 #include <stdlib.h>
 

@@ -1,4 +1,4 @@
-// { dg-options "-O2 -fopenmp" }
+// { dg-options "-O2 -fopenmp -flto" }
 // { dg-additional-sources "target-2-aux.cc" }
 
 extern "C" void abort (void);
