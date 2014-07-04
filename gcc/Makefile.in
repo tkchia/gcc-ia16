@@ -69,7 +69,6 @@ program_transform_name := @program_transform_name@
 
 # Normally identical to target_noncanonical, except for compilers built
 # as accelerator targets.
-tool_prefix = @tool_prefix@
 accel_dir_suffix = @accel_dir_suffix@
 
 # Directory where sources are, from where we are.
@@ -778,7 +777,7 @@ BUILD_CPPFLAGS= -I. -I$(@D) -I$(srcdir) -I$(srcdir)/$(@D) \
 
 # Actual name to use when installing a native compiler.
 GCC_INSTALL_NAME := $(shell echo gcc|sed '$(program_transform_name)')
-GCC_TARGET_INSTALL_NAME := $(tool_prefix)-$(shell echo gcc|sed '$(program_transform_name)')
+GCC_TARGET_INSTALL_NAME := $(target_noncanonical)-$(shell echo gcc|sed '$(program_transform_name)')
 CPP_INSTALL_NAME := $(shell echo cpp|sed '$(program_transform_name)')
 GCOV_INSTALL_NAME := $(shell echo gcov|sed '$(program_transform_name)')
 GCOV_TOOL_INSTALL_NAME := $(shell echo gcov-tool|sed '$(program_transform_name)')
@@ -3257,22 +3256,21 @@ install-common: native lang.install-common installdirs
 # Install the driver program as $(target_noncanonical)-gcc,
 # $(target_noncanonical)-gcc-$(version), and also as gcc if native.
 install-driver: installdirs xgcc$(exeext)
-	-install_name=$(GCC_INSTALL_NAME); \
-	if test "@enable_as_accelerator@" = "yes" ; then \
-	  install_name=$(GCC_TARGET_INSTALL_NAME); \
-	fi; \
-	rm -f $(DESTDIR)$(bindir)/$${install_name}$(exeext); \
-	$(INSTALL_PROGRAM) xgcc$(exeext) $(DESTDIR)$(bindir)/$${install_name}$(exeext)
+	-rm -f $(DESTDIR)$(bindir)/$(GCC_INSTALL_NAME)$(exeext)
+	-$(INSTALL_PROGRAM) xgcc$(exeext) $(DESTDIR)$(bindir)/$(GCC_INSTALL_NAME)$(exeext)
 	-if test "@enable_as_accelerator@" != "yes" ; then \
-	  rm -f $(DESTDIR)$(bindir)/$(tool_prefix)-gcc-$(version)$(exeext); \
+	if [ "$(GCC_INSTALL_NAME)" != "$(target_noncanonical)-gcc-$(version)" ]; then \
+	  rm -f $(DESTDIR)$(bindir)/$(target_noncanonical)-gcc-$(version)$(exeext); \
 	  ( cd $(DESTDIR)$(bindir) && \
-	    $(LN) $(GCC_INSTALL_NAME)$(exeext) $(tool_prefix)-gcc-$(version)$(exeext) ); \
-	  if [ ! -f gcc-cross$(exeext) ] ; then \
-	    rm -f $(DESTDIR)$(bindir)/$(tool_prefix)-gcc-tmp$(exeext); \
-	      ( cd $(DESTDIR)$(bindir) && \
-	      $(LN) $(GCC_INSTALL_NAME)$(exeext) $(tool_prefix)-gcc-tmp$(exeext) && \
-	      mv -f $(tool_prefix)-gcc-tmp$(exeext) $(GCC_TARGET_INSTALL_NAME)$(exeext) ); \
-	  fi; \
+	    $(LN) $(GCC_INSTALL_NAME)$(exeext) $(target_noncanonical)-gcc-$(version)$(exeext) ); \
+	fi; \
+	if [ ! -f gcc-cross$(exeext) ] \
+	    && [ "$(GCC_INSTALL_NAME)" != "$(GCC_TARGET_INSTALL_NAME)" ]; then \
+	  rm -f $(DESTDIR)$(bindir)/$(target_noncanonical)-gcc-tmp$(exeext); \
+	  ( cd $(DESTDIR)$(bindir) && \
+	    $(LN) $(GCC_INSTALL_NAME)$(exeext) $(target_noncanonical)-gcc-tmp$(exeext) && \
+	    mv -f $(target_noncanonical)-gcc-tmp$(exeext) $(GCC_TARGET_INSTALL_NAME)$(exeext) ); \
+	fi; \
 	fi
 
 # Install the info files.

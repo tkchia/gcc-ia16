@@ -7429,15 +7429,12 @@ fi
 # Check whether --enable-as-accelerator-for was given.
 if test "${enable_as_accelerator_for+set}" = set; then :
   enableval=$enable_as_accelerator_for;
-  if test $enable_accelerator = no; then
-    echo "--enable-as-accelerator-for requires --enable-accelerator"
-    exit 1;
-  fi
 
 $as_echo "#define ACCEL_COMPILER 1" >>confdefs.h
 
   enable_as_accelerator=yes
-  tool_prefix=${enable_as_accelerator_for}-accel-${enable_accelerator}
+  sedscript="s#${target_noncanonical}#${enable_as_accelerator_for}-accel-${target_noncanonical}#"
+  program_transform_name=`echo $program_transform_name | sed $sedscript`
   accel_dir_suffix=/accel/${target_noncanonical}
   real_target_noncanonical=${enable_as_accelerator_for}
 
@@ -18119,7 +18116,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 18117 "configure"
+#line 18119 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18225,7 +18222,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 18223 "configure"
+#line 18225 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
