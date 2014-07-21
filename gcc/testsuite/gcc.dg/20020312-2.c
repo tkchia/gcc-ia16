@@ -80,6 +80,8 @@ extern void abort (void);
 # else
 #  define PIC_REG "gr17"
 #endif
+#elif defined(__ia16__)
+/* No pic register.  */
 #else
 # error "Modify the test for your target."
 #endif
