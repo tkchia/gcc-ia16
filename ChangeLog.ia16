@@ -1,5 +1,17 @@
 2007-07-30  Rask Ingemann Lambertsen  <rask@sygehus.dk>
 
+	* gcc.dg/20020312-2.c: Skip test of unsupported feature on ia16.
+	* gcc.c-torture/compile/20010327-1.c: Likewise.
+	* gcc.c-torture/compile/20020604-1.c: Likewise.
+	* gcc.dg/pr27639.c: Likewise.
+	* gcc.dg/pr19340.c: Likewise.
+	* gcc.dg/cpp/_Pragma6.c: Likewise.
+	* gcc.dg/20040813-1.c: Likewise.
+	* gcc.dg/sibcall-3.c: Xfail on ia16 until sibling calls work.
+	* gcc.dg/sibcall-4.c: Likewise.
+
+2007-07-30  Rask Ingemann Lambertsen  <rask@sygehus.dk>
+
 	* reload.c (reload_inner_reg_of_subreg): No special handling is
 	  needed if a subreg consists of more hard regs than words.
 	  (push_reload): Likewise.
