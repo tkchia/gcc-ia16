@@ -1,0 +1,3 @@
+2007-07-30  Rask Ingemann Lambertsen  <rask@sygehus.dk>
+
+	* config.sub: Add support for 16-bit Intel x86.
