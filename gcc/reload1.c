@@ -4963,7 +4963,8 @@ reloads_unique_chain_p (int r1, int r2)
     if (i != r1 && i != r2 && rld[i].in)
       {
 	/* If our reload is mentioned at all, it isn't a simple chain.  */
-	if (reg_mentioned_p (rld[r1].in, rld[i].in))
+	if (reg_mentioned_p (rld[r1].in, rld[i].in)
+	    || reg_mentioned_p (rld[r2].in, rld[i].in))
 	  return false;
       }
   return true;

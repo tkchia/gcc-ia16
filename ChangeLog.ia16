@@ -1,3 +1,7 @@
 2007-07-30  Rask Ingemann Lambertsen  <rask@sygehus.dk>
 
+	* reload1.c (reloads_unique_chain_p): Check both reloads.
+
+2007-07-30  Rask Ingemann Lambertsen  <rask@sygehus.dk>
+
 	* config.sub: Add support for 16-bit Intel x86.
