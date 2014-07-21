@@ -862,7 +862,7 @@ reload_inner_reg_of_subreg (rtx x, machine_mode mode, bool output)
 	  && GET_MODE_SIZE (mode) <= UNITS_PER_WORD
 	  && GET_MODE_SIZE (GET_MODE (inner)) > UNITS_PER_WORD
 	  && ((GET_MODE_SIZE (GET_MODE (inner)) / UNITS_PER_WORD)
-	      != (int) hard_regno_nregs[REGNO (inner)][GET_MODE (inner)]));
+	      > (int) hard_regno_nregs[REGNO (inner)][GET_MODE (inner)]));
 }
 
 /* Return nonzero if IN can be reloaded into REGNO with mode MODE without
@@ -1092,8 +1092,8 @@ push_reload (rtx in, rtx out, rtx *inloc, rtx *outloc,
 		       > UNITS_PER_WORD)
 		   && ((GET_MODE_SIZE (GET_MODE (SUBREG_REG (in)))
 			/ UNITS_PER_WORD)
-		       != (int) hard_regno_nregs[REGNO (SUBREG_REG (in))]
-						[GET_MODE (SUBREG_REG (in))]))
+		       > (int) hard_regno_nregs[REGNO (SUBREG_REG (in))]
+					       [GET_MODE (SUBREG_REG (in))]))
 		  || ! HARD_REGNO_MODE_OK (subreg_regno (in), inmode)))
 	  || (secondary_reload_class (1, rclass, inmode, in) != NO_REGS
 	      && (secondary_reload_class (1, rclass, GET_MODE (SUBREG_REG (in)),
