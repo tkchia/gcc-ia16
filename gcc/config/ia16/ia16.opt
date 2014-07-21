@@ -1,0 +1,71 @@
+march=any
+Target RejectNegative Var(target_arch,0) Init(0)
+-march=any  Produce code that works on any CPU, with generic tuning options (default)
+
+march=any_186
+Target RejectNegative Var(target_arch,1)
+-march=any_186  Use features available on both Intel 80186 and NEC V20 or better.
+
+march=i8086
+Target RejectNegative Var(target_arch,4)
+-march=i8086  Use features of and optimize code for the Intel 8086
+
+march=i8088
+Target RejectNegative Var(target_arch,4)
+-march=i8088  Use features of and optimize code for the Intel 8088
+
+march=v30
+Target RejectNegative Var(target_arch,1)
+-march=v30  Use features of and optimize code for the NEC V30
+
+march=v20
+Target RejectNegative Var(target_arch,1)
+-march=v20  Use features of and optimize code for the NEC V20
+
+march=i80186
+Target RejectNegative Var(target_arch,7)
+-march=i80186  Use features of and optimize code for the Intel 80186
+
+march=i80188
+Target RejectNegative Var(target_arch,7)
+-march=i80188  Use features of and optimize code for the Intel 80188
+
+march=i80286
+Target RejectNegative Var(target_arch,15)
+-march=i80286  Use features of and optimize code for the Intel 80286
+
+mtune=i8086
+Target RejectNegative Var(target_tune,0) Init(0)
+-mtune=i8086  Optimize code for the Intel 8086
+
+mtune=i8088
+Target RejectNegative Var(target_tune,8)
+-mtune=i8088  Optimize code for the Intel 8088
+
+mtune=v30
+Target RejectNegative Var(target_tune,1)
+-mtune=v30  Optimize code for the NEC V30
+
+mtune=v20
+Target RejectNegative Var(target_tune,9)
+-mtune=v20  Optimize code for the NEC V20
+
+mtune=i80186
+Target RejectNegative Var(target_tune,2)
+-mtune=i80186  Optimize code for the Intel 80186
+
+mtune=i80188
+Target RejectNegative Var(target_tune,10)
+-mtune=i80188  Optimize code for the Intel 80188
+
+mtune=i80286
+Target RejectNegative Var(target_tune,3)
+-mtune=i80286  Optimize code for the Intel 80286
+
+mshort-jumps
+Target Mask(SHORT_JUMPS)
+-m(no-)short-jumps  Do (not - this is the default) use jump instructions which can only jump -128/+127 bytes.
+
+mseparate-code-segment
+Target Mask(SEPARATE_CSEG)
+-m(no-)separate-code-segment  Do (not - this is the default) use a separate code segment.

@@ -399,6 +399,9 @@ x86_64-*-*)
 		       avx512vbmivlintrin.h avx5124fmapsintrin.h avx5124vnniwintrin.h
 		       clwbintrin.h mwaitxintrin.h clzerointrin.h pkuintrin.h"
 	;;
+ia16-*-*)
+	cpu_type=ia16
+	;;
 ia64-*-*)
 	extra_headers=ia64intrin.h
 	extra_options="${extra_options} g.opt fused-madd.opt"
@@ -1776,6 +1779,14 @@ i[34567]86-*-mingw* | x86_64-*-mingw*)
 		*mingw32msv* | *mingw*)
 			;;
 	esac
+	;;
+ia16-*-elf)
+	tm_file="elfos.h ${tm_file} ia16/elf.h"
+	tmake_file="ia16/t-ia16"
+	;;
+ia16-*-elks)
+	tm_file="elfos.h ${tm_file} ia16/elks.h"
+	tmake_file="ia16/t-ia16"
 	;;
 ia64*-*-elf*)
 	tm_file="${tm_file} dbxelf.h elfos.h newlib-stdint.h ia64/sysv4.h ia64/elf.h"

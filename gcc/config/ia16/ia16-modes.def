@@ -1,0 +1,86 @@
+/* GNU Compiler Collection machine modes for target machine Intel 16-bit x86.
+   Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
+   Contributed by Rask Ingemann Lambertsen <rask@sygehus.dk>
+
+   This file is part of GCC.
+
+   GCC is free software; you can redistribute it and/or modify it under the
+   terms of the GNU General Public License as published by the Free Software
+   Foundation; either version 3 of the License, or (at your option) any
+   later version.
+
+   GCC is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+   FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+   details.
+
+   You should have received a copy of the GNU General Public License along
+   with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/* Please keep these definition in sync with ia16_hard_regno_nregs[][].  */
+
+/* The only purpose of this mode is to be able to tell function addresses
+ * apart from other addresses.  */
+PARTIAL_INT_MODE (QI);
+
+VECTOR_MODE (INT, QI, 2);
+
+/* Comparison modes.  The basic CCmode contains all of the Sign,
+   Carry, Overflow and Zero flags.  The rest of the modes only contain
+   the flags implied by the mode name letters after the initial CC.  */
+
+/* EQ and NE need this mode.  */
+CC_MODE (CCZ);
+
+/* This mode is used when making an equality comparison using the carry flag
+   instead of the zero flag.  */
+CC_MODE (CCZ_C);
+
+/* This mode is used when making an equality comparison using the carry flag
+   instead of the zero flag and the carry flag is inverted.  */
+CC_MODE (CCZ_NC);
+
+/* LTU and GEU need this mode.  */
+CC_MODE (CCC);
+
+/* LEU and GTU need this mode.  */
+CC_MODE (CCCZ);
+
+/* This mode is for LEU and GTU when checking for overflow of subtraction.
+   Only the carry flag is set and it is negated.  */
+CC_MODE (CCCZ_NC);
+
+/* This mode is used when making an unsigned comparison against an immediate
+   and the result would normally require both carry and zero flags (LEU and
+   GTU). This mode may be used with the cmp instruction.  */
+CC_MODE (CCCZ_C);
+
+/* GE and LT need this mode.  */
+CC_MODE (CCSO);
+
+/* GT and LE need this mode.  */
+CC_MODE (CCSOZ);
+
+/* The following modes don't set the overflow flag.  Signed comparisons (LT, LE,
+   GT and GE) in these modes are only valid against zero.  They are therefore
+   incompatible with the ones which set both the sign and overflow flags.  */
+
+/* GE and LT can use this mode when comparing against zero.  */
+CC_MODE (CCS);
+
+/* As above, but instead of setting the sign flag, it sets the carry flag. The
+   sense of the carry flag is inverted.  */
+CC_MODE (CCS_NC);
+
+/* This mode is used when the zero and overflow flags aren't set correctly.
+   For example by SImode/DImode/TImode plus/minus patterns.  */
+CC_MODE (CCSC);
+
+/* GT and LE can use this mode when comparing against zero, but we seem to
+   have no jump instruction (in hardware) for it.
+   This mode is used by the inc/dec instructions.  */
+CC_MODE (CCSZ);
+
+/* This mode is used when the overflow flag isn't set correctly.
+   For example by the add/sub/neg instructions.  */
+CC_MODE (CCSCZ);
