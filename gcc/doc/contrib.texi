@@ -476,6 +476,9 @@ Charles LaBrec contributed the support for the Integrated Solutions
 68020 system.
 
 @item
+Rask Ingemann Lambertsen contributed the 16-bit Intel x86 back end.
+
+@item
 Asher Langton and Mike Kumbera for contributing Cray pointer support
 to GNU Fortran, and for other GNU Fortran improvements.
 

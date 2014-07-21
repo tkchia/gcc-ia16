@@ -562,6 +562,10 @@ Objective-C and Objective-C++ Dialects}.
 -mcmodel=@var{code-model} @gol
 -m32  -m64 -mlarge-data-threshold=@var{num}}
 
+@emph{IA-16 Options}
+@gccoptlist{-mtune=@var{cpu-type}  -march=@var{cpu-type} -mshort-jumps @gol
+-mseparate-code-segment}
+
 @emph{IA-64 Options}
 @gccoptlist{-mbig-endian  -mlittle-endian  -mgnu-as  -mgnu-ld  -mno-pic @gol
 -mvolatile-asm-stop  -mregister-names  -mno-sdata @gol
@@ -8030,6 +8034,7 @@ platform.
 * H8/300 Options::
 * HPPA Options::
 * i386 and x86-64 Options::
+* IA-16 Options::
 * IA-64 Options::
 * M32C Options::
 * M32R/D Options::
@@ -10559,6 +10564,71 @@ building of shared libraries are not supported with the medium model.
 @opindex mcmodel=large
 Generate code for the large model: This model makes no assumptions
 about addresses and sizes of sections.
+@end table
+
+@node IA-16 Options
+@subsection IA-16 Options
+@cindex IA-16 Options
+
+These are the @samp{-m} options defined for the Intel IA-16 architecture.
+
+@table @gcctabopt
+@item -mtune=@var{cpu-type}
+@opindex mtune
+Tune to @var{cpu-type} everything applicable about the generated code, except
+for the ABI and the set of available instructions.  The choices for
+@var{cpu-type} are:
+@table @emph
+@item i8086
+The Intel 8086.
+
+@item i8088
+The Intel 8088.
+
+@item i80186
+The Intel 80186.
+
+@item i80286
+The Intel 80286.
+
+@item v20
+The NEC V20.
+
+@item v30
+The NEC V30.
+
+@item any
+Any CPU listed above.  The aim is to generate code which runs reasonably
+well on any CPU listed above.
+
+@item any_186
+As with @option{-mtune=any}, but assume a CPU which supports immediate
+operands for push, imul and shift/rotate instructions.
+@end table
+
+@item -march=@var{cpu-type}
+@opindex march
+Generate instructions for the machine type @var{cpu-type}.  The choices
+for @var{cpu-type} are the same as for @option{-mtune}.  Moreover,
+specifying @option{-march=@var{cpu-type}} implies
+@option{-mtune=@var{cpu-type}}.
+
+@item -mseparate-code-segment
+@itemx -mno-separate-code-segment
+@opindex mseparate-code-segment
+@opindex mno-separate-code-segment
+Assume (or don't assume) that the code segment may not be the same as the
+data and stack segments. The default is to assume that they are the same
+segment. Currently, trampolines are disabled when using this option.
+
+@item -mshort-jumps
+@itemx -mno-short-jumps
+@opindex mshort-jumps
+@opindex mno-short-jumps
+Allow (or disallow) the use of jump instructions which can only jump
+@minus{}128/+127 bytes.  The default is not to use them.  This option only
+affects instructions for which the assembler doesn't provide a work-around
+and the compiler doesn't know the jump displacement.
 @end table
 
 @node IA-64 Options

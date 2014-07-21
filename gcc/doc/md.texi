@@ -1,5 +1,5 @@
 @c Copyright (C) 1988, 1989, 1992, 1993, 1994, 1996, 1998, 1999, 2000, 2001,
-@c 2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+@c 2002, 2003, 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -2081,6 +2081,120 @@ instructions).
 to fit that range (for immediate operands in zero-extending x86-64
 instructions).
 
+@end table
+
+@item Intel IA-16---@file{config/ia16/constraints.md}
+@table @code
+@item a
+The @code{ax} register.
+
+@item b
+The @code{bx} register.
+
+@item c
+The @code{cx} register.
+
+@item d
+The @code{dx} register.
+
+@item S
+The @code{si} register.
+
+@item D
+The @code{di} register.
+
+@item Ral
+The @code{al} register.
+
+@item Rah
+The @code{ah} register.
+
+@item Rcl
+The @code{cl} register.
+
+@item Rbp
+The @code{bp} register.
+
+@item q
+Any 8-bit register.
+
+@item T
+Any general or segment register.
+
+@item A
+The @code{dx:ax} register pair.
+
+@item j
+The @code{bx:dx} register pair.
+
+@item l
+The lower half of pairs of 8-bit registers.
+
+@item u
+The upper half of pairs of 8-bit registers.
+
+@item k
+Any 32-bit register group with access to the two lower bytes.
+
+@item x
+The @code{si} and @code{di} registers.
+
+@item w
+The @code{bx} and @code{bp} registers.
+
+@item B
+The @code{bx}, @code{si}, @code{di} and @code{bp} registers.
+
+@item Q
+Any segment register.
+
+@item Z
+The constant 0.
+
+@item P1
+The constant 1.
+
+@item M1
+The constant @minus{}1.
+
+@item Um
+The constant @minus{}256.
+
+@item Lbm
+The constant 255.
+
+@item Lor
+Constants 128 @dots{} 254.
+
+@item Lom
+Constants 1 @dots{} 254.
+
+@item Lar
+Constants @minus{}255 @dots{} @minus{}129.
+
+@item Lam
+Constants @minus{}255 @dots{} @minus{}2.
+
+@item Uo
+Constants 0xXX00 except @minus{}256.
+
+@item Ua
+Constants 0xXXFF.
+
+@item Ish
+A constant usable as a shift count.
+
+@item Iaa
+A constant multiplier for the @code{aad} instruction.
+
+@item Ipu
+A constant usable with the @code{push} instruction.
+
+@item Imu
+A constant usable with the @code{imul} instruction except 257.
+
+@item I11
+The constant 257.
 @end table
 
 @item Intel IA-64---@file{config/ia64/ia64.h}

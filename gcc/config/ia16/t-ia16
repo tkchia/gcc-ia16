@@ -1,0 +1,7 @@
+# 16.1 Target Makefile Fragments
+
+MULTILIB_OPTIONS=march=any_186/Os/fno-omit-frame-pointer/fno-split-wide-types
+MULTILIB_DIRNAMES=any_186 size frame-pointer wide-types
+MULTILIB_MATCHES=march?any_186=march?i80186 march?any_186=march?i80188 \
+	march?any_186=march?i80286 march?any_186=march?v20 \
+	march?any_186=march?v30

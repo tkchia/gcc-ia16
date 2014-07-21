@@ -2489,6 +2489,10 @@ information are.
 @item
 @uref{#ix86-x-udk,,i?86-*-udk}
 @item
+@uref{#ia16-x-elf,,ia16-*-elf}
+@item
+@uref{#ia16-x-elks,,ia16-*-elks}
+@item
 @uref{#ia64-x-linux,,ia64-*-linux}
 @item
 @uref{#ia64-x-hpux,,ia64-*-hpux*}
@@ -3299,6 +3303,29 @@ tools by adding @command{udk-} before the commonly known name.  For
 example, to invoke the C compiler, you would use @command{udk-gcc}.
 They will coexist peacefully with any native-target GCC tools you may
 have installed.
+
+
+@html
+<hr />
+@end html
+@heading @anchor{ia16-x-elf}ia16-*-elf
+Intel 16-bit x86 processor configuration for embedded systems.
+
+There is no binutils configuration for this target, but binutils
+configurations for @samp{i?86} ELF systems can be used.  Binutils
+releases from around 2001 or later can be used.
+
+
+@html
+<hr />
+@end html
+@heading @anchor{ia16-x-elks}ia16-*-elks
+Intel 16-bit x86 processor configuration for the Embeddable Linux Kernel Subset
+system.
+
+There is no binutils configuration for this target, but binutils
+configurations for @samp{i?86} ELF systems can be used.  Binutils
+releases from around 2001 or later can be used.
 
 
 @html

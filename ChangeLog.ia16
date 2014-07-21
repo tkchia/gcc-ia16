@@ -1,5 +1,30 @@
 2007-07-30  Rask Ingemann Lambertsen  <rask@sygehus.dk>
 
+	libgcc/
+	* config.host: Add support for ia16.
+	* ia16/t-ia16: New.
+
+	gcc/
+	* config.gcc: Add support for ia16.
+	* doc/invoke.texi: Update for new ia16 back end.
+	* doc/contrib.texi: Likewise.
+	* doc/install.texi: Likewise.	
+	* doc/md.texi: Likewise.
+	* config/ia16/ia16.md: New.
+	* config/ia16/ia16-peepholes.md: New.
+	* config/ia16/ia16.opt: New.
+	* config/ia16/ia16.c: New.
+	* config/ia16/t-ia16: New.
+	* config/ia16/ia16-modes.def: New.
+	* config/ia16/predicates.md: New.
+	* config/ia16/constraints.md: New.
+	* config/ia16/ia16.h: New.
+	* config/ia16/ia16-protos.h: New.
+	* config/ia16/elf.h: New.
+	* config/ia16/elks.h: New.
+
+2007-07-30  Rask Ingemann Lambertsen  <rask@sygehus.dk>
+
 	* gcc.dg/20020312-2.c: Skip test of unsupported feature on ia16.
 	* gcc.c-torture/compile/20010327-1.c: Likewise.
 	* gcc.c-torture/compile/20020604-1.c: Likewise.

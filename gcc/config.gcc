@@ -289,6 +289,9 @@ x86_64-*-*)
 		       nmmintrin.h"
 	need_64bit_hwint=yes
 	;;
+ia16-*-*)
+	cpu_type=ia16
+	;;
 ia64-*-*)
 	extra_headers=ia64intrin.h
 	need_64bit_hwint=yes
@@ -1409,6 +1412,14 @@ i[34567]86-*-interix3*)
 i[34567]86-*-kaos*)
 	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h kaos.h i386/kaos-i386.h"
 	tmake_file="i386/t-i386elf t-svr4"
+	;;
+ia16-*-elf)
+	tm_file="elfos.h ${tm_file} ia16/elf.h"
+	tmake_file="ia16/t-ia16"
+	;;
+ia16-*-elks)
+	tm_file="elfos.h ${tm_file} ia16/elks.h"
+	tmake_file="ia16/t-ia16"
 	;;
 ia64*-*-elf*)
 	tm_file="${tm_file} dbxelf.h elfos.h ia64/sysv4.h ia64/elf.h"
