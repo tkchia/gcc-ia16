@@ -1,5 +1,11 @@
 2007-07-30  Rask Ingemann Lambertsen  <rask@sygehus.dk>
 
+	* reload.c (reload_inner_reg_of_subreg): No special handling is
+	  needed if a subreg consists of more hard regs than words.
+	  (push_reload): Likewise.
+
+2007-07-30  Rask Ingemann Lambertsen  <rask@sygehus.dk>
+
 	* reload1.c (reload_reg_free_p): A register isn't free to use in
 	  RELOAD_FOR_OPADDR_ADDR when already inherited for use in
 	  RELOAD_FOR_OPERAND_ADDRESS.

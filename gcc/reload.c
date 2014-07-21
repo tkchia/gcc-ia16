@@ -808,13 +808,13 @@ reload_inner_reg_of_subreg (rtx x, enum machine_mode mode, int output)
     return 1;
 
   /* If the outer part is a word or smaller, INNER larger than a
-     word and the number of regs for INNER is not the same as the
+     word and the number of regs for INNER is smaller than the
      number of words in INNER, then INNER will need reloading.  */
   return (GET_MODE_SIZE (mode) <= UNITS_PER_WORD
 	  && output
 	  && GET_MODE_SIZE (GET_MODE (inner)) > UNITS_PER_WORD
 	  && ((GET_MODE_SIZE (GET_MODE (inner)) / UNITS_PER_WORD)
-	      != (int) hard_regno_nregs[REGNO (inner)][GET_MODE (inner)]));
+	      > (int) hard_regno_nregs[REGNO (inner)][GET_MODE (inner)]));
 }
 
 /* Return nonzero if IN can be reloaded into REGNO with mode MODE without
@@ -1034,8 +1034,8 @@ push_reload (rtx in, rtx out, rtx *inloc, rtx *outloc,
 		       > UNITS_PER_WORD)
 		   && ((GET_MODE_SIZE (GET_MODE (SUBREG_REG (in)))
 			/ UNITS_PER_WORD)
-		       != (int) hard_regno_nregs[REGNO (SUBREG_REG (in))]
-						[GET_MODE (SUBREG_REG (in))]))
+		       > (int) hard_regno_nregs[REGNO (SUBREG_REG (in))]
+					       [GET_MODE (SUBREG_REG (in))]))
 		  || ! HARD_REGNO_MODE_OK (subreg_regno (in), inmode)))
 	  || (secondary_reload_class (1, class, inmode, in) != NO_REGS
 	      && (secondary_reload_class (1, class, GET_MODE (SUBREG_REG (in)),
@@ -1127,8 +1127,8 @@ push_reload (rtx in, rtx out, rtx *inloc, rtx *outloc,
 		       > UNITS_PER_WORD)
 		   && ((GET_MODE_SIZE (GET_MODE (SUBREG_REG (out)))
 			/ UNITS_PER_WORD)
-		       != (int) hard_regno_nregs[REGNO (SUBREG_REG (out))]
-						[GET_MODE (SUBREG_REG (out))]))
+		       > (int) hard_regno_nregs[REGNO (SUBREG_REG (out))]
+					       [GET_MODE (SUBREG_REG (out))]))
 		  || ! HARD_REGNO_MODE_OK (subreg_regno (out), outmode)))
 	  || (secondary_reload_class (0, class, outmode, out) != NO_REGS
 	      && (secondary_reload_class (0, class, GET_MODE (SUBREG_REG (out)),
