@@ -1,5 +1,11 @@
 2007-07-30  Rask Ingemann Lambertsen  <rask@sygehus.dk>
 
+	* reload1.c (reload_reg_free_p): A register isn't free to use in
+	  RELOAD_FOR_OPADDR_ADDR when already inherited for use in
+	  RELOAD_FOR_OPERAND_ADDRESS.
+
+2007-07-30  Rask Ingemann Lambertsen  <rask@sygehus.dk>
+
 	* reload1.c (reloads_unique_chain_p): Check both reloads.
 
 2007-07-30  Rask Ingemann Lambertsen  <rask@sygehus.dk>

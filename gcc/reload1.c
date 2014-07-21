@@ -4750,6 +4750,9 @@ reload_reg_free_p (unsigned int regno, int opnum, enum reload_type type)
       for (i = 0; i < reload_n_operands; i++)
 	if (TEST_HARD_REG_BIT (reload_reg_used_in_input[i], regno))
 	  return 0;
+      if (TEST_HARD_REG_BIT (reload_reg_used_for_inherit, regno)
+	  &amp;&amp; TEST_HARD_REG_BIT (reload_reg_used_in_op_addr, regno))
+        return 0;
 
       return (!TEST_HARD_REG_BIT (reload_reg_used_in_op_addr_reload, regno));
 
