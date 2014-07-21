@@ -247,7 +247,7 @@ case $basic_machine in
 	| d10v | d30v | dlx | dsp16xx \
 	| fido | fr30 | frv \
 	| h8300 | h8500 | hppa | hppa1.[01] | hppa2.0 | hppa2.0[nw] | hppa64 \
-	| i370 | i860 | i960 | ia64 \
+	| i370 | i860 | i960 | ia64 | ia16 \
 	| ip2k | iq2000 \
 	| m32c | m32r | m32rle | m68000 | m68k | m88k \
 	| maxq | mb | microblaze | mcore | mep \
@@ -327,7 +327,7 @@ case $basic_machine in
 	| f30[01]-* | f700-* | fido-* | fr30-* | frv-* | fx80-* \
 	| h8300-* | h8500-* \
 	| hppa-* | hppa1.[01]-* | hppa2.0-* | hppa2.0[nw]-* | hppa64-* \
-	| i*86-* | i860-* | i960-* | ia64-* \
+	| i*86-* | i860-* | i960-* | ia64-* | ia16-* \
 	| ip2k-* | iq2000-* \
 	| m32c-* | m32r-* | m32rle-* \
 	| m68000-* | m680[012346]0-* | m68360-* | m683?2-* | m68k-* \
