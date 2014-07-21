@@ -111,6 +111,8 @@ extern void abort (void);
 /* No pic register.  */
 #elif defined (__nvptx__)
 /* No pic register.  */
+#elif defined(__ia16__)
+/* No pic register.  */
 #else
 # error "Modify the test for your target."
 #endif
