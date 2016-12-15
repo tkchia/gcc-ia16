@@ -27,7 +27,6 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
 #include "rtl.h"
 #include "expr.h"
 #include "optabs.h"
@@ -138,6 +137,26 @@ ia16_secondary_reload (bool in_p, rtx x, enum reg_class reload_class,
   return (NO_REGS);
 }
 
+#undef TARGET_CLASS_LIKELY_SPILLED_P
+#define TARGET_CLASS_LIKELY_SPILLED_P ia16_class_likely_spilled_p
+
+/* IA16 easily qualifies as having small register classes.  But I
+   have yet to see a case where using small register classes made a
+   reload failure go away, so don't turn it on.
+   However, compiling the testcase calltest.c will fail if we don't
+   turn this it _or_ make this case caught by
+   TARGET_CLASS_LIKELY_SPILLED_P (REGNO_REG_CLASS (A_REG)).
+*/
+static bool
+ia16_class_likely_spilled_p (reg_class_t rclass)
+{
+  return rclass == AX_REGS || rclass == DX_REGS
+    || reg_class_size[(int)rclass] == 1;
+}
+
+#undef TARGET_FRAME_POINTER_REQUIRED
+#define TARGET_FRAME_POINTER_REQUIRED hook_bool_void_false
+
 /* Returns non-zero if register r must be saved by a function, zero if not.  */
 /* Always returns zero for upper halves of 16-bit registers
  * (i.e. ah, dh, bh or ch).  */
@@ -246,6 +265,25 @@ ia16_initial_elimination_offset (unsigned int from, unsigned int to)
 }
 
 /* Passing Arguments in Registers */
+#undef  TARGET_FUNCTION_ARG
+#define TARGET_FUNCTION_ARG ia16_function_arg
+static rtx
+ia16_function_arg (cumulative_args_t cum_v, machine_mode omode,
+		   const_tree type, bool named)
+{
+  return NULL;
+}
+
+#undef  TARGET_FUNCTION_ARG_ADVANCE
+#define TARGET_FUNCTION_ARG_ADVANCE ia16_function_arg_advance
+static void
+ia16_function_arg_advance (cumulative_args_t cum_v, machine_mode mode,
+                           const_tree type, bool named)
+{
+  CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
+  cum->regs_used = 0;
+}
+
 #undef  TARGET_VECTOR_MODE_SUPPORTED_P
 #define TARGET_VECTOR_MODE_SUPPORTED_P ia16_vector_mode_supported_p
 static bool
@@ -1802,6 +1840,10 @@ ia16_pop_reg (unsigned int regno)
 }
 
 /* Trampolines for Nested Functions */
+
+#undef TARGET_TRAMPOLINE_INIT
+#define TARGET_TRAMPOLINE_INIT ia16_initialize_trampoline
+
 /* tr = trampoline addr, fn = function addr, sc = static chain */
 /* FIXME: TARGET_CODE32 is not supported - add data16 and addr16 prefixes.  */
 void
