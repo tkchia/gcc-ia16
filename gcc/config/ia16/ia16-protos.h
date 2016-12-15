@@ -17,9 +17,6 @@
    You should have received a copy of the GNU General Public License along
    with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "rtl.h"
-#include "regs.h"
-#include "insn-modes.h"
 
 extern struct gcc_target targetm;
 extern unsigned char	ia16_hard_regno_nregs[17][FIRST_PSEUDO_REGISTER];
