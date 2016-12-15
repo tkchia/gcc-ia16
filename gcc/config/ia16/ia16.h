@@ -32,9 +32,6 @@
 /* Run-time Target Specification */
 #define TARGET_CPU_CPP_BUILTINS()	\
 	do { builtin_define_std ("ia16"); } while (0)
-#define TARGET_VERSION		fprintf (stderr, "ia16, GNU assembler syntax");
-
-#define CAN_DEBUG_WITHOUT_FP		1
 
 /* Storage Layout
  *
@@ -253,18 +250,6 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 
 #define PREFERRED_RELOAD_CLASS(X,CLASS) CLASS
 
-/* IA16 easily qualifies as having small register classes.  But I
-   have yet to see a case where SMALL_REGISTER_CLASSES made a
-   reload failure go away, so turn it off.
-   However, compiling the testcase calltest.c will fail if we don't
-   turn this on _or_ make this case caught by
-   CLASS_LIKELY_SPILLED_P (REGNO_REG_CLASS (A_REG)).
-*/
-#define SMALL_REGISTER_CLASSES	0
-
-#define CLASS_LIKELY_SPILLED_P(c)	\
-  ((c) == AX_REGS || (c) == DX_REGS || reg_class_size[c] == 1)
-
 /* The value returned by CLASS_MAX_NREGS() ends up being used by reload1.c
  * as one of the things considered when sorting reloads.  Reload is very
  * sensitive to this on an arch like IA16.  Reloads potentially requiring
@@ -308,7 +293,7 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
  * Basic Stack Layout
  */
 
-#define STACK_GROWS_DOWNWARD
+#define STACK_GROWS_DOWNWARD 1
 #define FRAME_GROWS_DOWNWARD 1
 #undef  ARGS_GROW_DOWNWARD
 #define STARTING_FRAME_OFFSET 0
@@ -338,7 +323,6 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 #define  STATIC_CHAIN_REGNUM D_REG
 
 /* Eliminating Frame Pointer and Arg Pointer */
-#define FRAME_POINTER_REQUIRED 0
 
 /* INITIAL_FRAME_POINTER_OFFSET(depth_var) */
 /* FIXME Documentation bug: depth-var is invalid as a macro parameter.  */
@@ -349,7 +333,6 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 	{	{ ARG_POINTER_REGNUM, STACK_POINTER_REGNUM },	\
 		{ ARG_POINTER_REGNUM, FRAME_POINTER_REGNUM },	\
 		{ FRAME_POINTER_REGNUM, STACK_POINTER_REGNUM }	}
-#define CAN_ELIMINATE(from_reg, to_reg)	1
 #define INITIAL_ELIMINATION_OFFSET(from_reg, to_reg, offset_var) \
 	offset_var = ia16_initial_elimination_offset (from_reg, to_reg)
 
@@ -358,24 +341,14 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 #define PUSH_ARGS_REVERSED	1
 #define PUSH_ROUNDING(BYTES)	(((BYTES) + 1) & ~1)
 
-/* TODO: Return 1 for functions which take a fixed number of arguments.  */
-/* FIXME: Docs say "stack-size" which isn't allowed in a macro parameter.  */
-#define RETURN_POPS_ARGS(fundecl, funtype, stack_size) 0
-
 /* Passing Arguments in Registers */
 /* TODO: Allow arguments to be passed in registers.  */
-#define FUNCTION_ARG(cum, mode, type, named)	0
 #define FUNCTION_ARG_REGNO_P(regno)		0
 #define CUMULATIVE_ARGS				int
 
 /* The next two were modified from m68k/m68k.h.  */
 #define INIT_CUMULATIVE_ARGS(CUM, FNTYPE, LIBNAME, INDIRECT, N_NAMED_ARGS) \
 	((CUM) = 0)
-
-#define FUNCTION_ARG_ADVANCE(CUM, MODE, TYPE, NAMED)	\
-	((CUM) += ((MODE) != BLKmode			\
-		? (GET_MODE_SIZE (MODE) + 1) & ~1	\
-		: (int_size_in_bytes (TYPE) + 1) & ~1))
 
 /* How Scalar Function Values Are Returned */
 #define LIBCALL_VALUE(mode)	\
@@ -408,7 +381,6 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 
 /* Trampolines for Nested Functions */
 #define TRAMPOLINE_SIZE 6
-#define INITIALIZE_TRAMPOLINE(addr, fnaddr, static_chain) ia16_initialize_trampoline (addr, fnaddr, static_chain)
 
 /* Implicit Calls to Library Routines */
 /* defaults.  */
@@ -478,9 +450,6 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
     else								\
       goto label;							\
 }
-
-#define GO_IF_MODE_DEPENDENT_ADDRESS(addr, label)	{}
-#define LEGITIMATE_CONSTANT_P(x)		1
 
 /* Condition Code Status.  */
 extern GTY(()) rtx ia16_cmp_op0;

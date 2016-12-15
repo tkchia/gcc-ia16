@@ -21,7 +21,7 @@
 
 /* The only purpose of this mode is to be able to tell function addresses
  * apart from other addresses.  */
-PARTIAL_INT_MODE (QI);
+PARTIAL_INT_MODE (QI, -1U, PQI);
 
 VECTOR_MODE (INT, QI, 2);
 
