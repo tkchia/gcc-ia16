@@ -378,8 +378,8 @@ i[34567]86-*-*)
 		       xsavesintrin.h avx512dqintrin.h avx512bwintrin.h
 		       avx512vlintrin.h avx512vlbwintrin.h avx512vldqintrin.h
 		       avx512ifmaintrin.h avx512ifmavlintrin.h avx512vbmiintrin.h
-		       avx512vbmivlintrin.h clwbintrin.h pcommitintrin.h
-		       mwaitxintrin.h clzerointrin.h pkuintrin.h"
+		       avx512vbmivlintrin.h clwbintrin.h mwaitxintrin.h
+		       clzerointrin.h pkuintrin.h"
 	;;
 x86_64-*-*)
 	cpu_type=i386
@@ -400,8 +400,8 @@ x86_64-*-*)
 		       xsavesintrin.h avx512dqintrin.h avx512bwintrin.h
 		       avx512vlintrin.h avx512vlbwintrin.h avx512vldqintrin.h
 		       avx512ifmaintrin.h avx512ifmavlintrin.h avx512vbmiintrin.h
-		       avx512vbmivlintrin.h clwbintrin.h pcommitintrin.h
-		       mwaitxintrin.h clzerointrin.h pkuintrin.h"
+		       avx512vbmivlintrin.h clwbintrin.h mwaitxintrin.h
+		       clzerointrin.h pkuintrin.h"
 	;;
 ia16-*-*)
 	cpu_type=ia16
@@ -818,6 +818,11 @@ case ${target} in
       ;;
   esac
   ;;
+*-*-phoenix*)
+  gas=yes
+  gnu_ld=yes
+  default_use_cxa_atexit=yes
+  ;;
 *-*-rtems*)
   case ${enable_threads} in
     "" | yes | rtems) thread_file='rtems' ;;
@@ -1099,6 +1104,12 @@ arm*-*-uclinux*eabi*)		# ARM ucLinux
 	tm_file="$tm_file arm/bpabi.h arm/uclinux-eabi.h arm/aout.h vxworks-dummy.h arm/arm.h"
 	# The EABI requires the use of __cxa_atexit.
 	default_use_cxa_atexit=yes
+	;;
+arm*-*-phoenix*)
+	tm_file="elfos.h arm/unknown-elf.h arm/elf.h arm/bpabi.h"
+	tm_file="${tm_file} newlib-stdint.h phoenix.h"
+	tm_file="${tm_file} arm/aout.h arm/arm.h"
+	tmake_file="${tmake_file} arm/t-arm arm/t-bpabi arm/t-phoenix"
 	;;
 arm*-*-eabi* | arm*-*-symbianelf* | arm*-*-rtems*)
 	case ${target} in
@@ -1793,6 +1804,7 @@ i[34567]86-*-interix[3-9]*)
 	if test x$stabs = xyes ; then
 		tm_file="${tm_file} dbxcoff.h"
 	fi
+	;;
 ia16-*-elf)
 	tm_file="elfos.h ${tm_file} ia16/elf.h"
 	tmake_file="ia16/t-ia16"
@@ -4198,16 +4210,6 @@ case "${target}" in
 			tm_file="$tm_file ./advance-toolchain.h"
 			(at="/opt/$with_advance_toolchain"
 			 echo "/* Use Advance Toolchain $at */"
-			 echo
-			 echo "#ifndef USE_AT_INCLUDE_FILES"
-			 echo "#define USE_AT_INCLUDE_FILES 1"
-			 echo "#endif"
-			 echo
-			 echo "#if USE_AT_INCLUDE_FILES"
-			 echo "#undef  INCLUDE_EXTRA_SPEC"
-			 echo "#define INCLUDE_EXTRA_SPEC" \
-			      "\"-isystem $at/include\""
-			 echo "#endif"
 			 echo
 			 echo "#undef  LINK_OS_EXTRA_SPEC32"
 			 echo "#define LINK_OS_EXTRA_SPEC32" \
