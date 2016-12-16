@@ -36,7 +36,6 @@
 /* Part 1.  Part 2 is at the end of this file.  */
 
 #include "target.h"
-#include "target-def.h"
 
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -47,16 +46,10 @@
 #include "tm_p.h"
 #include <stdio.h>
 
-/* Run-time Target Specification */
-/* Part 1, see section "Describing Relative Costs of Operations" for the
- * second part.  */
-#undef  TARGET_HANDLE_OPTION
-#define TARGET_HANDLE_OPTION ia16_handle_option
+/* This file should be included last.  */
+#include "target-def.h"
 
 /* Storage Layout.  */
-#define TARGET_MS_BITFIELD_LAYOUT_P	hook_bool_tree_false
-#define TARGET_PROMOTE_FUNCTION_ARGS	hook_bool_tree_false
-#define TARGET_PROMOTE_FUNCTION_RETURN	hook_bool_tree_false
 
 /* Layout of Source Language Data Types */
 #undef  TARGET_DEFAULT_SHORT_ENUMS
@@ -113,6 +106,13 @@ enum reg_class const ia16_regno_class[FIRST_PSEUDO_REGISTER] = {
 	/* 12 sp */ HI_REGS,
 	/* 13 cc */ ALL_REGS,
 	/* 14 ap */ ALL_REGS,
+};
+
+/* Processor target table, indexed by processor number */
+struct ptt
+{
+  const struct processor_costs *cost;           /* Processor costs */
+  int features;
 };
 
 #undef  TARGET_SECONDARY_RELOAD
@@ -380,7 +380,7 @@ ia16_gen_compare_reg (enum rtx_code op, rtx x, rtx y, bool branch)
 
   if (MEM_P (x) && MEM_P (y))
     y = force_reg (GET_MODE (y), y);
-  emit_insn (gen_rtx_SET (VOIDmode, cc_reg, gen_rtx_COMPARE (mode, x, y)));
+  emit_insn (gen_rtx_SET (cc_reg, gen_rtx_COMPARE (mode, x, y)));
   return cc_reg;
 }
 
@@ -928,7 +928,22 @@ static struct processor_costs ia16_nec_v20_costs = {
 
 #undef C
 
+/* This table must be in sync with enum processor_type in ia16.h.  */
+static const struct ptt processor_target_table[PROCESSOR_max] =
+{
+  {&ia16_i8086_costs,    0},
+  {&ia16_i8086_costs,    1},
+  {&ia16_i8086_costs,    4},
+  {&ia16_i8088_costs,   20},
+  {&ia16_nec_v30_costs,  1},
+  {&ia16_nec_v20_costs, 17},
+  {&ia16_i80186_costs,   7},
+  {&ia16_i80186_costs,  23},
+  {&ia16_i80286_costs,  15}
+};
+
 const struct processor_costs *ia16_costs = &ia16_i8086_costs;
+int ia16_features = 0;
 
 #define I_REG	0
 #define I_MEM	1
@@ -1534,76 +1549,19 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
 }
 
 /* Continued: Run-time Target Specification */
-#undef  TARGET_HANDLE_OPTION
-#define TARGET_HANDLE_OPTION	ia16_handle_option
-static bool
-ia16_handle_option (size_t code, const char *arg ATTRIBUTE_UNUSED, int value ATTRIBUTE_UNUSED)
+#undef  TARGET_OPTION_OVERRIDE
+#define TARGET_OPTION_OVERRIDE	ia16_option_override
+static void
+ia16_option_override (void)
 {
-  if (optimize_size)
+  ia16_costs = processor_target_table[target_arch].cost;
+  ia16_features = processor_target_table[target_arch].features;
+  if (target_tune != PROCESSOR_ANY)
     {
-      ia16_costs = &ia16_size_costs;
-      return (true);
+      ia16_costs = processor_target_table[target_arch].cost;
+      ia16_features = (ia16_features & 15)
+	| (processor_target_table[target_tune].features & 16);
     }
-
-  switch (code)
-    {
-      case OPT_march_i8086:
-        target_tune &= ~8;
-        /* fall through. */
-
-      case OPT_mtune_i8086:
-	ia16_costs = &ia16_i8086_costs;
-	return (true);
-
-      case OPT_march_i8088:
-        target_tune |= 8;
-        /* fall through. */
-
-      case OPT_mtune_i8088:
-	ia16_costs = &ia16_i8088_costs;
-	return (true);
-
-      case OPT_march_i80186:
-        target_tune &= ~8;
-        /* fall through. */
-
-      case OPT_mtune_i80186:
-	ia16_costs = &ia16_i80186_costs;
-	return (true);
-
-      case OPT_march_i80188:
-        target_tune |= 8;
-        /* fall through. */
-
-      case OPT_mtune_i80188:
-	ia16_costs = &ia16_i80186_costs;
-	return (true);
-
-      case OPT_march_i80286:
-        target_tune &= ~8;
-        /* fall through. */
-
-      case OPT_mtune_i80286:
-	ia16_costs = &ia16_i80286_costs;
-	return (true);
-
-      case OPT_march_v20:
-        target_tune |= 8;
-        /* fall through. */
-
-      case OPT_mtune_v20:
-	ia16_costs = &ia16_nec_v20_costs;
-	return (true);
-
-      case OPT_march_v30:
-        target_tune &= ~8;
-        /* fall through. */
-
-      case OPT_mtune_v30:
-	ia16_costs = &ia16_nec_v30_costs;
-	return (true);
-    }
-  return (true);
 }
 
 /* The Overall Framework of an Assembler File */
@@ -1832,7 +1790,7 @@ ia16_push_reg (unsigned int regno)
 rtx
 ia16_pop_reg (unsigned int regno)
 {
-  return gen_rtx_SET (VOIDmode, gen_rtx_REG (HImode, regno),
+  return gen_rtx_SET (gen_rtx_REG (HImode, regno),
 		      gen_frame_mem (HImode,
 				     gen_rtx_POST_INC (Pmode,
 						       stack_pointer_rtx)));
