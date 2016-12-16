@@ -20,7 +20,7 @@
 
 extern struct gcc_target targetm;
 extern unsigned char	ia16_hard_regno_nregs[17][FIRST_PSEUDO_REGISTER];
-extern unsigned char	ia16_regno_class[FIRST_PSEUDO_REGISTER];
+extern enum reg_class	ia16_regno_class[FIRST_PSEUDO_REGISTER];
 extern int		ia16_save_reg_p (unsigned int r);
 extern HOST_WIDE_INT	ia16_first_parm_offset (void);
 extern HOST_WIDE_INT	ia16_initial_frame_pointer_offset (void);
@@ -28,12 +28,16 @@ extern HOST_WIDE_INT
 		ia16_initial_elimination_offset (unsigned int from, unsigned int to);
 extern enum machine_mode
 		ia16_cc_modes_compatible (enum machine_mode mode1, enum machine_mode mode2);
+
+#ifdef RTX_CODE
 extern void	ia16_initialize_trampoline (rtx addr, rtx fnaddr, rtx static_chain);
 extern bool	ia16_parse_address (rtx e, rtx *p_r1, rtx *p_r2, rtx *p_c);
 extern void	ia16_print_operand (FILE *file, rtx x, int code);
 extern void	ia16_print_operand_address (FILE *file, rtx x);
+#endif
 extern rtx	ia16_push_reg (unsigned int regno);
 extern rtx	ia16_pop_reg (unsigned int regno);
+#ifdef RTX_CODE
 extern enum machine_mode
 		ia16_select_cc_mode (enum rtx_code op, rtx x, rtx y, bool branch);
 extern rtx	ia16_gen_compare_reg (enum rtx_code op, rtx x, rtx y, bool branch);
@@ -42,3 +46,4 @@ extern rtx	ia16_prepare_operands (enum rtx_code, rtx *operands);
 extern bool	ia16_move_multiple_mem_p (enum machine_mode mode, rtx m1, rtx m2);
 extern bool	ia16_move_multiple_reg_p (enum machine_mode mode, rtx r1, rtx r2);
 extern bool	ia16_non_overlapping_mem_p (rtx m1, rtx m2);
+#endif
