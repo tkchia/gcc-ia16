@@ -500,7 +500,7 @@
    (set (match_dup 3) (plus:HI  (plus:HI (match_dup 0) (match_dup 5))
 				(match_dup 7)))]
 {
-  operands[7] = plus_constant (operands[4], INTVAL (operands[1]));
+  operands[7] = plus_constant (HImode, operands[4], INTVAL (operands[1]));
 })
 
 ; Try to rewrite
@@ -534,7 +534,7 @@
 	(plus:HI (plus:HI (match_dup 0) (match_dup 5))
 		 (match_dup 7)))]
 {
-  operands[7] = plus_constant (operands[4], INTVAL (operands[1]));
+  operands[7] = plus_constant (HImode, operands[4], INTVAL (operands[1]));
 })
 
 (define_peephole2
@@ -555,7 +555,7 @@
 	(plus:HI (plus:HI (match_dup 0) (match_dup 5))
 		 (match_dup 6)))]
 {
-  operands[6] = plus_constant (operands[4], INTVAL (operands[1]));
+  operands[6] = plus_constant (HImode, operands[4], INTVAL (operands[1]));
 })
 
 ;; And with constants.

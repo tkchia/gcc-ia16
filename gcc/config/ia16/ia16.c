@@ -97,7 +97,7 @@ unsigned char ia16_hard_regno_nregs[17][FIRST_PSEUDO_REGISTER] =
 };
 
 /* Register Classes.  */
-unsigned char ia16_regno_class[FIRST_PSEUDO_REGISTER] = {
+enum reg_class const ia16_regno_class[FIRST_PSEUDO_REGISTER] = {
 	/*  0 cl */ CL_REGS,
 	/*  1 ch */ CX_REGS,
 	/*  2 al */ AL_REGS,
@@ -241,9 +241,8 @@ ia16_initial_frame_pointer_offset (void)
 {
   HOST_WIDE_INT offset;
 	
-  offset = get_frame_size ()
-	 + current_function_outgoing_args_size
-	 + current_function_pretend_args_size;
+  offset = get_frame_size () + crtl->outgoing_args_size
+    + crtl->args.pretend_args_size;
 
   return (offset);
 }
@@ -1874,19 +1873,21 @@ ia16_initialize_trampoline (rtx tr, rtx fn, rtx sc)
 			GEN_INT ((signed char) mov_opcode));
 
 	/* Write the static chain value.  */
-	emit_move_insn (gen_rtx_MEM (Pmode, plus_constant (tr, 1)), sc);
+	emit_move_insn (gen_rtx_MEM (Pmode, plus_constant (Pmode, tr, 1)), sc);
 
 	/* Write the absolute jmp opcode.  */
-	emit_move_insn (gen_rtx_MEM (QImode, plus_constant (tr, 3)),
+	emit_move_insn (gen_rtx_MEM (QImode, plus_constant (Pmode, tr, 3)),
 	                GEN_INT ((signed char) 0xe9));
 
 	/* Calculate the difference between the function address and %pc, which
 	   points to (tr+4)+2 when the jmp instruction executes.  */
-	fn_disp = expand_binop (Pmode, sub_optab, fn, plus_constant (tr, 4 + 2),
-				NULL_RTX, 1, OPTAB_DIRECT);
+	fn_disp = expand_binop (Pmode, sub_optab, fn,
+				plus_constant (Pmode, tr, 4 + 2), NULL_RTX, 1,
+				OPTAB_DIRECT);
 
 	/* Write the jmp offset.  */
-	emit_move_insn (gen_rtx_MEM (Pmode, plus_constant (tr, 4)), fn_disp);
+	emit_move_insn (gen_rtx_MEM (Pmode, plus_constant (Pmode, tr, 4)),
+			fn_disp);
 
 	/* Done.  That wasn't a lot of fun.  */
 }

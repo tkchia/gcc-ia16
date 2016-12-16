@@ -301,10 +301,11 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 
 /* Taken from i386/i386.h.  */
 /* TODO: Check that this is still correct.  */
-#define RETURN_ADDR_RTX(COUNT, FRAME)						 \
-	((COUNT) == 0								 \
-	 ? gen_rtx_MEM (Pmode, plus_constant (arg_pointer_rtx, -UNITS_PER_WORD)) \
-	 : gen_rtx_MEM (Pmode, plus_constant (FRAME, UNITS_PER_WORD)))
+#define RETURN_ADDR_RTX(COUNT, FRAME)				       	      \
+	((COUNT) == 0							      \
+	 ? gen_rtx_MEM (Pmode, plus_constant (Pmode, arg_pointer_rtx,         \
+					      -UNITS_PER_WORD))		      \
+	 : gen_rtx_MEM (Pmode, plus_constant (Pmode, FRAME, UNITS_PER_WORD)))
 
 /* Exception Handling Support */
 /* XXX needs work.  */
@@ -364,7 +365,7 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 /* Function Entry and Exit */
 /* Thunks support is missing.  */
 /* Stack adjustment at function exit isn't needed with a frame pointer.  */
-#define EXIT_IGNORE_STACK (!current_function_calls_alloca)
+#define EXIT_IGNORE_STACK (!cfun->calls_alloca)
 
 /* Generating Code for Profiling */
 /* It isn't there yet.  */
@@ -491,8 +492,8 @@ extern GTY(()) rtx ia16_cmp_op1;
  * Add to that 4 (or 8) cycles to fetch the branch instruction (two bytes)
  * itself.
  */
-#define BRANCH_COST  (TARGET_TUNE_8BIT ? COSTS_N_INSNS (8) : COSTS_N_INSNS (4) \
-		      + COSTS_N_INSNS (8))
+#define BRANCH_COST(speed_p, predictable_p) (TARGET_TUNE_8BIT ? \
+   COSTS_N_INSNS (8) : COSTS_N_INSNS (4) + COSTS_N_INSNS (8))
 #define SLOW_BYTE_ACCESS	(TARGET_TUNE_8BIT ? 0 : 1)
 
 /* These probably need some tweaking.  Leave the defaults for now.
@@ -504,7 +505,7 @@ extern GTY(()) rtx ia16_cmp_op1;
  * (i80186) and saves at most 1 byte and 2 cycles (i80186) per call.  So don't
  * waste a precious register on this. TODO: Why does this have no effect?
  */
-#define NO_FUNCTION_CSE
+#define NO_FUNCTION_CSE 1
 
 /* Adjusting the Instruction Scheduler.
    #define TARGET_SCHED_ISSUE_RATE() MAX_DFA_ISSUE_RATE
@@ -530,6 +531,15 @@ extern GTY(()) rtx ia16_cmp_op1;
 	asm_output_aligned_bss(stream, decl, name, size, alignment)
 
 /* Output and Generation of Labels.  */
+
+/* The prefix to add for compiler private assembler symbols.  */
+#undef LOCAL_LABEL_PREFIX
+#define LOCAL_LABEL_PREFIX "."
+
+#undef ASM_GENERATE_INTERNAL_LABEL
+#define ASM_GENERATE_INTERNAL_LABEL(BUF,PREFIX,NUMBER)  \
+  sprintf ((BUF), LOCAL_LABEL_PREFIX "%s%ld", (PREFIX), (long)(NUMBER))
+
 /* Used by target hook TARGET_ASM_GLOBALIZE_LABEL. */
 #define GLOBAL_ASM_OP	"\t.global\t"
 
