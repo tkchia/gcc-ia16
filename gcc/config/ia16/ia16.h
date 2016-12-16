@@ -18,16 +18,16 @@
    with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/* Keep this in sync with ia16.opt.  */
-#define TARGET_SHIFT_IMM	(target_arch & 1)
-#define TARGET_PUSH_IMM		(target_arch & 1)
-#define TARGET_IMUL_IMM		(target_arch & 1)
-#define TARGET_PUSHA		(target_arch & 1)
-#define TARGET_ENTER_LEAVE	(target_arch & 1)
-#define TARGET_SHIFT_MASKED	(target_arch & 2)
-#define TARGET_AAD_IMM		(target_arch & 4)
-#define TARGET_FSTSW_AX		(target_arch & 8)
-#define TARGET_TUNE_8BIT	(target_tune & 8)
+/* Keep this in sync with processor_target_table in ia16.c.  */
+#define TARGET_SHIFT_IMM	(ia16_features & 1)
+#define TARGET_PUSH_IMM		(ia16_features & 1)
+#define TARGET_IMUL_IMM		(ia16_features & 1)
+#define TARGET_PUSHA		(ia16_features & 1)
+#define TARGET_ENTER_LEAVE	(ia16_features & 1)
+#define TARGET_SHIFT_MASKED	(ia16_features & 2)
+#define TARGET_AAD_IMM		(ia16_features & 4)
+#define TARGET_FSTSW_AX		(ia16_features & 8)
+#define TARGET_TUNE_8BIT	(ia16_features & 16)
 
 /* Run-time Target Specification */
 #define TARGET_CPU_CPP_BUILTINS()	\
@@ -635,3 +635,23 @@ extern GTY(()) rtx ia16_cmp_op1;
 #define STORE_FLAG_VALUE		(-1)
 #define Pmode				HImode
 #define FUNCTION_MODE			PQImode
+
+
+/* Which processor to tune code generation for.  These must be in sync
+   with processor_target_table in ia16.c.  */
+
+enum processor_type
+{
+  PROCESSOR_ANY,
+  PROCESSOR_ANY_186,
+  PROCESSOR_I8086,
+  PROCESSOR_I8088,
+  PROCESSOR_NEC_V30,
+  PROCESSOR_NEC_V20,
+  PROCESSOR_I80186,
+  PROCESSOR_I80188,
+  PROCESSOR_I80286,
+  PROCESSOR_max
+};
+
+extern int ia16_features;

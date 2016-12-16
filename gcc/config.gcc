@@ -405,6 +405,7 @@ x86_64-*-*)
 	;;
 ia16-*-*)
 	cpu_type=ia16
+	target_has_targetm_common=no
 	;;
 ia64-*-*)
 	extra_headers=ia64intrin.h
