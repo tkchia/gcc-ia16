@@ -27,27 +27,34 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "backend.h"
 #include "rtl.h"
-#include "expr.h"
-#include "optabs.h"
+#include "tree.h"
+#include "gimple.h"
+#include "cfgloop.h"
 #include "df.h"
-
-/* The Global targetm Variable.  */
-/* Part 1.  Part 2 is at the end of this file.  */
-
-#include "target.h"
-
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "expr.h"
-#include "toplev.h"
-#include "insn-constants.h"
-#include "output.h"
 #include "tm_p.h"
-#include <stdio.h>
+#include "expmed.h"
+#include "optabs.h"
+#include "regs.h"
+#include "emit-rtl.h"
+#include "diagnostic.h"
+#include "fold-const.h"
+#include "calls.h"
+#include "stor-layout.h"
+#include "varasm.h"
+#include "output.h"
+#include "explow.h"
+#include "expr.h"
+#include "gimple-iterator.h"
+#include "tree-vectorizer.h"
+#include "builtins.h"
 
 /* This file should be included last.  */
 #include "target-def.h"
+
+/* The Global targetm Variable.  */
+/* Part 1.  Part 2 is at the end of this file.  */
 
 /* Storage Layout.  */
 
@@ -122,8 +129,8 @@ struct ptt
  * pointer offset into a segment register.  This is also where copies between
  * segment registers should be handled, if needed.  All of this needs an
  * intermediate register of class GENERAL_REGS.  */
-static enum reg_class
-ia16_secondary_reload (bool in_p, rtx x, enum reg_class reload_class,
+static reg_class_t
+ia16_secondary_reload (bool in_p, rtx x, reg_class_t reload_class,
 		       enum machine_mode reload_mode ATTRIBUTE_UNUSED,
 		       secondary_reload_info *sri ATTRIBUTE_UNUSED)
 {
@@ -267,8 +274,10 @@ ia16_initial_elimination_offset (unsigned int from, unsigned int to)
 #undef  TARGET_FUNCTION_ARG
 #define TARGET_FUNCTION_ARG ia16_function_arg
 static rtx
-ia16_function_arg (cumulative_args_t cum_v, machine_mode omode,
-		   const_tree type, bool named)
+ia16_function_arg (cumulative_args_t cum_v ATTRIBUTE_UNUSED,
+		   machine_mode omode ATTRIBUTE_UNUSED,
+		   const_tree type ATTRIBUTE_UNUSED,
+		   bool named ATTRIBUTE_UNUSED)
 {
   return NULL;
 }
@@ -276,11 +285,13 @@ ia16_function_arg (cumulative_args_t cum_v, machine_mode omode,
 #undef  TARGET_FUNCTION_ARG_ADVANCE
 #define TARGET_FUNCTION_ARG_ADVANCE ia16_function_arg_advance
 static void
-ia16_function_arg_advance (cumulative_args_t cum_v, machine_mode mode,
-                           const_tree type, bool named)
+ia16_function_arg_advance (cumulative_args_t cum_v,
+			   machine_mode mode ATTRIBUTE_UNUSED,
+                           const_tree type ATTRIBUTE_UNUSED,
+			   bool named ATTRIBUTE_UNUSED)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
-  cum->regs_used = 0;
+  *cum = 0;
 }
 
 #undef  TARGET_VECTOR_MODE_SUPPORTED_P
@@ -295,7 +306,8 @@ ia16_vector_mode_supported_p (enum machine_mode mode)
 #undef  TARGET_FUNCTION_VALUE
 #define TARGET_FUNCTION_VALUE ia16_function_value
 static rtx
-ia16_function_value (tree ret_type, tree fn_decl_or_type ATTRIBUTE_UNUSED,
+ia16_function_value (const_tree ret_type,
+		     const_tree fn_decl_or_type ATTRIBUTE_UNUSED,
 		     bool outgoing ATTRIBUTE_UNUSED)
 {
   return gen_rtx_REG (TYPE_MODE (ret_type), A_REG);
@@ -306,7 +318,7 @@ ia16_function_value (tree ret_type, tree fn_decl_or_type ATTRIBUTE_UNUSED,
 #undef  TARGET_RETURN_IN_MEMORY
 #define TARGET_RETURN_IN_MEMORY ia16_return_in_memory
 static bool
-ia16_return_in_memory (tree type, tree fntype ATTRIBUTE_UNUSED)
+ia16_return_in_memory (const_tree type, const_tree fntype ATTRIBUTE_UNUSED)
 {
   /* Return in memory if it's larger than 4 bytes or BLKmode.
    * TODO: Increase this to 8 bytes or so.  Doing so requires more call
@@ -560,7 +572,7 @@ struct processor_costs {
 };
 
 extern const  struct processor_costs *ia16_costs;
-static struct processor_costs  ia16_size_costs;
+extern struct processor_costs ia16_size_costs;
 
 #define IA16_COST(F)	\
 	(MAX (ia16_costs->F, ia16_costs->byte_fetch * ia16_size_costs.F))
@@ -699,7 +711,7 @@ ia16_i808x_address_cost (rtx r1, rtx r2, rtx c)
 /* Size costs for IA-16 instructions.  Used when optimizing for size.
  * EA sizes are not included except for xlat.
  */
-static struct processor_costs ia16_size_costs = {
+ struct processor_costs ia16_size_costs = {
   /* byte_fetch */	1,
   /* ea_calc */		ia16_default_address_cost,
   /* move */		C (2),
@@ -961,7 +973,7 @@ int ia16_features = 0;
 #define TARGET_ADDRESS_COST ia16_address_cost
 
 static int
-ia16_address_cost (rtx address)
+ia16_address_cost_internal (rtx address)
 {
   rtx r1, r2, c;
 
@@ -981,6 +993,12 @@ ia16_address_cost (rtx address)
   ia16_parse_address (address, &r1, &r2, &c);
 
   return (ia16_costs->ea_calc (r1, r2, c));
+}
+
+static int
+ia16_address_cost (rtx address, machine_mode, addr_space_t, bool)
+{
+  return ia16_address_cost_internal(address);
 }
 
 /* Return true if X is a valid memory operand for xlat and return the cost
@@ -1032,7 +1050,7 @@ ia16_xlat_cost (rtx x, int *total)
 	    *total += IA16_COST (imm_load[M_HI]);
 	  else if (MEM_P (base))
 	    *total += IA16_COST (int_load[M_HI])
-		      + ia16_address_cost (XEXP (base, 0));
+		      + ia16_address_cost_internal (XEXP (base, 0));
 	  return (true);	
 	}
       return (false);
@@ -1056,9 +1074,11 @@ ia16_xlat_cost (rtx x, int *total)
 */
 
 static bool
-ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
+ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
+		int opno ATTRIBUTE_UNUSED, int *total, bool speed)
 {
-  enum machine_mode mode = GET_MODE (x);
+  enum rtx_code code = GET_CODE (x);
+  enum rtx_code outer_code = (enum rtx_code) outer_code_i;
 
   switch (code)
     {
@@ -1068,30 +1088,41 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
 	rtx op1 = XEXP (x, 1);
 
 	if (memory_operand (op0, GET_MODE (op0)))
-	  if (register_operand (op1, GET_MODE (op1)))
-	    *total = IA16_COST (int_store[M_RTX (op0)]);
-	  else if (immediate_operand (op1, GET_MODE (op1)))
-	    *total = IA16_COST (imm_store[M_RTX (op0)]);
-	  else
+	  {
+	    if (register_operand (op1, GET_MODE (op1)))
+	      *total = IA16_COST (int_store[M_RTX (op0)]);
+	    else if (immediate_operand (op1, GET_MODE (op1)))
+	      *total = IA16_COST (imm_store[M_RTX (op0)]);
+	    else
+	      {
 #if 0
-	    /* Arithmetic or logic instruction which writes to memory.
-	     * Subtract the mem,reg->reg cost which will incorrectly be added
-	     * in the MEM case below.  */
-	    *total = IA16_COST (add[O_REGMEM]) - IA16_COST (add[O_MEMREG]);
+		/* Arithmetic or logic instruction which writes to memory.
+		 * Subtract the mem,reg->reg cost which will incorrectly be
+		 * added in the MEM case below.  */
+		*total = IA16_COST (add[O_REGMEM]) - IA16_COST (add[O_MEMREG]);
 #else
-	    do {} while (0);
+		do {} while (0);
 #endif
-	else if (register_operand (op0, GET_MODE (op1)))
-	  if (register_operand (op1, GET_MODE (op1)))
-	    *total = IA16_COST (move);
-	  else if (memory_operand (op1, GET_MODE (op1)))
-	    *total = IA16_COST (int_load[M_RTX (op1)]);
-	  else if (immediate_operand (op1, GET_MODE (op1)))
-	    *total = IA16_COST (imm_load[M_RTX (op0)]);
-
-	  /* Try to get constructs involving "xlat" right.  */
-	  else if (MEM_P (op1) && ia16_xlat_cost (op1, total))
-	    return (true);
+	      }
+	  }
+	else
+	  {
+	    if (register_operand (op0, GET_MODE (op1)))
+	      {
+		if (register_operand (op1, GET_MODE (op1)))
+		  *total = IA16_COST (move);
+		else if (memory_operand (op1, GET_MODE (op1)))
+		  *total = IA16_COST (int_load[M_RTX (op1)]);
+		else if (immediate_operand (op1, GET_MODE (op1)))
+		  *total = IA16_COST (imm_load[M_RTX (op0)]);
+	      }
+	    /* Try to get constructs involving "xlat" right.  */
+	    else
+	      {
+		if (MEM_P (op1) && ia16_xlat_cost (op1, total))
+		  return (true);
+	      }
+	  }
 	return (false);
       }
 
@@ -1102,7 +1133,7 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
       if ((outer_code == ZERO_EXTEND || outer_code == SET)
 	&& ia16_xlat_cost (x, total))
 	return (true);
-      *total = ia16_address_cost (XEXP (x, 0));
+      *total = ia16_address_cost_internal (XEXP (x, 0));
       /* This is never called recursively from the SET case.  */
       if (outer_code == SET)
 	*total += IA16_COST (int_load[M_MOD (mode)]);
@@ -1140,7 +1171,7 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
       /* Avoid the extra high cost of a subreg.  */
       if (GET_CODE (XEXP (x, 0)) == SUBREG)
 	{
-	  *total += rtx_cost (SUBREG_REG (XEXP (x, 0)), code);
+	  *total += rtx_cost (SUBREG_REG (XEXP (x, 0)), mode, code, 0, speed);
 	  return true;
 	}
       return false;
@@ -1161,7 +1192,7 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
 	      *total = IA16_COST (sign_extend[M_QI]);
 	  else if (mode == HImode && INTVAL (XEXP (x, 1)) >= 15)
 	    *total = IA16_COST (sign_extend[M_HI]);
-          *total += rtx_cost (XEXP (x, 0), code);
+          *total += rtx_cost (XEXP (x, 0), mode, code, 0, speed);
           return true;
 	}
       /* fall through */
@@ -1173,7 +1204,7 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
           && CONST_INT_P (XEXP (x, 1))
           && INTVAL (XEXP (x, 1)) == 8)
 	{
-	  *total = rtx_cost (XEXP (x, 0), code);
+	  *total = rtx_cost (XEXP (x, 0), mode, code, 0, speed);
 	  return true;
 	}
     case LSHIFTRT:
@@ -1183,7 +1214,7 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
 	  && CONST_INT_P (XEXP (x, 1))
 	  && INTVAL (XEXP (x, 1)) == 8)
 	{
-	  *total = rtx_cost (XEXP (x, 0), code);
+	  *total = rtx_cost (XEXP (x, 0), mode, code, 0, speed);
 	  return true;
         }
     case ROTATE:
@@ -1194,13 +1225,13 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
 	  {
 	    /* This is implemented using movb or xchgb.  */
 	    *total = IA16_COST (add[O_REGREG])
-	           + rtx_cost (XEXP (x, 0), code);
+	      + rtx_cost (XEXP (x, 0), mode, code, 0, speed);
 	    return true;
 	  }
 	else if (INTVAL (XEXP (x, 1)) == 1)
 	  {
 	    *total = IA16_COST (shift_1bit[I_REG])
-	           + rtx_cost (XEXP (x, 0), code);
+	      + rtx_cost (XEXP (x, 0), mode, code, 0, speed);
 	  }
 	else
 	  *total = MAX (ia16_costs->shift_start[I_REG]
@@ -1219,7 +1250,7 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
 	  && (ZERO_EXTEND == GET_CODE (XEXP (x, 0))
 	      || SIGN_EXTEND == GET_CODE (XEXP (x,0))))
 	{
-	  *total += rtx_cost (XEXP (XEXP (x, 0), 0), code);
+	  *total += rtx_cost (XEXP (XEXP (x, 0), 0), mode, code, 0, speed);
 	  return true;
 	}
       else
@@ -1240,7 +1271,8 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
 	  /* (mult:HI (...) (const_int 257) is cheap.  */
 	  if (CONST_INT_P (op1) && INTVAL (op1) == 257 && mode == HImode)
 	    {
-	      *total = IA16_COST (add[O_REGREG]) + rtx_cost (op0, code);
+	      *total = IA16_COST (add[O_REGREG])
+		+ rtx_cost (op0, mode, code, 0, speed);
 	      return true;
             }
 	  if (CONST_INT_P (op1) && ia16_costs->mult_bit != 0)
@@ -1281,7 +1313,8 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
 			+ nbits * ia16_costs->mult_bit,
 			ia16_size_costs.s_mult_init[M_MOD (mode)][I_RTX (op1)]
 			* ia16_costs->byte_fetch)
-	           + rtx_cost (op0, outer_code) + rtx_cost (op1, outer_code);
+	    + rtx_cost (op0, mode, outer_code, 0, speed)
+	    + rtx_cost (op1, mode, outer_code, 1, speed);
 
           return true;
 	}
@@ -1334,9 +1367,9 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
 	      rtx op1 = XEXP (XEXP (x, 0), 1);
 	      rtx cst = XEXP (x, 1);
 
-	      *total = IA16_COST (lea) + ia16_costs->ea_calc (op0, op1, cst);
-		     + rtx_cost (op0, outer_code);
-		     + rtx_cost (op1, outer_code);
+	      *total = IA16_COST (lea) + ia16_costs->ea_calc (op0, op1, cst)
+		+ rtx_cost (op0, mode, outer_code, 0, speed)
+	        + rtx_cost (op1, mode, outer_code, 1, speed);
 	      return true;
 	    }
 	}
@@ -1344,7 +1377,7 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
       if (outer_code == MINUS
 	  && carry_flag_operator (XEXP (x, 0), mode))
 	{
-	  *total = rtx_cost (XEXP (x, 1), outer_code);
+	  *total = rtx_cost (XEXP (x, 1), mode, outer_code, 1, speed);
 	  return false;
 	}
       /* FALLTHRU */
@@ -1359,7 +1392,7 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
       if (outer_code == PLUS
 	  && carry_flag_operator (XEXP (x, 1), mode))
 	{
-	  *total = rtx_cost (XEXP (x, 0), outer_code);
+	  *total = rtx_cost (XEXP (x, 0), mode, outer_code, 0, speed);
 	  return false;
 	}
       /* FALLTHRU */
@@ -1372,7 +1405,7 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
           && CONST_INT_P (XEXP (x, 1))
           && INTVAL (XEXP (x, 1)) == -256)
 	{
-	  *total = rtx_cost (XEXP (x, 0), code);
+	  *total = rtx_cost (XEXP (x, 0), mode, code, 0, speed);
 	  return true;
         }
     case IOR:
@@ -1412,8 +1445,9 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
 	  /* This kind of construct is implemented using test[bw].
 	     Treat it as if we had an AND.  */
 	  *total = (IA16_COST (add_imm[I_RTX (x)])
-		    + rtx_cost (XEXP (XEXP (x, 0), 0), outer_code)
-		    + rtx_cost (const1_rtx, outer_code));
+		    + rtx_cost (XEXP (XEXP (x, 0), 0), mode, outer_code, 0,
+				speed)
+		    + rtx_cost (const1_rtx, mode, outer_code, 1, speed));
 	  return true;
 	}
       /* COMPARE is free in e.g. (compare (plus ...) (const_int 0)).  */
@@ -1421,14 +1455,14 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
 	   || GET_RTX_CLASS (GET_CODE (XEXP (x, 0))) == RTX_BIN_ARITH)
 	  && XEXP (x, 1) == const0_rtx)
 	{
-	  *total = rtx_cost (XEXP (x, 0), outer_code);
+	  *total = rtx_cost (XEXP (x, 0), mode, outer_code, 0, speed);
 	  return true;
 	}
       /* COMPARE is free in overflow checks.  */
       if (GET_CODE (XEXP (x, 0)) == MINUS
 	  && rtx_equal_p (XEXP (x, 1), XEXP (XEXP (x, 0), 0)))
 	{
-	  *total = rtx_cost (XEXP (x, 0), outer_code);
+	  *total = rtx_cost (XEXP (x, 0), mode, outer_code, 0, speed);
 	  return true;
 	}
       if (CONSTANT_P (XEXP (x, 1)))
@@ -1447,8 +1481,8 @@ ia16_rtx_costs (rtx x, int code, int outer_code, int *total)
 	{
 	  /* See above under COMPARE.  */
 	  *total = (IA16_COST (add[I_RTX (x)])
-		    + rtx_cost (XEXP (x, 0), outer_code)
-		    + rtx_cost (const1_rtx, outer_code));
+		    + rtx_cost (XEXP (x, 0), mode, outer_code, 0, speed)
+		    + rtx_cost (const1_rtx, mode, outer_code, 0, speed));
 	  return true;
 	}
       if (REG_P (x))
@@ -1653,7 +1687,7 @@ ia16_print_operand (FILE *file, rtx e, int code)
   else
     x = e;
   if (GET_CODE (x) == SUBREG)
-    x = alter_subreg (&x);
+    x = alter_subreg (&x, true);
   mode = GET_MODE (x);
 
   switch (GET_CODE (x))
@@ -1799,14 +1833,15 @@ ia16_pop_reg (unsigned int regno)
 /* Trampolines for Nested Functions */
 
 #undef TARGET_TRAMPOLINE_INIT
-#define TARGET_TRAMPOLINE_INIT ia16_initialize_trampoline
+#define TARGET_TRAMPOLINE_INIT ia16_trampoline_init
 
 /* tr = trampoline addr, fn = function addr, sc = static chain */
 /* FIXME: TARGET_CODE32 is not supported - add data16 and addr16 prefixes.  */
 void
-ia16_initialize_trampoline (rtx tr, rtx fn, rtx sc)
+ia16_trampoline_init (rtx tr, tree fn, rtx sc)
 {
 	rtx fn_disp;
+
 	/* Opcode register encoding   sBDSbdac for sp bp di si bx dx ax cx */
 	unsigned long int regtable = 045763201;
 
@@ -1839,7 +1874,7 @@ ia16_initialize_trampoline (rtx tr, rtx fn, rtx sc)
 
 	/* Calculate the difference between the function address and %pc, which
 	   points to (tr+4)+2 when the jmp instruction executes.  */
-	fn_disp = expand_binop (Pmode, sub_optab, fn,
+	fn_disp = expand_binop (Pmode, sub_optab, XEXP (DECL_RTL (fn), 0),
 				plus_constant (Pmode, tr, 4 + 2), NULL_RTX, 1,
 				OPTAB_DIRECT);
 
@@ -1969,10 +2004,12 @@ rtx ia16_prepare_operands (enum rtx_code code, rtx *operands)
   /* If op1 is MEM, op0 must be the same mem.  If they are the same mem, then
      op2 must not also be a mem.  */
   if (MEM_P (operands[1]))
-    if (!rtx_equal_p (operands[0], operands[1]))
-      operands[1] = force_reg (GET_MODE (operands[1]), operands[1]);
-    else if (MEM_P (operands[2]))
-      operands[2] = force_reg (GET_MODE (operands[2]), operands[2]);
+    {
+      if (!rtx_equal_p (operands[0], operands[1]))
+	operands[1] = force_reg (GET_MODE (operands[1]), operands[1]);
+      else if (MEM_P (operands[2]))
+	operands[2] = force_reg (GET_MODE (operands[2]), operands[2]);
+    }
 
   /* If op2 is MEM, op0 must be the same mem and CODE != MINUS.  */
   if (MEM_P (operands[2])
