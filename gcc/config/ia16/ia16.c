@@ -377,12 +377,9 @@ ia16_select_cc_mode (enum rtx_code op, rtx x, rtx y,
     return CCmode;
     }
 }
-/* Comparison insns are not emitted until the usage of the comparison result is
- * know.  The comparison operands are saved here.  */
-rtx ia16_cmp_op0, ia16_cmp_op1;
 
 /* Emit a comparison instruction for the comparison operator OP and the two
- * operands X and Y. If BRANCH is true, optimize for a branch instruction. 
+ * operands X and Y. If BRANCH is true, optimize for a branch instruction.
  * Return the register which holds the comparison result.  */
 rtx
 ia16_gen_compare_reg (enum rtx_code op, rtx x, rtx y, bool branch)
@@ -390,8 +387,6 @@ ia16_gen_compare_reg (enum rtx_code op, rtx x, rtx y, bool branch)
   enum machine_mode mode = ia16_select_cc_mode (op, x, y, branch);
   rtx cc_reg = gen_rtx_REG (mode, CC_REG);
 
-  if (MEM_P (x) && MEM_P (y))
-    y = force_reg (GET_MODE (y), y);
   emit_insn (gen_rtx_SET (cc_reg, gen_rtx_COMPARE (mode, x, y)));
   return cc_reg;
 }
@@ -1031,7 +1026,7 @@ ia16_xlat_cost (rtx x, int *total)
 	        && (GET_CODE (zext) != LSHIFTRT || !CONST_INT_P (XEXP (zext, 1))))
 	      || (!general_operand (base, Pmode)))
 	    return (false);
-	  
+	
 	  op1 = XEXP (zext, 0);
 /*	  op2 = XEXP (zext, 1); */
 	  if (GET_CODE (op1) == SUBREG)
@@ -1659,7 +1654,7 @@ static const char *reg_HInames[SP_REG+1] = {
 
 /* E is known not to be null when this is called.  These non-standard codes are
    supported:
-   'L': Print the name of the lower 8-bits of E. 
+   'L': Print the name of the lower 8-bits of E.
    'H': Print the name of the upper 8-bits of E.
    'X': Print the name of E as a 16-bit operand.
    'R': Don't print any register prefix before E.
@@ -1746,7 +1741,7 @@ ia16_print_operand (FILE *file, rtx e, int code)
  * If there is only one register, it will be the base register.
  * This is a helper function for ia16_print_operand_address ().
  */
-static bool 
+static bool
 ia16_parse_address_strict (rtx x, rtx *p_rb, rtx *p_ri, rtx *p_c)
 {
 	rtx tmp;
