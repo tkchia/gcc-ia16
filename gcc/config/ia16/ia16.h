@@ -452,10 +452,6 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
       goto label;							\
 }
 
-/* Condition Code Status.  */
-extern GTY(()) rtx ia16_cmp_op0;
-extern GTY(()) rtx ia16_cmp_op1;
-
 /* Un-canonicalize op0 == -op1 as op0 + op1 == 0. Likewise with !=.  */
 #define CANONICALIZE_COMPARISON(code, op0 ,op1)	\
 {	\
@@ -602,10 +598,13 @@ extern GTY(()) rtx ia16_cmp_op1;
 #define ASM_OUTPUT_MAX_SKIP_ALIGN(stream, power, max_skip) \
 	fprintf (stream, "\t.p2align\t%u,,%u\n", power, max_skip)
 
-/* Controlling Debugging Information Format
- * Skipped - my programs have no bugs :-)
+/* Controlling Debugging Information Format  */
+/* Macros Affecting All Debugging Formats  */
+#undef PREFERRED_DEBUGGING_TYPE
+/* Macros for SDB and DWARF Output  */
+#undef DWARF2_DEBUGGING_INFO
 
- * Cross Compilation and Floating Point
+/* Cross Compilation and Floating Point
  * Skipped for now.
 
  * Mode Switching Instructions

@@ -56,10 +56,3 @@ endif
 # These might cause a divide overflow trap and so are compiled with
 # unwinder info.
 lib2_divmodsi_funcs = _divXX3 _modXX3 _udivXX3 _umodXX3 _udivmodXX4
-
-lib2-divmodsi-o = $(patsubst %,%$(objext),$(subst XX,si,$(lib2_divmodsi_funcs)))
-$(lib2-divmodsi-o): %$(objext): $(gcc_srcdir)/libgcc2.c
-	$(gcc_compile) -DL$(subst si,di,$*) -c $(gcc_srcdir)/libgcc2.c \
-	  -fexceptions -fnon-call-exceptions $(vis_hide) \
-	-DLIBGCC2_UNITS_PER_WORD=2
-libgcc-objects += $(lib2-divmodsi-o)
