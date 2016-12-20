@@ -178,6 +178,7 @@ static bitmap consideration_allocno_bitmap;
 
 /* All allocnos sorted according their priorities.  */
 static ira_allocno_t *sorted_allocnos;
+static int n_sorted_allocnos;
 
 /* Vec representing the stack of allocnos used during coloring.  */
 static vec<ira_allocno_t> allocno_stack_vec;
@@ -2937,6 +2938,17 @@ improve_allocation (void)
 		/* No intersection.  */
 		continue;
 	      ALLOCNO_HARD_REGNO (conflict_a) = -1;
+	      if (n == n_sorted_allocnos)
+		{
+		  ira_allocno_t *sorted_allocnos_expanded
+		    = (ira_allocno_t *) ira_allocate (sizeof (ira_allocno_t)
+						      * n_sorted_allocnos * 2);
+		  memcpy (sorted_allocnos_expanded, sorted_allocnos,
+			  sizeof (ira_allocno_t) * n_sorted_allocnos);
+		  ira_free (sorted_allocnos);
+		  sorted_allocnos = sorted_allocnos_expanded;
+		  n_sorted_allocnos *= 2;
+		}
 	      sorted_allocnos[n++] = conflict_a;
 	      if (internal_flag_ira_verbose > 2 && ira_dump_file != NULL)
 		fprintf (ira_dump_file, "Spilling a%dr%d for a%dr%d\n",
@@ -4740,6 +4752,7 @@ ira_initiate_assign (void)
   sorted_allocnos
     = (ira_allocno_t *) ira_allocate (sizeof (ira_allocno_t)
 				      * ira_allocnos_num);
+  n_sorted_allocnos = ira_allocnos_num;
   consideration_allocno_bitmap = ira_allocate_bitmap ();
   initiate_cost_update ();
   allocno_priorities = (int *) ira_allocate (sizeof (int) * ira_allocnos_num);
@@ -4797,6 +4810,7 @@ fast_allocation (void)
 
   sorted_allocnos = (ira_allocno_t *) ira_allocate (sizeof (ira_allocno_t)
 						    * ira_allocnos_num);
+  n_sorted_allocnos = ira_allocnos_num;
   num = 0;
   FOR_EACH_ALLOCNO (a, ai)
     sorted_allocnos[num++] = a;

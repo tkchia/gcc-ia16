@@ -144,6 +144,9 @@ ia16_secondary_reload (bool in_p, rtx x, reg_class_t reload_class,
   return (NO_REGS);
 }
 
+#undef TARGET_LRA_P
+#define TARGET_LRA_P hook_bool_void_true
+
 #undef TARGET_CLASS_LIKELY_SPILLED_P
 #define TARGET_CLASS_LIKELY_SPILLED_P ia16_class_likely_spilled_p
 

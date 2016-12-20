@@ -451,20 +451,20 @@
 ; when bx is a scratch register.
 ; FIXME Documentation doesn't say you can't use constraints except in
 ; match_scratch.
-(define_peephole2
-  [(set (reg:SET_CC CC_REG)
-	(compare:SET_CC (and:MO (match_operand:MO 0 "register_operand")
-				(match_operand:MO 1 "general_operand"))
-			(const_int 0)))]
-  "peep2_reg_dead_p (1, operands[0])"
-  [(parallel
-  [(set (reg:SET_CC CC_REG)
-	(compare:SET_CC (and:MO (match_dup 0) (match_dup 1))
-			(const_int 0)))
-   (clobber (match_dup 0))]
-  )]
-  ""
-)
+;(define_peephole2
+;  [(set (reg:SET_CC CC_REG)
+;	(compare:SET_CC (and:MO (match_operand:MO 0 "register_operand")
+;				(match_operand:MO 1 "general_operand"))
+;			(const_int 0)))]
+;  "peep2_reg_dead_p (1, operands[0])"
+;  [(parallel
+;  [(set (reg:SET_CC CC_REG)
+;	(compare:SET_CC (and:MO (match_dup 0) (match_dup 1))
+;			(const_int 0)))
+;   (clobber (match_dup 0))]
+;  )]
+;  ""
+;)
 
 ; Try to rewrite
 ;	movw	$648,	%bp
