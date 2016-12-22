@@ -165,7 +165,7 @@ ia16_class_likely_spilled_p (reg_class_t rclass)
 }
 
 #undef TARGET_FRAME_POINTER_REQUIRED
-#define TARGET_FRAME_POINTER_REQUIRED hook_bool_void_false
+#define TARGET_FRAME_POINTER_REQUIRED hook_bool_void_true
 
 /* Returns non-zero if register r must be saved by a function, zero if not.  */
 /* Always returns zero for upper halves of 16-bit registers
@@ -1838,49 +1838,51 @@ ia16_pop_reg (unsigned int regno)
 void
 ia16_trampoline_init (rtx tr, tree fn, rtx sc)
 {
-	rtx fn_disp;
+  rtx fn_disp;
+  rtx mem;
 
-	/* Opcode register encoding   sBDSbdac for sp bp di si bx dx ax cx */
-	unsigned long int regtable = 045763201;
+  /* Opcode register encoding   sBDSbdac for sp bp di si bx dx ax cx */
+  unsigned long int regtable = 045763201;
 
-	/* Base opcode for movw $imm16, reg16.  */
-	unsigned char mov_opcode = 0xb8;
-	unsigned char regno = STATIC_CHAIN_REGNUM;
+  /* Base opcode for movw $imm16, reg16.  */
+  unsigned char mov_opcode = 0xb8;
+  unsigned char regno = STATIC_CHAIN_REGNUM;
 
-	if (TARGET_SEPARATE_CSEG)
-	  {
-	    sorry ("Trampolines are disabled by -mseparate-code-segment.");
-	    abort ();
-	  }
+  if (TARGET_SEPARATE_CSEG)
+    {
+      sorry ("Trampolines are disabled by -mseparate-code-segment.");
+      abort ();
+    }
 
-	if (TEST_HARD_REG_BIT (reg_class_contents[QI_REGS], regno))
-		regno /= 2;
-	else
-		regno -= 4;
-	mov_opcode |= (regtable >> (regno * 3)) & 7;
+  if (TEST_HARD_REG_BIT (reg_class_contents[QI_REGS], regno))
+    regno /= 2;
+  else
+    regno -= 4;
+  mov_opcode |= (regtable >> (regno * 3)) & 7;
 
-	/* Write the movw opcode.  */
-	emit_move_insn (gen_rtx_MEM (QImode, tr),
-			GEN_INT ((signed char) mov_opcode));
+  /* Write the movw opcode.  */
+  mem = adjust_address (tr, QImode, 0);
+  emit_move_insn (mem, gen_int_mode (mov_opcode, QImode));
 
-	/* Write the static chain value.  */
-	emit_move_insn (gen_rtx_MEM (Pmode, plus_constant (Pmode, tr, 1)), sc);
+  /* Write the static chain value.  */
+  mem = adjust_address (tr, HImode, 1);
+  emit_move_insn (mem, sc);
 
-	/* Write the absolute jmp opcode.  */
-	emit_move_insn (gen_rtx_MEM (QImode, plus_constant (Pmode, tr, 3)),
-	                GEN_INT ((signed char) 0xe9));
+  /* Write the absolute jmp opcode.  */
+  mem = adjust_address (tr, QImode, 3);
+  emit_move_insn (mem, gen_int_mode (0xe9, QImode));
 
-	/* Calculate the difference between the function address and %pc, which
-	   points to (tr+4)+2 when the jmp instruction executes.  */
-	fn_disp = expand_binop (Pmode, sub_optab, XEXP (DECL_RTL (fn), 0),
-				plus_constant (Pmode, tr, 4 + 2), NULL_RTX, 1,
-				OPTAB_DIRECT);
+  /* Calculate the difference between the function address and %pc, which
+     points to (tr+4)+2 when the jmp instruction executes.  */
+  mem = adjust_address (tr, Pmode, 4 + 2);
+  fn_disp = expand_binop (Pmode, sub_optab, XEXP (DECL_RTL (fn), 0),
+			  mem, NULL_RTX, 1, OPTAB_DIRECT);
 
-	/* Write the jmp offset.  */
-	emit_move_insn (gen_rtx_MEM (Pmode, plus_constant (Pmode, tr, 4)),
-			fn_disp);
+  /* Write the jmp offset.  */
+  mem = adjust_address (tr, HImode, 4);
+  emit_move_insn (mem, fn_disp);
 
-	/* Done.  That wasn't a lot of fun.  */
+  /* Done.  That wasn't a lot of fun.  */
 }
 
 /* Addressing Modes.  */
