@@ -335,8 +335,11 @@ proc gcc-dg-prune { system text } {
     if { !$allow_blank_lines } {
 	set num_blank_lines [llength [regexp -all -inline "\n\n" $text]]
 	if { $num_blank_lines } {
-	    global testname_with_flags
-	    fail "$testname_with_flags $num_blank_lines blank line(s) in output"
+	    set testcase ""
+	    if [info exists testname_with_flags] {
+		set testcase $testname_with_flags
+	    }
+	    fail "$testcase $num_blank_lines blank line(s) in output"
 	}
 	set allow_blank_lines 0
     }

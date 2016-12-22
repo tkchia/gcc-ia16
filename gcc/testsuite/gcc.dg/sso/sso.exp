@@ -33,6 +33,8 @@ set SSO_TORTURE_OPTIONS [list \
 set-torture-options $SSO_TORTURE_OPTIONS
 
 if { ![check_effective_target_int32] } {
+    dg-finish
+    torture-finish
     return
 }
 
