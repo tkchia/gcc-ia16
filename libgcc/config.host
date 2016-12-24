@@ -124,7 +124,8 @@ x86_64-*-*)
 	cpu_type=i386
 	;;
 ia16-*-*)
-	tmake_file="ia16/t-ia16"
+	cpu_type=i8086
+	tmake_file=t-fdpbit
 	;;
 ia64-*-*)
 	;;
@@ -751,7 +752,7 @@ i[34567]86-*-interix[3-9]*)
 	;;
 ia16-*-*)
 	extra_parts=""
-	tmake_file="ia16/t-ia16"
+	tmake_file="$tmake_file ia16/t-ia16"
 	;;
 ia64*-*-elf*)
 	extra_parts="$extra_parts crtbeginS.o crtendS.o crtfastmath.o"
