@@ -303,8 +303,7 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 /* TODO: Check that this is still correct.  */
 #define RETURN_ADDR_RTX(COUNT, FRAME)				       	      \
 	((COUNT) == 0							      \
-	 ? gen_rtx_MEM (Pmode, plus_constant (Pmode, arg_pointer_rtx,         \
-					      -UNITS_PER_WORD))		      \
+	 ? gen_rtx_MEM (Pmode, arg_pointer_rtx)				      \
 	 : gen_rtx_MEM (Pmode, plus_constant (Pmode, FRAME, UNITS_PER_WORD)))
 
 /* Exception Handling Support */
@@ -633,7 +632,7 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 #define TRULY_NOOP_TRUNCATION(outprec, inprec) 1
 #define STORE_FLAG_VALUE		(-1)
 #define Pmode				HImode
-#define FUNCTION_MODE			PQImode
+#define FUNCTION_MODE			QImode
 
 
 /* Which processor to tune code generation for.  These must be in sync

@@ -1876,7 +1876,8 @@ ia16_trampoline_init (rtx tr, tree fn, rtx sc)
      points to (tr+4)+2 when the jmp instruction executes.  */
   mem = adjust_address (tr, Pmode, 4 + 2);
   fn_disp = expand_binop (Pmode, sub_optab, XEXP (DECL_RTL (fn), 0),
-			  mem, NULL_RTX, 1, OPTAB_DIRECT);
+			  plus_constant (Pmode, XEXP (tr, 0), 4 + 2), NULL_RTX,
+			  1, OPTAB_DIRECT);
 
   /* Write the jmp offset.  */
   mem = adjust_address (tr, HImode, 4);

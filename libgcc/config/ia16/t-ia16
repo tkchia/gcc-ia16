@@ -1,35 +1,18 @@
 # 16.1 Target Makefile Fragments
 
-# We want fine grained libraries, so use the new code
-# to build the floating point emulation libraries.
-FPBIT = fp-bit.c
-DPBIT = dp-bit.c
-#TPBIT = tp-bit.c
-
-$(gcc_objdir)/fp-bit.c: $(gcc_srcdir)/config/fp-bit.c
-	echo '#define FLOAT' > $(gcc_objdir)/fp-bit.c
-	echo '#define SMALL_MACHINE' >> $(gcc_objdir)/fp-bit.c
-	cat $(gcc_srcdir)/config/fp-bit.c >> $(gcc_objdir)/fp-bit.c
-
-$(gcc_objdir)/dp-bit.c: $(gcc_srcdir)/config/fp-bit.c
-	echo '#define SMALL_MACHINE' > $(gcc_objdir)/dp-bit.c
-	cat $(gcc_srcdir)/config/fp-bit.c >> $(gcc_objdir)/dp-bit.c
-
-#$(gcc_objdir)/tp-bit.c: $(gcc_srcdir)/config/fp-bit.c
-#	echo '#define EXTENDED_FLOAT_STUBS' > $(gcc_objdir)/tp-bit.c
-#	echo '#define SMALL_MACHINE' >> $(gcc_objdir)/tp-bit.c
-#	cat $(gcc_srcdir)/config/fp-bit.c >> $(gcc_objdir)/tp-bit.c
+FPBIT_CFLAGS = -DSMALL_MACHINE
+DPBIT_CFLAGS = -DSMALL_MACHINE
 
 # Extra 32-bit integer functions.
 intfuncs32 = _ashlXX3 _ashrXX3 _lshrXX3 _cmpXX2 _ucmpXX2
 siintfuncs32 = $(subst XX,si,$(intfuncs32))
 diintfuncs32 = $(subst XX,di,$(intfuncs32))
 
-#iter-items := $(siintfuncs)
-#iter-labels := $(diintfuncs)
-#iter-sizes := $(patsubst %,2,$(siintfuncs))
+iter-items := $(siintfuncs)
+iter-labels := $(diintfuncs)
+iter-sizes := $(patsubst %,2,$(siintfuncs))
 
-#include $(srcdir)/empty.mk $(patsubst %,$(srcdir)/siditi-object.mk,$(iter-items))
+include $(srcdir)/empty.mk $(patsubst %,$(srcdir)/siditi-object.mk,$(iter-items))
 
 libgcc-objects += $(patsubst %,%$(objext),$(siintfuncs32))
 ifeq ($(enable_shared),yes)
@@ -56,3 +39,10 @@ endif
 # These might cause a divide overflow trap and so are compiled with
 # unwinder info.
 lib2_divmodsi_funcs = _divXX3 _modXX3 _udivXX3 _umodXX3 _udivmodXX4
+
+lib2-divmodsi-o = $(patsubst %,%$(objext),$(subst XX,si,$(lib2_divmodsi_funcs)))
+$(lib2-divmodsi-o): %$(objext): $(srcdir)/libgcc2.c
+	$(gcc_compile) -DL$(subst si,di,$*) -c $< \
+	  $(LIB2_DIVMOD_EXCEPTION_FLAGS) $(vis_hide) \
+	-DLIBGCC2_UNITS_PER_WORD=2
+libgcc-objects += $(lib2-divmodsi-o)
