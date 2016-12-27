@@ -701,7 +701,10 @@ ia16_i808x_address_cost (rtx r1, rtx r2, rtx c)
         cost += C (4) + ia16_constant_cost (c, Pmode, MEM);
     }
   else
-    cost = C (6) + ia16_constant_cost (c, Pmode, MEM);;
+    {
+      if (c)
+	cost = C (6) + ia16_constant_cost (c, Pmode, MEM);;
+    }
 
   return (cost);
 }
@@ -1886,9 +1889,7 @@ ia16_trampoline_init (rtx tr, tree fn, rtx sc)
   /* Done.  That wasn't a lot of fun.  */
 }
 
-/* Addressing Modes.  */
-/* Check an address E and optionally split it into its components.
- */
+/* Subroutine of ia16_parse_address.  */
 bool
 ia16_parse_address (rtx e, rtx *p_r1, rtx *p_r2, rtx *p_c)
 {
@@ -1933,6 +1934,23 @@ ia16_parse_address (rtx e, rtx *p_r1, rtx *p_r2, rtx *p_c)
 		*p_c = c;
 
 	return (0 == 0);
+}
+
+/* Addressing Modes.  */
+/* Check an address E and optionally split it into its components.
+*/
+bool
+ia16_parse_address (rtx e, rtx *p_r1, rtx *p_r2, rtx *p_c)
+{
+  if (ia16_parse_address_internal (e, p_r1, p_r2, p_c))
+    return true;
+  if (p_r1)
+    *p_r1 = NULL;
+  if (p_r2)
+    *p_r2 = NULL;
+  if (p_c)
+    *p_c = NULL;
+  return false;
 }
 
 /* Miscellaneous Parameters */

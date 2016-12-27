@@ -1799,7 +1799,7 @@ x86_64-*-fuchsia*)
 	tmake_file="${tmake_file} i386/t-x86_64-elf"
 	tm_file="${tm_file} i386/unix.h i386/att.h elfos.h newlib-stdint.h i386/i386elf.h i386/x86-64.h fuchsia.h"
 ia16-*-elf)
-	tm_file="elfos.h ${tm_file} ia16/elf.h"
+	tm_file="elfos.h ${tm_file} ia16/elf.h newlib-stdint.h"
 	tmake_file="ia16/t-ia16"
 	;;
 ia16-*-elks)
