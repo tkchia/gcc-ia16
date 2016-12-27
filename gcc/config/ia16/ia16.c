@@ -1891,7 +1891,7 @@ ia16_trampoline_init (rtx tr, tree fn, rtx sc)
 
 /* Subroutine of ia16_parse_address.  */
 bool
-ia16_parse_address (rtx e, rtx *p_r1, rtx *p_r2, rtx *p_c)
+ia16_parse_address_internal (rtx e, rtx *p_r1, rtx *p_r2, rtx *p_c)
 {
 	rtx x, y;
 	rtx r1 = NULL, r2 = NULL, c = NULL;
