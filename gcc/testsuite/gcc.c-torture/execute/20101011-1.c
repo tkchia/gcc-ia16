@@ -89,6 +89,9 @@ __aeabi_idiv0 (int return_value)
 #elif defined (__nvptx__)
 /* There isn't even a signal function.  */
 # define DO_TEST 0
+#elif defined (__ia16__)
+/* We need to hook a hardware interrupt and implement it in the simulator.  */
+# define DO_TEST 0
 #else
 # define DO_TEST 1
 #endif

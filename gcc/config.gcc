@@ -1807,7 +1807,7 @@ i[34567]86-*-interix[3-9]*)
 	fi
 	;;
 ia16-*-elf)
-	tm_file="elfos.h ${tm_file} ia16/elf.h"
+	tm_file="elfos.h ${tm_file} ia16/elf.h newlib-stdint.h"
 	tmake_file="ia16/t-ia16"
 	;;
 ia16-*-elks)
