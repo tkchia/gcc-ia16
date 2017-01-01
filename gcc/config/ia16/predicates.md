@@ -23,6 +23,11 @@
 	(match_operand 0 "memory_operand"))
 )
 
+(define_predicate "general_or_concat_operand"
+   (ior (match_operand 0 "general_operand")
+	(match_code "concat"))
+)
+
 ; This is like "register_operand", but subregs of multiword registers are not
 ; allowed. This is to prevent the combiner from re-inserting such subregs
 ; into the insn.

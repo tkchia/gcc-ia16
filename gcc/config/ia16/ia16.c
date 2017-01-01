@@ -1710,7 +1710,8 @@ ia16_print_operand (FILE *file, rtx e, int code)
 
       case CONST_VECTOR:
       fprintf (file, "%s" HOST_WIDE_INT_PRINT_DEC, IMMEDIATE_PREFIX,
-	       INTVAL (XVECEXP (x, 0, 0)) + 256 * INTVAL (XVECEXP (x, 0, 1)));
+	       (UINTVAL (XVECEXP (x, 0, 0)) & 0xff)
+	       + 256 * INTVAL (XVECEXP (x, 0, 1)));
       break;
 
       /* TODO: handle floating point constants here.  */
