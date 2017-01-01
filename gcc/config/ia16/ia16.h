@@ -299,12 +299,15 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 #define STARTING_FRAME_OFFSET 0
 #define FIRST_PARM_OFFSET(fundecl) ia16_first_parm_offset ()
 
-/* Taken from i386/i386.h.  */
-/* TODO: Check that this is still correct.  */
+/* Because we have no way of knowing how many registers are saved between the
+   return address and the frame pointer, we can't find the return address for
+   count > 0.
+   TODO: Make this work by pushing the frame pointer before the saved regs
+   when not using ENTER.  */
 #define RETURN_ADDR_RTX(COUNT, FRAME)				       	      \
 	((COUNT) == 0							      \
 	 ? gen_rtx_MEM (Pmode, arg_pointer_rtx)				      \
-	 : gen_rtx_MEM (Pmode, plus_constant (Pmode, FRAME, UNITS_PER_WORD)))
+	 : NULL_RTX)
 
 /* Exception Handling Support */
 /* XXX needs work.  */

@@ -3730,7 +3730,7 @@ subreg_get_info (unsigned int xregno, machine_mode xmode,
       rknown = true;
     }
   info->offset = (y_offset / (mode_multiple / nregs_multiple)) * nregs_ymode;
-  info->nregs = nregs_ymode;
+  info->nregs = hard_regno_nregs[xregno + info->offset][ymode];
 }
 
 /* This function returns the regno offset of a subreg expression.
