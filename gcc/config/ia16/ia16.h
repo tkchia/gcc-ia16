@@ -656,3 +656,7 @@ enum processor_type
 };
 
 extern int ia16_features;
+
+
+/* The linker will take care of this.  */
+#define CTOR_LISTS_DEFINED_EXTERNALLY 1
