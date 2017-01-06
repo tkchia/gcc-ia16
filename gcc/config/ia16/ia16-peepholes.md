@@ -176,7 +176,7 @@
 {
   operands[4] = simplify_gen_subreg (HImode, operands[0], QImode, 0);
   if (CONST_INT_P (operands[1]) && CONST_INT_P (operands[3]))
-    operands[5] = gen_rtx_CONST_INT (HImode, INTVAL (operands[1])
+    operands[5] = gen_rtx_CONST_INT (HImode, (UINTVAL (operands[1]) & 0xff)
 				     + INTVAL (operands[3]) * 256);
   else
     operands[5] = widen_memory_access (operands[1], HImode, 0);
@@ -195,7 +195,7 @@
    && ia16_move_multiple_mem_p (QImode, operands[0], operands[2])"
 {
   if (CONST_INT_P (operands[1]) && CONST_INT_P (operands[3]))
-    operands[4] = gen_rtx_CONST_INT (HImode, INTVAL (operands[1])
+    operands[4] = gen_rtx_CONST_INT (HImode, (UINTVAL (operands[1]) & 0xff)
 				     + INTVAL (operands[3]) * 256);
   else
     operands[4] = simplify_gen_subreg (HImode, operands[1], QImode, 0);
