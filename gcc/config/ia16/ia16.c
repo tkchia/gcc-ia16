@@ -147,6 +147,25 @@ ia16_secondary_reload (bool in_p, rtx x, reg_class_t reload_class,
 #undef TARGET_LRA_P
 #define TARGET_LRA_P hook_bool_void_true
 
+#undef TARGET_CANNOT_SUBSTITUTE_MEM_EQUIV_P
+#define TARGET_CANNOT_SUBSTITUTE_MEM_EQUIV_P ia16_cannot_substitute_mem_equiv_p
+
+/* Return true if SUBST can't safely replace its equivalent during RA.  */
+static bool
+ia16_cannot_substitute_mem_equiv_p(rtx subst)
+{
+  if (!MEM_P (subst))
+    return false;
+  rtx e = XEXP (subst, 0);
+  if (GET_CODE(e) != PLUS)
+    return false;
+  rtx x = XEXP (e, 0);
+  if (GET_CODE(x) == PLUS)
+    return true;
+  rtx y = XEXP (e, 1);
+  return GET_CODE(x) == REG && GET_CODE(y) == REG;
+}
+
 #undef TARGET_CLASS_LIKELY_SPILLED_P
 #define TARGET_CLASS_LIKELY_SPILLED_P ia16_class_likely_spilled_p
 
