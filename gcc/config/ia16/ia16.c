@@ -166,23 +166,6 @@ ia16_cannot_substitute_mem_equiv_p(rtx subst)
   return GET_CODE(x) == REG && GET_CODE(y) == REG;
 }
 
-#undef TARGET_CLASS_LIKELY_SPILLED_P
-#define TARGET_CLASS_LIKELY_SPILLED_P ia16_class_likely_spilled_p
-
-/* IA16 easily qualifies as having small register classes.  But I
-   have yet to see a case where using small register classes made a
-   reload failure go away, so don't turn it on.
-   However, compiling the testcase calltest.c will fail if we don't
-   turn this it _or_ make this case caught by
-   TARGET_CLASS_LIKELY_SPILLED_P (REGNO_REG_CLASS (A_REG)).
-*/
-static bool
-ia16_class_likely_spilled_p (reg_class_t rclass)
-{
-  return rclass == AX_REGS || rclass == DX_REGS
-    || reg_class_size[(int)rclass] == 1;
-}
-
 #undef TARGET_FRAME_POINTER_REQUIRED
 #define TARGET_FRAME_POINTER_REQUIRED hook_bool_void_true
 
