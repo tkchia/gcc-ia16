@@ -43,11 +43,9 @@
 #define WORDS_BIG_ENDIAN 0
 #define UNITS_PER_WORD 2
 
-/* Strictly speaking, FUNCTION_BOUNDARY could be just 8 bits.  But IIRC, I
- * make an assumption somewhere else that it is at least 16 bits.  */
 #define PARM_BOUNDARY		BITS_PER_WORD
 #define STACK_BOUNDARY		BITS_PER_WORD
-#define FUNCTION_BOUNDARY	BITS_PER_WORD
+#define FUNCTION_BOUNDARY	BITS_PER_UNIT
 #define BIGGEST_ALIGNMENT	BITS_PER_WORD
 #define STRUCTURE_SIZE_BOUNDARY	BITS_PER_UNIT
 #define STRICT_ALIGNMENT	0
@@ -235,8 +233,8 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
  * addressing when not eliminating the frame pointer.  This improves i80286
  * __gcc_bcmp() a lot (or it used to).
  */
-#define MODE_BASE_REG_CLASS(mode)	((mode) == PQImode ? GENERAL_REGS : BASE_REGS)
-#define MODE_BASE_REG_REG_CLASS(mode)	((mode) == PQImode ? NO_REGS : INDEX_REGS)
+#define MODE_BASE_REG_CLASS(mode)	BASE_REGS
+#define MODE_BASE_REG_REG_CLASS(mode)	INDEX_REGS
 #define INDEX_REG_CLASS			BASE_W_INDEX_REGS
 
 /* FIXME: Documentation:
@@ -418,25 +416,12 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 
 #endif
 
-/* PQImode is used for the function addresses in call insns, so we can
- * recognize them here.  */
 #define GO_IF_LEGITIMATE_ADDRESS(xmode, x, label)			\
 { rtx y, r1, r2;							\
   enum machine_mode ymode;						\
 									\
-  if ((xmode) == PQImode)						\
-    if (CONSTANT_P (x) || (REG_P (x) && REG_MODE_OK_FOR_BASE_P (x, xmode))) \
-      goto label;							\
-    else								\
-      {									\
-        y = XEXP (x, 0);						\
-	ymode = GET_MODE (y);						\
-      }									\
-  else									\
-    {									\
-      y = x;								\
-      ymode = xmode;							\
-    }									\
+  y = x;								\
+  ymode = xmode;							\
   if (ia16_parse_address (y, &r1, &r2, NULL))				\
     if (r1)								\
       if (r2)								\

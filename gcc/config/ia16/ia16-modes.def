@@ -19,10 +19,6 @@
 */
 /* Please keep these definition in sync with ia16_hard_regno_nregs[][].  */
 
-/* The only purpose of this mode is to be able to tell function addresses
- * apart from other addresses.  */
-PARTIAL_INT_MODE (QI, -1U, PQI);
-
 VECTOR_MODE (INT, QI, 2);
 
 /* Comparison modes.  The basic CCmode contains all of the Sign,
