@@ -278,8 +278,6 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
  	 GET_MODE_SIZE (mode) :						\
 	 (GET_MODE_SIZE (mode) + 1U) / 2U) + 0U)
 
-#define HARD_REGNO_NREGS_OVERRIDES_CLASS_MAX_NREGS
-
 /* HI_REGS cannot change mode to QImode.  We cannot change mode to a
  * larger mode without increasing the number of hard regs used.
  * TODO: This will change when x87 FPUs are supported.  */
