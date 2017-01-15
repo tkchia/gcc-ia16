@@ -33,6 +33,8 @@ proc libstdc++-dg-prune { system text } {
 
 #    send_user "Before:$text\n"
 
+    regsub -all "(^|\n)\[^\n\]*: warning: target system does not support debug output\[^\n\]*" $text "" text
+
     # Ignore caret diagnostics. Unfortunately dejaGNU trims leading
     # spaces, so one cannot rely on them being present.
     regsub -all "(^|\n)\[^\n\]+\n *\\^\n" $text "\n" text

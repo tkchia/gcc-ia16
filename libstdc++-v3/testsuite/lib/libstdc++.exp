@@ -501,6 +501,8 @@ proc v3_target_compile { source dest type options } {
     lappend options "timeout=[timeout_value]"
 
     set comp_output [target_compile $source $dest $type $options]
+    regsub -all "(^|\n)\[^\n\]*: warning: target system does not support debug output\[^\n\]*" $comp_output "" comp_output
+    set comp_output [string trim $comp_output]
 
     return $comp_output
 }
