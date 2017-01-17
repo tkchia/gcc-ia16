@@ -285,7 +285,7 @@ namespace
       unsigned char c3 = from[2];
       if ((c3 & 0xC0) != 0x80)
 	return invalid_mb_sequence;
-      char32_t c = (((char32_t)c1 << 12) + (c2 << 6) + c3 - 0xE2080;
+      char32_t c = ((char32_t)c1 << 12) + (c2 << 6) + c3 - 0xE2080;
       if (c <= maxcode)
 	from += 3;
       return c;
