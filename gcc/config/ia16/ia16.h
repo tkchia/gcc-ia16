@@ -62,7 +62,7 @@
 
 #define DEFAULT_SIGNED_CHAR		1
 #define SIZE_TYPE			"unsigned int"
-#define PTRDIFF_TYPE			"short int"
+#define PTRDIFF_TYPE			"int"
 #define WCHAR_TYPE_SIZE			16
 
 #define TARGET_VTABLE_USES_DESCRIPTORS 0

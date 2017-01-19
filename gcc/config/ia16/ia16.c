@@ -1576,6 +1576,10 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
     case CONCAT:
       return false;
 
+    /* See comment above get_last_value (const_rtx) in combine.c.  */
+    case CLOBBER:
+      return false;
+
     default:
       fprintf (stderr, "Unknown cost for rtx with code %s and "
                "outer code %s:\n", GET_RTX_NAME (code),
