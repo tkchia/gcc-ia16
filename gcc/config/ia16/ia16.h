@@ -52,8 +52,8 @@
 #define PCC_BITFIELD_TYPE_MATTERS 1
 
 /* Layout of Source Language Data Types.  */
-#define       SHORT_TYPE_SIZE 16
 #define         INT_TYPE_SIZE 16
+#define       SHORT_TYPE_SIZE 16
 #define        LONG_TYPE_SIZE 32
 #define   LONG_LONG_TYPE_SIZE 64
 #define       FLOAT_TYPE_SIZE 32
@@ -342,12 +342,10 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 
 /* Passing Arguments in Registers */
 /* TODO: Allow arguments to be passed in registers.  */
-#define FUNCTION_ARG_REGNO_P(regno)		0
 #define CUMULATIVE_ARGS				int
-
-/* The next two were modified from m68k/m68k.h.  */
 #define INIT_CUMULATIVE_ARGS(CUM, FNTYPE, LIBNAME, INDIRECT, N_NAMED_ARGS) \
-	((CUM) = 0)
+  ((CUM) = 0)
+#define FUNCTION_ARG_REGNO_P(regno)		0
 
 /* How Scalar Function Values Are Returned */
 #define LIBCALL_VALUE(mode)	\
@@ -437,18 +435,11 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
       goto label;							\
 }
 
-/* Un-canonicalize op0 == -op1 as op0 + op1 == 0. Likewise with !=.  */
-#define CANONICALIZE_COMPARISON(code, op0 ,op1)	\
-{	\
-  if ((code == EQ || code == NE)	\
-      && GET_CODE (op1) == NEG)		\
-    {					\
-      op0 = gen_rtx_PLUS (GET_MODE (op0), op0, XEXP (op1, 0));	\
-      op1 = const0_rtx;			\
-    }					\
-}
-#define SELECT_CC_MODE(op, x, y)	ia16_select_cc_mode (op, x, y, false)
+/* Condition Code Status */
 
+/* Representation of condition codes using registers */
+
+#define SELECT_CC_MODE(op, x, y)        ia16_select_cc_mode (op, x, y, false)
 #define REVERSIBLE_CC_MODE(mode)	1
 
 /* Describing Relative Costs of Operations.
@@ -513,16 +504,15 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 
 /* Output and Generation of Labels.  */
 
-/* The prefix to add for compiler private assembler symbols.  */
-#undef LOCAL_LABEL_PREFIX
-#define LOCAL_LABEL_PREFIX "."
+/* Used by target hook TARGET_ASM_GLOBALIZE_LABEL. */
+#define GLOBAL_ASM_OP   "\t.global\t"
 
 #undef ASM_GENERATE_INTERNAL_LABEL
 #define ASM_GENERATE_INTERNAL_LABEL(BUF,PREFIX,NUMBER)  \
   sprintf ((BUF), LOCAL_LABEL_PREFIX "%s%ld", (PREFIX), (long)(NUMBER))
 
 /* Used by target hook TARGET_ASM_GLOBALIZE_LABEL. */
-#define GLOBAL_ASM_OP	"\t.global\t"
+#define GLOBAL_ASM_OP   "\t.global\t"
 
 /* This is obsoleted by TARGET_ASM_EXTERNAL_LIBCALL and wrong in elfos.h.  */
 #undef ASM_OUTPUT_EXTERNAL_LIBCALL
@@ -574,7 +564,7 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 #define ASM_OUTPUT_ADDR_DIFF_ELT(stream, body, value, rel) \
 	fprintf (stream, "\t.word\t.%u-.%u\n", value, rel)
 
-/* Assembler Commands for Exception Regions.  */
+/* Assembler Commands for Alignment.  */
 #undef ASM_OUTPUT_SKIP
 #define ASM_OUTPUT_SKIP(stream, nbytes) asm_fprintf (stream, "\t.skip\t%wu,0\n", nbytes)
 #define ASM_OUTPUT_ALIGN(stream, power) fprintf (stream, "\t.p2align\t%u\n", power)

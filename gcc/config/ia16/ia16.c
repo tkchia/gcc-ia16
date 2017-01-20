@@ -396,6 +396,20 @@ ia16_gen_compare_reg (enum rtx_code op, rtx x, rtx y, bool branch)
   return cc_reg;
 }
 
+#undef  TARGET_CANONICALIZE_COMPARISON
+#define TARGET_CANONICALIZE_COMPARISON ia16_canonicalize_comparison
+
+static void
+ia16_canonicalize_comparison (int *code, rtx *op0, rtx *op1,
+			      bool op0_preserve_value ATTRIBUTE_UNUSED)
+{
+  if ((*code == EQ || *code == NE) && GET_CODE (*op1) == NEG)
+    {
+      *op0 = gen_rtx_PLUS (GET_MODE (*op0), *op0, XEXP (*op1, 0));
+      *op1 = const0_rtx;
+    }
+}
+
 #undef  TARGET_FIXED_CONDITION_CODE_REGS
 #define TARGET_FIXED_CONDITION_CODE_REGS ia16_fixed_condition_code_regs
 
