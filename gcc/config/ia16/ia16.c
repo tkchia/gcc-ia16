@@ -23,7 +23,6 @@
  *
  * FIXME: Docs say config.h includes tm.h, but it doesn't.
  */
-#define REG_OK_STRICT
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -330,6 +329,53 @@ ia16_return_in_memory (const_tree type, const_tree fntype ATTRIBUTE_UNUSED)
    * used registers or requires the prologue and epilogue patterns to not
    * touch the return value registers.  */
    return (TYPE_MODE (type) == BLKmode || int_size_in_bytes (type) > 4);
+}
+
+/* Addressing Modes */
+
+#undef TARGET_LEGITIMATE_ADDRESS_P
+#define TARGET_LEGITIMATE_ADDRESS_P ia16_legitimate_address_p
+static bool
+ia16_legitimate_address_p (machine_mode mode, rtx x, bool strict)
+{
+  rtx r1, r2;
+  if (CONSTANT_P (x))
+    return true;
+  if (!ia16_parse_address (x, &r1, &r2, NULL))
+    return false;
+  if (r1 == NULL_RTX)
+    return true;
+  int r1no = REGNO (r1);
+  bool r1ok = true;
+  if (strict)
+    {
+      r1ok = false;
+      if (r1no > LAST_HARD_REG && reg_renumber != 0)
+        {
+          r1no = reg_renumber[r1no];
+          if (r1no < 0 || r1no > LAST_HARD_REG)
+            return false;
+        }
+    }
+  if (r2 == NULL_RTX)
+    return REGNO_MODE_OK_FOR_BASE_P (r1no, mode) || r1ok;
+  int r2no = REGNO (r2);
+  bool r2ok = true;
+  if (strict)
+    {
+      r2ok = false;
+      if (r2no > LAST_HARD_REG && reg_renumber != 0)
+        {
+          r2no = reg_renumber[r2no];
+          if (r2no < 0 || r2no > LAST_HARD_REG)
+            return false;
+        }
+    }
+  if ((REGNO_OK_FOR_INDEX_P (r1no) || r1ok)
+      && (REGNO_MODE_OK_FOR_REG_BASE_P (r2no, mode) || r2ok))
+    return true;
+  return (REGNO_OK_FOR_INDEX_P (r2no) || r2ok)
+    && (REGNO_MODE_OK_FOR_REG_BASE_P (r1no, mode) || r1ok);
 }
 
 /* Condition Code Status */
@@ -1791,7 +1837,7 @@ ia16_parse_address_strict (rtx x, rtx *p_rb, rtx *p_ri, rtx *p_c)
 		return (0 == 1);
 
 	/* Check register class for base.  */
-	if (rb && !ri && !REG_MODE_OK_FOR_BASE_P (rb, mode))
+	if (rb && !ri && !REGNO_MODE_OK_FOR_BASE_P (REGNO (rb), mode))
 		return (0 == 1);
 
 	if (p_rb)

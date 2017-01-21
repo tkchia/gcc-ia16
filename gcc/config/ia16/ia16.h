@@ -386,55 +386,6 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 #define CONSTANT_ADDRESS_P(x)	CONSTANT_P (x)
 #define MAX_REGS_PER_ADDRESS	2
 
-/* This is silly.  I've already defined BASE_REG_CLASS, BASE_REG_REG_CLASS,
- * and INDEX_REG_CLASS, so this is duplicated from REG_CLASS_CONTENTS.
- * When not REG_OK_STRICT, pseudo registers and virtual hard registers must
- * be accepted as well as real hard registers of the required class.
- * FIXME: Documentation: It is unclear if you need true_regnum() or not.
- * true_regnum() will crash if reg_renumber[] hasn't been allocated yet.
- */
-#ifdef REG_OK_STRICT
-
-#define REG_MODE_OK_FOR_BASE_P(x, mode)		(REGNO_MODE_OK_FOR_BASE_P (REGNO (x), mode))
-#define REG_MODE_OK_FOR_REG_BASE_P(x, mode)	(REGNO_MODE_OK_FOR_REG_BASE_P (REGNO (x), mode))
-#define REG_OK_FOR_INDEX_P(x)			(REGNO_OK_FOR_INDEX_P (REGNO (x)))
-
-#else
-
-#define REG_MODE_OK_FOR_BASE_P(x, mode)		\
-  (REGNO (x) > LAST_HARD_REG || REGNO_MODE_OK_FOR_BASE_P (REGNO (x), mode))
-
-#define REG_MODE_OK_FOR_REG_BASE_P(x, mode)	\
-  (REGNO (x) > LAST_HARD_REG || REGNO_MODE_OK_FOR_REG_BASE_P (REGNO (x), mode))
-
-#define REG_OK_FOR_INDEX_P(x)			\
-  (REGNO (x) > LAST_HARD_REG || REGNO_OK_FOR_INDEX_P (REGNO (x)))
-
-#endif
-
-#define GO_IF_LEGITIMATE_ADDRESS(xmode, x, label)			\
-{ rtx y, r1, r2;							\
-  enum machine_mode ymode;						\
-									\
-  y = x;								\
-  ymode = xmode;							\
-  if (ia16_parse_address (y, &r1, &r2, NULL))				\
-    if (r1)								\
-      if (r2)								\
-	if ( (REG_OK_FOR_INDEX_P (r1) && REG_MODE_OK_FOR_REG_BASE_P (r2, ymode)) \
-	  || (REG_OK_FOR_INDEX_P (r2) && REG_MODE_OK_FOR_REG_BASE_P (r1, ymode))) \
-	  goto label;							\
-	else								\
-	  ;								\
-      else								\
-	{								\
-	  if (REG_MODE_OK_FOR_BASE_P (r1, ymode))			\
-	    goto label;							\
-	}								\
-    else								\
-      goto label;							\
-}
-
 /* Condition Code Status */
 
 /* Representation of condition codes using registers */
