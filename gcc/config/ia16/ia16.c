@@ -173,12 +173,17 @@ ia16_cannot_substitute_mem_equiv_p (rtx subst)
  * (i.e. ah, dh, bh or ch).  */
 int ia16_save_reg_p (unsigned int r)
 {
-	if (!TEST_HARD_REG_BIT (reg_class_contents[QI_REGS], r))
-		return (df_regs_ever_live_p (r) && !call_used_regs[r]);
-	if (TEST_HARD_REG_BIT (reg_class_contents[UP_QI_REGS], r))
-		return (0);
-	return ((df_regs_ever_live_p (r + 0) && !call_used_regs[r + 0]) ||
-	        (df_regs_ever_live_p (r + 1) && !call_used_regs[r + 1]));
+  if (r == BP_REG)
+    {
+      return (get_frame_size() + crtl->outgoing_args_size +
+	      crtl->args.pretend_args_size) > 0 || crtl->args.info > 0;
+    }
+  if (!TEST_HARD_REG_BIT (reg_class_contents[QI_REGS], r))
+    return (df_regs_ever_live_p (r) && !call_used_regs[r]);
+  if (TEST_HARD_REG_BIT (reg_class_contents[UP_QI_REGS], r))
+    return (0);
+  return ((df_regs_ever_live_p (r + 0) && !call_used_regs[r + 0]) ||
+	  (df_regs_ever_live_p (r + 1) && !call_used_regs[r + 1]));
 }
 
 /* Basic Stack Layout */
@@ -224,23 +229,12 @@ ia16_initial_arg_pointer_offset (void)
   unsigned int i;
 
   /* Add two bytes for each register saved.  */
-  for (i = 0; i < BP_REG; i ++)
+  for (i = 0; i <= ES_REG; i ++)
     {
       if (ia16_save_reg_p (i))
-	{
-	  offset += GET_MODE_SIZE (HImode);
-	}
+	offset += GET_MODE_SIZE (HImode);
     }
-  if (ia16_save_reg_p (ES_REG))
-    offset += GET_MODE_SIZE (HImode);
-
-  /* Add two bytes if we saved the bp register.  */
-  if ((frame_pointer_needed && !call_used_regs[BP_REG])
-      || ia16_save_reg_p (BP_REG))
-    {
-      offset += GET_MODE_SIZE (HImode);
-    }
-  return (offset);
+  return offset;
 }
 
 /* Calculates the difference between the frame pointer and the stack pointer
@@ -251,11 +245,11 @@ HOST_WIDE_INT
 ia16_initial_frame_pointer_offset (void)
 {
   HOST_WIDE_INT offset;
-	
+
   offset = get_frame_size () + crtl->outgoing_args_size
     + crtl->args.pretend_args_size;
 
-  return (offset);
+  return offset;
 }
 
 HOST_WIDE_INT
@@ -295,7 +289,7 @@ ia16_function_arg_advance (cumulative_args_t cum_v,
 			   bool named ATTRIBUTE_UNUSED)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
-  *cum = 0;
+  ++*cum;
 }
 
 #undef  TARGET_VECTOR_MODE_SUPPORTED_P
