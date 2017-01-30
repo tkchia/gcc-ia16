@@ -174,10 +174,7 @@ ia16_cannot_substitute_mem_equiv_p (rtx subst)
 int ia16_save_reg_p (unsigned int r)
 {
   if (r == BP_REG)
-    {
-      return (get_frame_size() + crtl->outgoing_args_size +
-	      crtl->args.pretend_args_size) > 0 || crtl->args.info > 0;
-    }
+    return get_frame_size() > 0 || crtl->args.info > 0 || cfun->calls_alloca;
   if (!TEST_HARD_REG_BIT (reg_class_contents[QI_REGS], r))
     return (df_regs_ever_live_p (r) && !call_used_regs[r]);
   if (TEST_HARD_REG_BIT (reg_class_contents[UP_QI_REGS], r))
@@ -246,8 +243,7 @@ ia16_initial_frame_pointer_offset (void)
 {
   HOST_WIDE_INT offset;
 
-  offset = get_frame_size () + crtl->outgoing_args_size
-    + crtl->args.pretend_args_size;
+  offset = get_frame_size ();
 
   return offset;
 }
