@@ -23,6 +23,7 @@ extern unsigned char	ia16_hard_regno_nregs[17][FIRST_PSEUDO_REGISTER];
 extern enum reg_class const ia16_regno_class[FIRST_PSEUDO_REGISTER];
 extern int		ia16_save_reg_p (unsigned int r);
 extern HOST_WIDE_INT	ia16_first_parm_offset (void);
+extern HOST_WIDE_INT	ia16_initial_arg_pointer_offset (void);
 extern HOST_WIDE_INT	ia16_initial_frame_pointer_offset (void);
 extern HOST_WIDE_INT
 		ia16_initial_elimination_offset (unsigned int from, unsigned int to);

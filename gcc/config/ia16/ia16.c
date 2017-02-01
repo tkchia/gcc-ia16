@@ -219,7 +219,7 @@ HOST_WIDE_INT ia16_first_parm_offset (void)
  * pointer immediately after the function prologue.  This should be kept int
  * sync with the prologue pattern.
  */
-static HOST_WIDE_INT
+HOST_WIDE_INT
 ia16_initial_arg_pointer_offset (void)
 {
   HOST_WIDE_INT offset = 0;
