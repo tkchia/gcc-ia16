@@ -2206,3 +2206,93 @@ ia16_non_overlapping_mem_p (rtx m1, rtx m2)
   else
     return (false);
 }
+
+void
+ia16_expand_prologue (void)
+{
+  rtx insn;
+  unsigned int i;
+  HOST_WIDE_INT size = get_frame_size ();
+
+  /* Save used registers which are not call clobbered. */
+  for (i = 0; i <= ES_REG; ++i)
+    {
+      if (i != BP_REG && ia16_save_reg_p (i))
+	{
+	  insn = emit_insn (ia16_push_reg (i));
+	  RTX_FRAME_RELATED_P (insn) = 1;
+	}
+    }
+  if (ia16_save_reg_p (BP_REG))
+    {
+      if (HAVE__enter && size != 0)
+	{
+	  insn = gen__enter (gen_rtx_CONST_INT (HImode, size + 2));
+	  insn = emit_insn (insn);
+	  RTX_FRAME_RELATED_P (insn) = 1;
+	}
+      else
+	{
+	  insn = emit_insn (ia16_push_reg (BP_REG));
+	  RTX_FRAME_RELATED_P (insn) = 1;
+	  insn = emit_move_insn (gen_rtx_REG (Pmode, BP_REG),
+				 gen_rtx_REG (Pmode, SP_REG));
+	  RTX_FRAME_RELATED_P (insn) = 1;
+	  if (size != 0)
+	    {
+	      insn = emit_insn (gen_subhi3 (gen_rtx_REG (Pmode, SP_REG),
+					    gen_rtx_REG (Pmode, SP_REG),
+					    gen_rtx_CONST_INT (HImode, size)));
+	      RTX_FRAME_RELATED_P (insn) = 1;
+	    }
+	}
+    }
+  if (flag_stack_usage_info)
+    {
+      current_function_static_stack_size =
+	ia16_initial_arg_pointer_offset () + UNITS_PER_WORD;
+    }
+}
+
+void
+ia16_expand_epilogue (bool sibcall)
+{
+  unsigned int i;
+  HOST_WIDE_INT size = get_frame_size ();
+
+  if (ia16_save_reg_p (BP_REG))
+    {
+      /* We need to restore the stack pointer. We have two options:
+       * 1) Add the frame size to sp.
+       * 2) Use the saved sp value in bp.
+       * The second option makes it possible to use the leave instruction and
+       * is shorter in any case, but ties up a register. So only refer to bp
+       * if it wasn't used during the function.
+       */
+      if (HAVE__leave)
+	{
+	  /* If sp wasn't modified, "popw %bp" is faster than "leavew". */
+	  if (size == 0 && crtl->sp_is_unchanging)
+	    emit_insn (ia16_pop_reg (BP_REG));
+	  else
+	    emit_insn (gen__leave ());
+	}
+      else
+	{
+	  if (size > 0 || cfun->calls_alloca || crtl->outgoing_args_size > 0)
+	    {
+	      emit_move_insn (gen_rtx_REG (Pmode, SP_REG),
+			      gen_rtx_REG (Pmode, BP_REG));
+	    }
+	  emit_insn (ia16_pop_reg (BP_REG));
+	}
+    }
+  /* Restore used registers. */
+  for (i = ES_REG; i < FIRST_PSEUDO_REGISTER; --i)
+    {
+      if (i != BP_REG && ia16_save_reg_p (i))
+	emit_insn (ia16_pop_reg (i));
+    }
+  if (!sibcall)
+    emit_jump_insn (gen_simple_return ());
+}
