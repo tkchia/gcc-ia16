@@ -585,3 +585,9 @@ extern int ia16_features;
 
 /* The linker will take care of this.  */
 #define CTOR_LISTS_DEFINED_EXTERNALLY 1
+
+/* No need to support Java.  */
+#define TARGET_USE_JCR_SECTION 0
+
+/* Avoid having register_tm_clones and unregister_tm_clones in crtstuff.  */
+#define USE_TM_CLONE_REGISTRY 0

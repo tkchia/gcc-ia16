@@ -28,7 +28,3 @@
 
 #define LIB_SPEC	\
   ""
-
-/* Macros Controlling Initialization Routines */
-/* We don't have .init/.fini support (yet).  */
-#undef  INIT_SECTION_ASM_OP
