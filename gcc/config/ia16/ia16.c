@@ -219,7 +219,7 @@ HOST_WIDE_INT ia16_first_parm_offset (void)
  * pointer immediately after the function prologue.  This should be kept int
  * sync with the prologue pattern.
  */
-HOST_WIDE_INT
+static HOST_WIDE_INT
 ia16_initial_arg_pointer_offset (void)
 {
   HOST_WIDE_INT offset = 0;
@@ -319,6 +319,17 @@ ia16_return_in_memory (const_tree type, const_tree fntype ATTRIBUTE_UNUSED)
    * used registers or requires the prologue and epilogue patterns to not
    * touch the return value registers.  */
    return (TYPE_MODE (type) == BLKmode || int_size_in_bytes (type) > 4);
+}
+
+/* Permitting tail calls */
+#undef  TARGET_FUNCTION_OK_FOR_SIBCALL
+#define TARGET_FUNCTION_OK_FOR_SIBCALL ia16_function_ok_for_sibcall
+static bool
+ia16_function_ok_for_sibcall (tree decl, tree exp)
+{
+  /* For now, only allow sibcalling known functions.
+     TODO: Try relaxing this.  */
+  return decl != 0;
 }
 
 /* Addressing Modes */
@@ -2249,7 +2260,7 @@ ia16_expand_prologue (void)
     }
   if (flag_stack_usage_info)
     {
-      current_function_static_stack_size =
+      current_function_static_stack_size = size +
 	ia16_initial_arg_pointer_offset () + UNITS_PER_WORD;
     }
 }
