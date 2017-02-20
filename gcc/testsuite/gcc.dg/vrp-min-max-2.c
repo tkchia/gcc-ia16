@@ -1,8 +1,10 @@
-/* { dg-do compile } */
+/* { dg-do compile { target { stdint_types } } } */
 /* { dg-options "-O2 -fdump-tree-vrp2" } */
 /* { dg-require-effective-target int32plus } */
 
-int Foo (int X)
+#include <stdint.h>
+
+int_least32_t Foo (int_least32_t X)
 {
   if (X < 0)
     X = 0;

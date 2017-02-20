@@ -1,9 +1,11 @@
 /* PR41779: Wconversion cannot see through real*integer promotions. */
-/* { dg-do compile } */
+/* { dg-do compile { target { stdint_types } } } */
 /* { dg-skip-if "doubles are floats" { "avr-*-*" } { "*" } { "" } } */
 /* { dg-options "-std=c99 -Wconversion" { target c } } */
 /* { dg-options "-Wconversion" { target c++ } } */
 /* { dg-require-effective-target large_double } */
+
+#include <stdint.h>
 
 float f1(float x, unsigned short y)
 {
@@ -25,7 +27,7 @@ float f4(float x, unsigned char y)
   return x * y;
 }
 
-float f5(float x, int y)
+float f5(float x, int_least32_t y)
 {
   return x * y; /* { dg-warning "conversion" } */
 }
@@ -50,7 +52,7 @@ double c4(float x, unsigned char y, int z)
   return z ? x + x : y;
 }
 
-double c5(float x, int y, int z)
+double c5(float x, int_least32_t y, int z)
 {
   return z ? x + x : y; /* { dg-warning "conversion" } */
 }

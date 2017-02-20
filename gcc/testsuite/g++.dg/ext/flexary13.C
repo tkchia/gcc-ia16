@@ -1,5 +1,7 @@
-// { dg-do compile }
+// { dg-do compile { target { stdint_types } } }
 // { dg-options -Wno-pedantic }
+
+#include <stdint.h>
 
 #define STR(s) #s
 #define ASSERT(exp) \
@@ -7,10 +9,10 @@
                      __FILE__, __LINE__, STR(exp)), \
                       __builtin_abort ()))
 
-struct Ax { int n, a[]; };
-struct AAx { int i; Ax ax; };
+struct Ax { int_least32_t n, a[]; };
+struct AAx { int_least32_t i; Ax ax; };
 
-int i = 12345678;
+int_least32_t i = 12345678;
 
 int main ()
 {
@@ -44,7 +46,7 @@ int main ()
     ASSERT (s.n == 456 && s.a [0] == i);
   }
   {
-    int j = i + 1, k = j + 1;
+    int_least32_t j = i + 1, k = j + 1;
     Ax s =
       { 3, { i, j, k } }; // dg-warning "initialization of a flexible array member" }
     ASSERT (s.n == 3 && s.a [0] == i && s.a [1] == j && s.a [2] == k);

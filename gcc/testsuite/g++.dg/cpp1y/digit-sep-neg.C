@@ -1,9 +1,11 @@
 // { dg-do compile { target c++14 } }
 
+#include <stdint.h>
+
 int
 main()
 {
-  int i = 0;
+  int_least32_t i = 0;
   i = 1048''576; // { dg-error "adjacent digit separators" }
   i = 0X'100000; // { dg-error "digit separator after base indicator" }
   i = 0x'100000; // { dg-error "digit separator after base indicator" }
@@ -25,6 +27,6 @@ main()
   float f = 1.602'176'565e-19'F; // { dg-error "digit separator outside digit sequence" }
 }
 
-// { dg-error "exponent has no digits" "exponent has no digits" { target *-*-* } 21 }
-// { dg-error "expected ';' before" "expected ';' before" { target *-*-* } 14 }
-// { dg-error "expected ';' before" "expected ';' before" { target *-*-* } 25 }
+// { dg-error "exponent has no digits" "exponent has no digits" { target *-*-* } 23 }
+// { dg-error "expected ';' before" "expected ';' before" { target *-*-* } 16 }
+// { dg-error "expected ';' before" "expected ';' before" { target *-*-* } 27 }

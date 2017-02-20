@@ -1,16 +1,18 @@
 // PR c++/49136
 // { dg-do compile { target c++11 } }
 
+#include <stdint.h>
+
 struct S
 {
-  unsigned : 1; unsigned s : 27; unsigned : 4;
-  constexpr S (unsigned int x) : s(x) {}
+  uint_least32_t : 1; uint_least32_t s : 27; uint_least32_t : 4;
+  constexpr S (uint_least32_t x) : s(x) {}
 };
 
 template <typename S>
 struct T
 {
-  unsigned int t;
+  uint_least32_t t;
   constexpr T (S s) : t(s.s != 7 ? 0 : s.s) {}
   constexpr T (S s, S s2) : t(s.s != s2.s ? 0 : s.s) {}
 };
@@ -22,8 +24,8 @@ static_assert (t2.t == 7, "Error");
 
 struct U
 {
-  int a : 1; int s : 1;
-  constexpr U (int x, int y) : a (x), s (y) {}
+  int_least32_t a : 1; int_least32_t s : 1;
+  constexpr U (int_least32_t x, int_least32_t y) : a (x), s (y) {}
 };
 
 constexpr U u (0, -1), u2 (-1, -1);

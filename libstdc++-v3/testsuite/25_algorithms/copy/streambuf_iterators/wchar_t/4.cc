@@ -22,6 +22,12 @@
 #include <algorithm>
 #include <testsuite_hooks.h>
 
+#ifdef __ia16__
+#define MAX 1650
+#else
+#define MAX 16500
+#endif
+
 // In the occasion of libstdc++/25482
 void test01()
 {
@@ -32,10 +38,10 @@ void test01()
   wifstream fbuf_ref("istream_unformatted-1.txt"),
             fbuf("istream_unformatted-1.txt");
 
-  wchar_t buffer_ref[16500],
-          buffer[16500];
+  wchar_t buffer_ref[MAX],
+          buffer[MAX];
 
-  fbuf_ref.read(buffer_ref, 16500);
+  fbuf_ref.read(buffer_ref, MAX);
 
   in_iterator_type beg(fbuf);
   in_iterator_type end;
@@ -44,7 +50,7 @@ void test01()
   VERIFY( fbuf_ref.good() );
   VERIFY( fbuf.good() );
 
-  VERIFY( !wmemcmp(buffer, buffer_ref, 16500) );
+  VERIFY( !wmemcmp(buffer, buffer_ref, MAX) );
 }
 
 int main()

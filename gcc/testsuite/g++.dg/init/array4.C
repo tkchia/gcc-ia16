@@ -10,7 +10,11 @@
 class Array
 {
 public:
+#ifdef __ia16__
+   std::string m_array[5][10][15];
+#else
    std::string m_array[10][20][30];
+#endif
 };
 
 Array func()

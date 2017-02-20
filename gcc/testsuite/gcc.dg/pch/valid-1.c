@@ -1,5 +1,6 @@
 /* { dg-require-effective-target pch_supported_debug } */
 /* { dg-options "-I. -Winvalid-pch -g" } */
+/* { dg-skip-if "No debug information" { ia16-*-* } { "*" } { "" } } */
 
 #include "valid-1.h"/* { dg-warning "created with -gnone, but used with -g" } */
 /* { dg-error "No such file" "no such file" { target *-*-* } 0 } */

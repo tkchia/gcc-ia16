@@ -1,4 +1,4 @@
-// { dg-do run { target c++11 } }
+// { dg-do run { target { c++11 && int32plus } } }
 // { dg-options "-fabi-version=0 -Wabi=2" }
 
 enum class A: short { a1, a2, a3 };

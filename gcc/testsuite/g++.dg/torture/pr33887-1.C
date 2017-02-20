@@ -1,7 +1,9 @@
-/* { dg-do run } */
+/* { dg-do run { target { stdint_types } } } */
+
+#include <stdint.h>
 
 extern "C" void abort (void);
-struct S { unsigned int i : 24; } x;
+struct S { uint_least32_t i : 24; } x;
 void __attribute__((noinline)) test1()
 {
   if (--x.i != 0x00ffffff)

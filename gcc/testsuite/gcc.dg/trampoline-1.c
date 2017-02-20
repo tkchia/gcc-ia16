@@ -13,6 +13,16 @@
 extern void abort(void);
 extern double fabs(double);
 
+#if defined(STACK_SIZE)
+#if STACK_SIZE < 30000
+#define MAX 9
+#endif
+#endif
+
+#ifndef MAX
+#define MAX 10
+#endif
+
 void foo (void)
 {
   const int correct[1100] = {1, 0, -2, 0, 1, 0, 1, -1, -10, -30, -67};
@@ -40,7 +50,7 @@ void foo (void)
       return b ();
   }
 
-  for (i=0; i<=10; i++)
+  for (i=0; i<=MAX; i++)
   {
     if (fabs(a( i, x1, x2, x3, x4, x5 ) - correct [i]) > 0.1)
       abort();

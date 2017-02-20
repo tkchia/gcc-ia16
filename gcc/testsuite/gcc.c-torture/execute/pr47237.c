@@ -2,6 +2,12 @@
 /* { dg-require-effective-target untyped_assembly } */
 #define INTEGER_ARG  5
 
+#ifdef __ia16__
+#define ARGS_SIZE 2
+#else
+#define ARGS_SIZE 16
+#endif
+
 extern void abort(void);
 
 static void foo(int arg)
@@ -13,7 +19,7 @@ static void foo(int arg)
 static void bar(int arg)
 {
   foo(arg);
-  __builtin_apply(foo, __builtin_apply_args(), 16);
+  __builtin_apply(foo, __builtin_apply_args(), ARGS_SIZE);
 }
 
 int main(void)

@@ -1,4 +1,5 @@
 // { dg-do run }
+// { dg-skip-if "Does not fit in 64kB" { "ia16-*-*" } }
 
 // Copyright (C) 2004 Free Software Foundation, Inc.
 // Contributed by Nathan Sidwell 8 Dec 2004 <nathan@codesourcery.com>

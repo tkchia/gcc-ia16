@@ -1,5 +1,5 @@
 // PR c++/48780
-// { dg-do compile { target c++11 } }
+// { dg-do compile { target { c++11 && int32plus } } }
 // { dg-options "-fabi-version=5 -Wabi" }
 
 typedef __builtin_va_list __gnuc_va_list;

@@ -8,7 +8,13 @@
 #include <stdio.h>
 #endif
 
-double u[1782225];
+#ifdef __ia16__
+#define SIZE 50
+#else
+#define SIZE 1335
+#endif
+
+double u[SIZE*SIZE];
 
 static int __attribute__((noinline))
 foo (int N, int *res)
@@ -17,12 +23,12 @@ foo (int N, int *res)
   double sum = 0;
   for (i = 0; i < N; i++)
     for (j = 0; j < N; j++)
-      sum = sum + u[i + 1335 * j];
+      sum = sum + u[i + SIZE * j];
 
   for (i = 0; i < N; i++)
-    u[1336 * i] *= 2;
+    u[(SIZE + 1) * i] *= 2;
 
-  *res = sum + N + u[1336 * 2] + u[1336];
+  *res = sum + N + u[(SIZE + 1) * 2] + u[SIZE + 1];
 }
 
 extern void abort ();
@@ -32,16 +38,16 @@ main (void)
 {
   int i, j, res;
 
-  for (i = 0; i < 1782225; i++)
+  for (i = 0; i < SIZE*SIZE; i++)
     u[i] = 2;
 
-  foo (1335, &res);
+  foo (SIZE, &res);
 
 #if DEBUG
   fprintf (stderr, "res = %d \n", res);
 #endif
 
-  if (res != 3565793)
+  if (res != 2*SIZE*SIZE + SIZE + 4 + 4)
     abort ();
 
   return 0;

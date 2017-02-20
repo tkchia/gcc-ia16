@@ -5,10 +5,10 @@ extern void abort (void);
 /* { dg-require-effective-target int32plus } */
 
 #define TYPE_MAX(type, sign)	\
-  ((!sign) ? ((1 << (sizeof (type) * 8 - 1)) - 1) :	\
-   ((1 << (sizeof (type) * 8)) - 1))
+  ((!sign) ? ((1L << (sizeof (type) * 8 - 1)) - 1) :	\
+   ((1L << (sizeof (type) * 8)) - 1))
 #define TYPE_MIN(type, sign)	\
-  ((!sign) ? -(1 << (sizeof (type) * 8 - 1)) : 0)
+  ((!sign) ? -(1L << (sizeof (type) * 8 - 1)) : 0)
 
 #define TEST_FN(NAME, ARG_TYPE, RET_TYPE, CAST_TYPE, VAL, VR_MIN, VR_MAX)\
   __attribute__((noinline, noclone)) RET_TYPE				\

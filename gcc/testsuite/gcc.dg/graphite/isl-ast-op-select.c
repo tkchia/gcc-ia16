@@ -2,7 +2,13 @@
 /* { dg-require-effective-target int32plus } */
 /* { dg-options "-O2 -floop-nest-optimize" } */
 
-static void kernel_gemm(int ni, int nj, int nk, double alpha, double beta, double C[1024][1024], double A[1024][1024], double B[1024][1024])
+#if defined(STACK_SIZE)
+#define SIZE 32
+#else
+#define SIZE 1024
+#endif
+
+static void kernel_gemm(int ni, int nj, int nk, double alpha, double beta, double C[SIZE][SIZE], double A[SIZE][SIZE], double B[SIZE][SIZE])
 {
  int i, j, k;
  for (i = 0; i < ni; i++)
@@ -17,15 +23,15 @@ static void kernel_gemm(int ni, int nj, int nk, double alpha, double beta, doubl
 void *polybench_alloc_data (int, int);
 
 int main(int argc, char** argv) {
-  int ni = 1024;
-  int nj = 1024;
-  int nk = 1024;
+  int ni = SIZE;
+  int nj = SIZE;
+  int nk = SIZE;
   double alpha;
   double beta;
-  double (*C)[1024][1024];
-  C = (double(*)[1024][1024])polybench_alloc_data ((1024) * (1024), sizeof(double));
-  double (*A)[1024][1024];
-  A = (double(*)[1024][1024])polybench_alloc_data ((1024) * (1024), sizeof(double));
-  double (*B)[1024][1024];
+  double (*C)[SIZE][SIZE];
+  C = (double(*)[SIZE][SIZE])polybench_alloc_data ((SIZE) * (SIZE), sizeof(double));
+  double (*A)[SIZE][SIZE];
+  A = (double(*)[SIZE][SIZE])polybench_alloc_data ((SIZE) * (SIZE), sizeof(double));
+  double (*B)[SIZE][SIZE];
   kernel_gemm (ni, nj, nk, alpha, beta, *C, *A, *B);
 }

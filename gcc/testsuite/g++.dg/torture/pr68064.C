@@ -1,4 +1,4 @@
-// { dg-do compile }
+// { dg-do compile { target int32plus } }
 
 template <class Config> class A {
 public:

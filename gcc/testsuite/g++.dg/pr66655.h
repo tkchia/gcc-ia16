@@ -1,5 +1,7 @@
+#include <stdint.h>
+
 struct S
 {
-  static int i;
-  static void set (int ii) { i = -ii; }
+  static int_least32_t i;
+  static void set (int_least32_t ii) { i = -ii; }
 };

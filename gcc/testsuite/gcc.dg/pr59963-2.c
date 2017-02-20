@@ -1,13 +1,15 @@
 /* PR c/59963 */
-/* { dg-do compile } */
+/* { dg-do compile { target { stdint_types } } } */
 /* { dg-options "-Woverflow -Wconversion" } */
 /* { dg-require-effective-target int32plus } */
+
+#include <stdint.h>
 
 extern void bar (unsigned char);
 extern void bar8 (unsigned char, unsigned char, unsigned char, unsigned char,
 		  unsigned char, unsigned char, unsigned char, unsigned char);
 extern void bazu (unsigned int, ...);
-extern void bazi (char, int);
+extern void bazi (char, int32_t);
 extern int f (short a, short b);
 
 int

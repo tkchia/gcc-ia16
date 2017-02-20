@@ -23,15 +23,16 @@
 #include <vector>
 #include <testsuite_hooks.h>
 #include <testsuite_iterators.h>
+#include <stdint.h>
 
 using __gnu_test::test_container;
 using __gnu_test::random_access_iterator_wrapper;
 
-typedef test_container<int, random_access_iterator_wrapper> Container;
+typedef test_container<int_least32_t, random_access_iterator_wrapper> Container;
 
 void test01()
 {
-  std::vector<int> v = {
+  std::vector<int_least32_t> v = {
     207089,
     202585,
     180067,

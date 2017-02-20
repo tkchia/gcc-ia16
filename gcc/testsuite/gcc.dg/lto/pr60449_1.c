@@ -12,7 +12,7 @@ struct timezone
     int tz_dsttime;
   };
 typedef struct timezone *__restrict __timezone_ptr_t;
-extern int gettimeofday (struct timeval *__restrict __tv,
+extern int gettimeofday1 (struct timeval *__restrict __tv,
     __timezone_ptr_t __tz) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
 
 typedef long int __jmp_buf[8];
@@ -63,7 +63,7 @@ int main (void)
 
   if (!get_input ())
     {
-      gettimeofday (&tv, &tz);
+      gettimeofday1 (&tv, &tz);
       z = 0;
       printf ("This is from main %i\n", tz.tz_dsttime);
     }

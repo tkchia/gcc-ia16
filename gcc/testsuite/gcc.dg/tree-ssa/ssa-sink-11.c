@@ -13,4 +13,4 @@ int foo (int v[], int a)
   return r;
 }
 
-/* { dg-final { scan-tree-dump "MEM\\\[.* \\+ 252B\\\]" "optimized"} } */
+/* { dg-final { scan-tree-dump "MEM\\\[.* \\+ 252B\\\]" "optimized" { target { ! ia16-*-* } } } } */

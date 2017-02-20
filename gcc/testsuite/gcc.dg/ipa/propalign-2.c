@@ -25,7 +25,11 @@ foo (void *p)
 {
   uintptr_t a = (uintptr_t) p;
 
+#if __SIZEOF_POINTER__ == 2
+  if (a % 2)
+#else
   if (a % 4)
+#endif
     return fail_the_test (p);
   else
     return pass_the_test (p);

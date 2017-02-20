@@ -30,7 +30,7 @@ test01()
 
   discard_block
     <
-    subtract_with_carry<long, (1 << 24), 10, 24>,
+    subtract_with_carry<long, (1L << 24), 10, 24>,
     389, 24
     > u, v;
 

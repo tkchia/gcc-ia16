@@ -1,5 +1,7 @@
 // PR c++/50793
-// { dg-do run }
+// { dg-do run { target { stdint_types } } }
+
+#include <stdint.h>
 
 struct NonTrivial
 {
@@ -9,16 +11,16 @@ struct NonTrivial
 struct S
 {
   NonTrivial nt;
-  int i;
+  int_least32_t i;
 };
 
-int f(S s)
+int_least32_t f(S s)
 {
   s.i = 0xdeadbeef;
   return s.i;
 }
 
-int g(S s = S())
+int_least32_t g(S s = S())
 {
   return s.i;
 }

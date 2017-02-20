@@ -41,7 +41,11 @@ public:
 
 
 int main ( int , char** ) {
+#ifdef __ia16__
+    int w = ( 1 << 3 )+1;
+#else
     int w = ( 1 << 7 )+1;
+#endif
     int wsqr = w*w;
     int wcub = w*w*w;
 

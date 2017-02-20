@@ -1,8 +1,9 @@
-// { dg-do compile }
+// { dg-do compile { target { stdint_types } } }
 // { dg-require-effective-target fpic }
 // { dg-require-visibility "" }
 // { dg-options "-fPIC" }
 
+#include <stdint.h>
 
 typedef __SIZE_TYPE__ size_t;
 extern "C" void *
@@ -40,8 +41,6 @@ template < typename _Tp > inline const _Tp &
 max (const _Tp & __a, const _Tp & __b)
 {
 }
-typedef unsigned short int uint16_t;
-typedef unsigned long int uintptr_t;
 typedef uint16_t UChar;
 namespace std __attribute__ ((__visibility__ ("default")))
 {
@@ -155,7 +154,7 @@ public:
 UChar *
 plainTextToMallocAllocatedBuffer (const Range * r, unsigned &bufferLength)
 {
-  static const unsigned cMaxSegmentSize = 1 << 16;
+  static const uint_least32_t cMaxSegmentSize = (uint_least32_t)1 << 16;
   typedef pair < UChar *, unsigned >TextSegment;
   Vector < TextSegment > *textSegments = 0;
   Vector < UChar > textBuffer;

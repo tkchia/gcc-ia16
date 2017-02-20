@@ -1,7 +1,11 @@
 // { dg-do compile { target c++11 } }
 
-struct A {int i;}  a [[gnu::aligned(16)]];
-struct B {int i;} __attribute__((aligned(16))) b;
+#include <stdint.h>
+
+struct I {int_least32_t i;} __attribute__((aligned(4)));
+
+struct A {I i;}  a [[gnu::aligned(16)]];
+struct B {I i;} __attribute__((aligned(16))) b;
 
 constexpr unsigned si = sizeof(int);
 constexpr unsigned ai = alignof(int);

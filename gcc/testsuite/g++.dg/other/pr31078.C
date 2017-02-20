@@ -1,4 +1,8 @@
+#ifdef __UINT_LEAST32_TYPE__
+typedef __UINT_LEAST32_TYPE__ SLONG;
+#else
 typedef int SLONG;
+#endif
 typedef char SCHAR;
 typedef short SSHORT;
 typedef char TEXT;

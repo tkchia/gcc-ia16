@@ -1,4 +1,4 @@
-/* { dg-do run } */
+/* { dg-do run { target { stdint_types } } } */
 /* { dg-additional-sources "pr66655_1.cc" } */
 
 #include "pr66655.h"
@@ -7,13 +7,13 @@ extern "C" void abort (void);
 
 #define COOKIE 0xabcd0123
 
-int
+int_least32_t
 g (void)
 {
   return COOKIE;
 }
 
-extern int f (void);
+extern int_least32_t f (void);
 
 int
 main (void)

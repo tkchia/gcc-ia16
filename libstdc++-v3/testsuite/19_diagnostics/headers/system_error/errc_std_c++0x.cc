@@ -105,7 +105,10 @@ void test01()
 
   TEST_ERRC(not_connected); 
   TEST_ERRC(not_enough_memory);
+
+#ifdef _GLIBCXX_HAVE_ENOTSUP
   TEST_ERRC(not_supported);
+#endif
 
 #ifdef _GLIBCXX_HAVE_ECANCELED
   TEST_ERRC(operation_canceled);

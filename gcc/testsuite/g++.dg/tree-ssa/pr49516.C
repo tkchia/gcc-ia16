@@ -1,12 +1,14 @@
-/* { dg-do run } */
+/* { dg-do run { target { stdint_types } } } */
 /* { dg-options "-O2" } */
+
+#include <stdint.h>
 
 extern "C" void abort (void);
 
-typedef int int32;
-typedef unsigned int uint32;
-typedef unsigned long long uint64;
-typedef short int16;
+typedef int32_t int32;
+typedef uint32_t uint32;
+typedef uint64_t uint64;
+typedef int16_t int16;
 
 class Tp {
  public:
@@ -21,7 +23,7 @@ class Tp {
   inline static bool IsValidSegment(const int segment);
   static const int kSegmentBits = 28;
   static const int kTypeBits = 4;
-  static const int kMaxSegment = (1 << kSegmentBits) - 1;
+  static const int_least32_t kMaxSegment = ((int_least32_t)1 << kSegmentBits) - 1;
 
   union {
 

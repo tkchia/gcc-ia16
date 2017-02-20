@@ -1,5 +1,6 @@
 /* { dg-do compile } */
 /* { dg-options "-g" } */
+/* { dg-skip-if "No debug information" { ia16-*-* } { "*" } { "" } } */
 
 /* Make sure we didn't eliminate foo because we thought it was unused.  */
 

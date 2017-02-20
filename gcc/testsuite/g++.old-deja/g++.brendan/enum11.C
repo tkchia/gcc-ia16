@@ -1,4 +1,4 @@
-// { dg-do assemble  }
+// { dg-do assemble { target int32plus } }
 // GROUPS passed enums
 class X
 {

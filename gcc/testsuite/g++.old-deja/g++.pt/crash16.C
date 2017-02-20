@@ -2,6 +2,12 @@
 // { dg-xfail-if "" { xstormy16-*-* } { "*" } { "" } }
 // { dg-options "" }
 
+#ifdef __ia16__
+#define MAX 16
+#else
+#define MAX 256
+#endif
+
 extern "C" void qsort(void *base, __SIZE_TYPE__ nmemb, __SIZE_TYPE__ size,
               int (*compar)(const void *, const void *));
 
@@ -25,6 +31,6 @@ namespace CXX {
 using namespace CXX;
 
 void sort_machine() {
-  struct R d[256][256];
-  qsort<R,256> (d, cmp_d);
+  struct R d[MAX][MAX];
+  qsort<R,MAX> (d, cmp_d);
 }

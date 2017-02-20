@@ -1,5 +1,7 @@
-/* { dg-do run } */
+/* { dg-do run { target { stdint_types } } } */
 /* { dg-options "-O2 -Wno-overflow" } */
+
+#include <stdint.h>
 
 extern
 #ifdef __cplusplus
@@ -13,7 +15,7 @@ void abort (void);
 
 #include ROTATE_N
 
-unsigned int expected[] = {
+uint_least32_t expected[] = {
 0x91a2b3c0, 0x91a2b3c0, 0x2468acf0, 0x91a2b3c, 0xb3c2, 0xb3c2, 0xc3, 0xc3,
 0x91a2b3c0, 0x91a2b3c0, 0x2468acf0, 0x91a2b3c, 0xb3c2, 0xb3c2, 0xc3, 0xc3,
 0x91a2b3c0, 0x91a2b3c0, 0x2468acf0, 0x91a2b3c, 0xb3c2, 0xb3c2, 0xc3, 0xc3,
@@ -42,7 +44,7 @@ main ()
   return 0;
 #else
 #undef F
-#define F(n) if ((unsigned int) f##n (0x12345678U, 3) != expected[n - 1]) abort ();
+#define F(n) if ((uint_least32_t) f##n (0x12345678U, 3) != expected[n - 1]) abort ();
   ALL
   return 0;
 #endif

@@ -12,7 +12,13 @@ enum rtx_code {
 void abort (void);
 
 struct rtx_def {
-  __extension__ enum rtx_code code:16;
+  __extension__ enum rtx_code code:
+#if __SIZEOF_INT__ == 2
+  8
+#else
+  16
+#endif
+;
 };
 typedef struct rtx_def *rtx;
 

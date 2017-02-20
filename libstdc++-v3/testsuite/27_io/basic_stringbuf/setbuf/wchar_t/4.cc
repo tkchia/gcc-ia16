@@ -19,7 +19,7 @@
 
 // 27.8.1.4 Overridden virtual functions
 
-// { dg-options "-DMAX_SIZE=4096" { target simulator } }
+// { dg-options "-DMAX_SIZE=4096" { target { simulator || ia16-*-* } } }
 
 #ifndef MAX_SIZE
 #define MAX_SIZE (1 << 18)

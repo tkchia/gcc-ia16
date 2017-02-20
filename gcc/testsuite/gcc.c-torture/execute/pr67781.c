@@ -11,13 +11,19 @@ typedef __UINT8_TYPE__ uint8_t;
 typedef unsigned char uint8_t;
 #endif
 
+#ifdef __INT32_TYPE__
+typedef __INT32_TYPE__ int32_t;
+#else
+typedef int int32_t;
+#endif
+
 struct
 {
   uint32_t a;
   uint8_t b;
 } s = { 0x123456, 0x78 };
 
-int pr67781()
+int32_t pr67781()
 {
   uint32_t c = (s.a << 8) | s.b;
   return c;

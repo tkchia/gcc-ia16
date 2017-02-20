@@ -12,11 +12,17 @@ bar (struct S *x, unsigned long y)
   return x->s + y;
 }
 
+#ifdef __ia16__
+#define STACK_OFFSET 0x2U
+#else
+#define STACK_OFFSET 0x1000U
+#endif
+
 __attribute__ ((noinline, noclone)) unsigned long long
 foo (struct S *x, unsigned long y)
 {
   unsigned long a;
-  if (__builtin_expect (((__UINTPTR_TYPE__) (x) + 0x1000U < 0x2000U), 0))
+  if (__builtin_expect (((__UINTPTR_TYPE__) (x) + STACK_OFFSET < 0x2000U), 0))
     return ~0ULL;
   if (__builtin_expect (x->s <= 0 || x->s > 9, 0))
     return ~0ULL;

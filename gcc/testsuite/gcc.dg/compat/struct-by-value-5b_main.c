@@ -1,3 +1,5 @@
+/* { dg-skip-if "Program too big" { "ia16-*-*" } { "*" } { "" } } */
+
 /* Test structures passed by value, including to a function with a
    variable-length argument lists.  All struct members are float
    scalars.  */

@@ -1,45 +1,47 @@
 // PR middle-end/60597
-// { dg-do compile }
+// { dg-do compile { target { stdint_types } } }
 // { dg-options "-O2 -g" }
+
+#include <stdint.h>
 
 struct A
 {
-  int foo () const;
-  int bar () const;
-  int a;
+  int_least32_t foo () const;
+  int_least32_t bar () const;
+  int_least32_t a;
 };
 
 struct B
 {
-  int foo ();
-  int bar ();
+  int_least32_t foo ();
+  int_least32_t bar ();
 };
 
-int *c, d;
+int_least32_t *c, d;
 
-int
+int_least32_t
 A::foo () const
 {
-  int b = a >> 16;
+  int_least32_t b = a >> 16;
   return b;
 }
 
-int
+int_least32_t
 A::bar () const
 {
-  int b = a;
+  int_least32_t b = a;
   return b;
 }
 
 void
-baz (A &x, B h, int i, int j)
+baz (A &x, B h, int_least32_t i, int_least32_t j)
 {
   for (; i < h.bar (); ++i)
     for (; h.foo (); ++j)
       {
-	int g = x.foo ();
-	int f = x.bar ();
-	int e = c[0] & 1;
+	int_least32_t g = x.foo ();
+	int_least32_t f = x.bar ();
+	int_least32_t e = c[0] & 1;
 	d = (e << 1) | (g << 16) | (f & 1);
 	c[j] = 0;
       }

@@ -2,6 +2,12 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -g -fdump-tree-optimized-lineno" } */
 
+#ifdef __ia16__
+#define QI_CONSTRAINT "qmi"
+#else
+#define QI_CONSTRAINT "g"
+#endif
+
 _Bool cond;
 
 int
@@ -19,8 +25,9 @@ fn1 (unsigned char arg0, unsigned char arg1, unsigned char arg2,
      unsigned char arg3, unsigned char arg4, unsigned char arg5,
      unsigned short arg6)
 {
-  asm volatile ("" :: "g" ((unsigned long long) arg0), "g" (arg1),
-		      "g" (arg2), "g" (arg3), "g" (arg4), "g" (arg5),
+  asm volatile ("" :: "g" ((unsigned long long) arg0), QI_CONSTRAINT (arg1),
+		      QI_CONSTRAINT (arg2), QI_CONSTRAINT (arg3),
+		      QI_CONSTRAINT (arg4), QI_CONSTRAINT (arg5),
 		      "g" (arg6));
   if (cond)
     {
@@ -39,8 +46,8 @@ static __inline__ __attribute__ ((always_inline)) void
 fn5 (unsigned int arg0, unsigned char arg1, unsigned int arg2,
      unsigned char arg3)
 {
-  asm volatile ("" :: "g" (arg0), "g" (arg1),
-		      "g" ((unsigned long long) arg2), "g" (arg3));
+  asm volatile ("" :: "g" (arg0), QI_CONSTRAINT (arg1),
+		      "g" ((unsigned long long) arg2), QI_CONSTRAINT (arg3));
 }
 
 static __inline__ __attribute__ ((always_inline)) void

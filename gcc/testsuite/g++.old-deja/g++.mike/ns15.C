@@ -4,7 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef __ia16__
+#define MAX 16
+#else
 #define MAX 256
+#endif
 #define MAXSTATE 1000000
 
 struct R {

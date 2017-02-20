@@ -12,7 +12,7 @@ struct dt_interpolation c;
 __m128
 fn1 (float p1)
 {
-  return (__attribute__ ((__vector_size__ (4 * sizeof 0))) float){ p1 };
+  return (__attribute__ ((__vector_size__ (16))) float){ p1 };
 }
 __m128
 fn2 (float p1)

@@ -1,5 +1,6 @@
 // { dg-do run { target c++11 } }
 // { dg-add-options ieee }
+// { dg-require-effective-target stdint_types }
 
 // 2010-02-25  Ed Smith-Rowland
 
@@ -25,6 +26,7 @@
 #include <limits>
 #include <cmath>
 #include <testsuite_hooks.h>
+#include <stdint.h>
 
 void
 test01()
@@ -55,12 +57,12 @@ test01()
 			      * 643 / 2136);
   VERIFY( std::numeric_limits<float>::max_digits10 == f_max_digits10 );
 
-  const int d_max_digits10 = (2 + std::numeric_limits<double>::digits
-			      * 643 / 2136);
+  const int_least32_t d_max_digits10 = (2 + std::numeric_limits<double>::digits
+			      * 643L / 2136);
   VERIFY( std::numeric_limits<double>::max_digits10 == d_max_digits10 );
 
-  const int ld_max_digits10 = (2 + std::numeric_limits<long double>::digits
-			       * 643 / 2136);
+  const int_least32_t ld_max_digits10 = (2 + std::numeric_limits<long double>::digits
+			       * 643L / 2136);
   VERIFY( std::numeric_limits<long double>::max_digits10 == ld_max_digits10 );
 }
 

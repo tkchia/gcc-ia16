@@ -18,14 +18,14 @@ struct timezone
   };
 typedef struct timezone *__restrict __timezone_ptr_t;
 
-extern int gettimeofday (struct timeval *__restrict __tv, __timezone_ptr_t __tz);
+extern int gettimeofday1 (struct timeval *__restrict __tv, __timezone_ptr_t __tz);
 
 int bar (void)
 {
   struct timeval tv;
   struct timezone tz;
 
-  gettimeofday (&tv, &tz);
+  gettimeofday1 (&tv, &tz);
   printf ("This is from bar %i\n", tz.tz_dsttime);
   return 5;
 }

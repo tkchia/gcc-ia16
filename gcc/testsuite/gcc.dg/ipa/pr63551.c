@@ -22,7 +22,13 @@ void
 fn2 ()
 {
   d = 0;
-  union U b = { 4294967286U };
+  union U b = {
+#if __SIZEOF_INT__ == __SIZEOF_SHORT__
+    65526U
+#else
+    4294967286U
+#endif
+  };
   fn1 (b);
 }
 

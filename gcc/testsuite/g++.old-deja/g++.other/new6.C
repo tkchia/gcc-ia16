@@ -1,12 +1,13 @@
-// { dg-do run  }
+// { dg-do run { target { stdint_types } } }
 // Test that we properly default-initialize the new int when () is given.
 
+#include <stdint.h>
 #include <new>
 using namespace std;
 extern "C" void *malloc (size_t);
 
 int special;
-int space = 0xdeadbeef;
+int_least32_t space = 0xdeadbeef;
 
 void *operator new (size_t size)
 #if __cplusplus <= 199711L

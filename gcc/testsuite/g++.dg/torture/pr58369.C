@@ -1,5 +1,7 @@
-// { dg-do compile }
+// { dg-do compile { target { stdint_types } } }
 // Reduced from boost-1.54
+
+#include <stdint.h>
 
 int pow(int, int);
 int sqrt(int);
@@ -7,7 +9,7 @@ int sqrt(int);
 class PolicyA { };
 
 template <class>
-int max_value() { return 0x7fffffff; }
+int_least32_t max_value() { return 0x7fffffff; }
 
 template <class>
 int min_value() { return 1; }

@@ -1,26 +1,28 @@
 /* Test support of scalar_storage_order pragma */
 
-/* { dg-do run } */
+/* { dg-do run { target { stdint_types } } } */
 /* { dg-options "-fsso-struct=big-endian" } */
 /* { dg-require-effective-target int32plus } */
 
+#include <stdint.h>
+
 struct S1
 {
-  int i;
+  int32_t i;
 };
 
 #pragma scalar_storage_order little-endian
 
 struct S2
 {
-  int i;
+  int32_t i;
 };
 
 #pragma scalar_storage_order default
 
 struct S3
 {
-  int i;
+  int32_t i;
 };
 
 struct S1 my_s1 = { 0x12345678 };

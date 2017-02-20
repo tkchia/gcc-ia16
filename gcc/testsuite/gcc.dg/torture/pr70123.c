@@ -1,5 +1,6 @@
 /* { dg-do run } */
 /* { dg-options "-fPIC" { target fpic } } */
+/* { dg-skip-if "Not enough registers" { "ia16-*-*" } } */
 __attribute__ ((noinline, noclone)) int
 bar (int flag, const char *__restrict format, ...)
 {

@@ -1,6 +1,8 @@
-/* { dg-do compile } */
+/* { dg-do compile { target { stdint_types } } } */
 /* { dg-options "-O3 -g" } */
 /* { dg-require-effective-target ptr32plus } */
+
+#include <stdint.h>
 
 int d0, sj, v0, rp, zi;
 
@@ -9,7 +11,8 @@ zn(void)
 {
   if (v0 != 0)
     {
-      int *js, *r3;
+      intptr_t *js;
+      int *r3;
       int pm, gc;
 
       for (gc = 0; gc < 1; ++gc)
@@ -19,7 +22,7 @@ zn(void)
             ;
         }
       r3 = &pm;
-      *js = (long)&gc;
+      *js = (intptr_t)&gc;
 ka:
       for (d0 = 0; d0 < 2; ++d0)
         {

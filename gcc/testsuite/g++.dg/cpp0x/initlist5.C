@@ -1,6 +1,7 @@
 // Test for narrowing diagnostics
 // { dg-do compile { target c++11 } }
 
+#include <stdint.h>
 #include <initializer_list>
 
 struct A { int i; int j; };
@@ -32,4 +33,4 @@ char c = char{ u };		// { dg-error "narrowing" }
 
 // PR c++/50011
 short unsigned su;
-int i { su };
+int_least32_t i { su };

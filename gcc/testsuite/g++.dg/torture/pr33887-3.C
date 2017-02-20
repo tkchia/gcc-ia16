@@ -1,18 +1,20 @@
-/* { dg-do run } */
+/* { dg-do run { target { stdint_types } } } */
+
+#include <stdint.h>
 
 extern "C" void abort (void);
 
 struct s
 {
   unsigned long long f1 : 40;
-  unsigned int f2 : 24;
+  uint_least32_t f2 : 24;
 };
 
 s sv;
 
-void __attribute__((noinline)) foo(unsigned int i)
+void __attribute__((noinline)) foo(uint_least32_t i)
 {
-  unsigned int tmp;
+  uint_least32_t tmp;
   sv.f2 = i;
   tmp = sv.f2;
   if (tmp != 0)

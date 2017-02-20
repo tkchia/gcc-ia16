@@ -1,8 +1,11 @@
 /* PR tree-optimization/53645 */
 /* { dg-options "-std=gnu89" } */
+/* { dg-require-effective-target stdint_types } */
 
-typedef unsigned int UV __attribute__((vector_size (16)));
-typedef int SV __attribute__((vector_size (16)));
+#include <stdint.h>
+
+typedef uint32_t UV __attribute__((vector_size (16)));
+typedef int32_t SV __attribute__((vector_size (16)));
 extern void abort (void);
 
 #define TEST(a, b, c, d) \

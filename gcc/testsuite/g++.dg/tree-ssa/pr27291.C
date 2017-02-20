@@ -1,5 +1,7 @@
-/* { dg-do compile } */
+/* { dg-do compile { target { stdint_types } } } */
 /* { dg-options "-O2" } */
+
+#include <stdint.h>
 
 namespace std
 {
@@ -29,7 +31,6 @@ namespace std
     static const bool is_integer = true;
   };
 };
-typedef unsigned int uint32_t;
 namespace std
 {
   template < typename _Alloc > class allocator;
@@ -69,8 +70,8 @@ namespace boost
     {
     };
   }
-  template <> class integer_traits < int >:public std::numeric_limits < int >,
-    public detail::integer_traits_base < int, (-2147483647 - 1), 2147483647 >
+  template <> class integer_traits < int32_t >:public std::numeric_limits < int32_t >,
+    public detail::integer_traits_base < int32_t, (-2147483647 - 1), 2147483647 >
   {
   };
   namespace random

@@ -1,6 +1,8 @@
 /* { dg-do compile { target int32plus } } */
 /* { dg-options "-O2 -fdump-rtl-expand-details" } */
 
+#include <stdint.h>
+
 int foo(unsigned int cc )
 {
 

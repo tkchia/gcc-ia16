@@ -1,5 +1,6 @@
 // { dg-do run { target c++11 } }
 // { dg-options "-D__STDCPP_WANT_MATH_SPEC_FUNCS__" }
+// { dg-skip-if "Does not fit in 64kB" { "ia16-*-*" } }
 //
 // Copyright (C) 2016-2017 Free Software Foundation, Inc.
 //

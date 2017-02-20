@@ -2,7 +2,7 @@
    statement to force a 'long long' (64-bits) to go in a register.  */
 /* { dg-do assemble } */
 /* { dg-skip-if "" { { i?86-*-* x86_64-*-* } && { ia32 && { ! nonpic } } } { "*" } { "" } } */
-/* { dg-skip-if "No 64-bit registers" { m32c-*-* } { "*" } { "" } } */
+/* { dg-skip-if "No 64-bit registers" { m32c-*-* ia16-*-* } { "*" } { "" } } */
 /* { dg-skip-if "Not enough 64-bit registers" { pdp11-*-* } { "-O0" } { "" } } */
 /* { dg-xfail-if "" { h8300-*-* } { "*" } { "" } } */
 

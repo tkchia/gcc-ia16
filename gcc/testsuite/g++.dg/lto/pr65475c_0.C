@@ -1,6 +1,8 @@
 /* { dg-lto-do link } */
 /* { dg-lto-options "-O2  -w" } */
 /* { dg-extra-ld-options { -O2 -Wno-odr -r -nostdlib } } */
+/* { dg-require-effective-target int32plus } */
+
 namespace std
 {
 template < class > struct char_traits;

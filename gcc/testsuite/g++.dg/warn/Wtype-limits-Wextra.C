@@ -20,13 +20,15 @@ void a (unsigned char x)
 
 }
 
+#ifndef __ia16__
 void b (unsigned short x)
 {
-  if (x < 0)  return;/* { dg-warning "comparison is always false due to limited range of data type" } */
-  if (x >= 0) return;/* { dg-warning "comparison is always true due to limited range of data type" } */
-  if (0 > x)  return;/* { dg-warning "comparison is always false due to limited range of data type" } */
-  if (0 <= x) return;/* { dg-warning "comparison is always true due to limited range of data type" } */
+  if (x < 0)  return;/* { dg-warning "comparison is always false due to limited range of data type" "" { target { ! ia16-*-* } } } */
+  if (x >= 0) return;/* { dg-warning "comparison is always true due to limited range of data type" "" { target { ! ia16-*-* } } } */
+  if (0 > x)  return;/* { dg-warning "comparison is always false due to limited range of data type" "" { target { ! ia16-*-* } } } */
+  if (0 <= x) return;/* { dg-warning "comparison is always true due to limited range of data type" "" { target { ! ia16-*-* } } } */
 }
+#endif
 
 void c (unsigned int x)
 {

@@ -23,6 +23,7 @@
 // changes this test may begin to fail.
 
 #include <tuple>
+#include <stdint.h>
 
 // make_tuple
 void
@@ -56,9 +57,9 @@ test_forward_as_tuple()
   {
     static int i(22);
     static float f(22.222);
-    static int ii(77799);
+    static int_least32_t ii(77799);
 
-    typedef std::tuple<int&, float&, int&&> tuple_type;
+    typedef std::tuple<int&, float&, int_least32_t&&> tuple_type;
     constexpr tuple_type p1 __attribute__((unused))
       = std::forward_as_tuple(i, f, std::move(ii));
   }
@@ -79,9 +80,9 @@ test_tie()
   {
     static int i(22);
     static float f(22.222);
-    static const int ii(77799);
+    static const int_least32_t ii(77799);
 
-    typedef std::tuple<int&, float&, const int&> tuple_type;
+    typedef std::tuple<int&, float&, const int_least32_t&> tuple_type;
     constexpr tuple_type p1 __attribute__((unused))
       = std::tie(i, f, ii);
   }

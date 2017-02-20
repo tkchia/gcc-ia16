@@ -1,10 +1,12 @@
-// { dg-do assemble  }
+// { dg-do assemble { target { stdint_types } } }
 // { dg-options "-O2 -g" }
 // (Should preferrably cycle through options.)
 // Origin: Hans-Peter Nilsson <hp@axis.com>
 // See <URL:http://gcc.gnu.org/ml/gcc-patches/2000-06/msg00310.html>
 
-typedef unsigned int    udword;
+#include <stdint.h>
+
+typedef uint32_t    udword;
 extern "C" {
 void __assert (const char *, int, const char *);
 }

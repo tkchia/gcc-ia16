@@ -36,7 +36,7 @@ void test01()
   VERIFY( (extent<int[2], 1>::value == 0) );
   VERIFY( (extent<int[2][4], 1>::value == 4) );
   VERIFY( (extent<int[][4], 1>::value == 4) );
-  VERIFY( (extent<int[10][4][6][8][12][2], 4>::value == 12) );
+  VERIFY( (extent<int[3][4][6][8][12][2], 4>::value == 12) );
   VERIFY( (test_property<extent, ClassType, 0>(0)) );
   VERIFY( (test_property<extent, ClassType[2], 0>(2)) );
   VERIFY( (test_property<extent, ClassType[2][4], 0>(2)) );
@@ -45,7 +45,7 @@ void test01()
   VERIFY( (extent<ClassType[2], 1>::value == 0) );
   VERIFY( (extent<ClassType[2][4], 1>::value == 4) );
   VERIFY( (extent<ClassType[][4], 1>::value == 4) );
-  VERIFY( (extent<ClassType[10][4][6][8][12][2], 4>::value == 12) );
+  VERIFY( (extent<ClassType[3][4][6][8][12][2], 4>::value == 12) );
 }
 
 int main()

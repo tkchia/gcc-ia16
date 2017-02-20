@@ -1,13 +1,15 @@
 // PR c++/44613
-// { dg-do run }
+// { dg-do run { target { stdint_types } } }
 // { dg-options "" }
+
+#include <stdint.h>
 
 void *volatile p;
 
 int
 main (void)
 {
-  int n = 0;
+  int_least32_t n = 0;
  lab:;
   int x[n % 1000 + 1];
   x[0] = 1;

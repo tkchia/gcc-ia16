@@ -1,9 +1,11 @@
 // PR c++/37146
-// { dg-do run }
+// { dg-do run { target { stdint_types } } }
+
+#include <stdint.h>
 
 extern "C" void abort ();
-int a, b;
-struct A { int i:8; int j:8; int k:16; int l:32; } c;
+int_least32_t a, b;
+struct A { int_least32_t i:8; int_least32_t j:8; int_least32_t k:16; int_least32_t l:32; } c;
 
 void
 f1 (int x, int y)

@@ -1,6 +1,8 @@
 // PR debug/55717
-// { dg-do compile }
+// { dg-do compile { target { stdint_types } } }
 // { dg-options "-O -g" }
+
+#include <stdint.h>
 
 struct DebugOnly {};
 template <class T>
@@ -90,10 +92,10 @@ bool IsScriptMarked (JSScript **);
 struct AllocationSiteKey
 {
   JSScript *script;
-  unsigned offset : 24;
-  int kind;
+  uint_least32_t offset : 24;
+  int_least32_t kind;
   typedef AllocationSiteKey Lookup;
-  static unsigned hash (AllocationSiteKey key) { return (long (key.script->code + key.offset)) ^ key.kind; }
+  static uint_least32_t hash (AllocationSiteKey key) { return (long (key.script->code + key.offset)) ^ key.kind; }
 };
 void
 TypeCompartment::sweep (FreeOp *)

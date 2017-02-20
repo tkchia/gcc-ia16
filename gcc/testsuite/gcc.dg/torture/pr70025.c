@@ -1,12 +1,14 @@
 /* PR middle-end/70025 */
-/* { dg-do run } */
+/* { dg-do run { target { stdint_types } } } */
 /* { dg-additional-options "-mtune=z10" { target s390*-*-* } } */
 /* { dg-require-effective-target int32plus } */
+
+#include <stdint.h>
 
 typedef char (*F) (unsigned long, void *);
 typedef union { struct A { char a1, a2, a3, a4; unsigned long a5; F a6; void *a7; } b; char c[1]; } B;
 struct C { const char *c1; unsigned long c2; };
-typedef struct D { unsigned long d1; int d2; const char *d3; unsigned long d4, d5; struct C d6[49]; char d7[8]; } E[1];
+typedef struct D { unsigned long d1; int_least32_t d2; const char *d3; unsigned long d4, d5; struct C d6[49]; char d7[8]; } E[1];
 
 __attribute__ ((noinline, noclone))
 void foo (register E p)

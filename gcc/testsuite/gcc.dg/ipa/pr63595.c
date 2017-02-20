@@ -1,7 +1,8 @@
-/* { dg-do compile } */
+/* { dg-do compile { target { stdint_types } } } */
 /* { dg-options "-O2 -fdump-ipa-icf-details"  } */
 /* { dg-require-effective-target ptr32plus } */
 
+#include <stdint.h>
 typedef int size_t;
 
 typedef struct TypHeader {
@@ -30,11 +31,11 @@ TypHandle FunOnRight (TypHandle hdCall)
 
     if ( ((hdCall)->size) != 3*((size_t)sizeof(TypHandle)) )
         return Error("",0L,0L);
-    hdPnt = ((long)(((TypHandle*)((hdCall)->ptr))[1])&1 ? (((TypHandle*)((hdCall)->ptr))[1]) : (* EvTab[(((long)(((TypHandle*)((hdCall)->ptr))[1]) & 1) ? 1 : ((((TypHandle*)((hdCall)->ptr))[1])->type))])((((TypHandle*)((hdCall)->ptr))[1])));
-    hdElm = ((long)(((TypHandle*)((hdCall)->ptr))[2])&1 ? (((TypHandle*)((hdCall)->ptr))[2]) : (* EvTab[(((long)(((TypHandle*)((hdCall)->ptr))[2]) & 1) ? 1 : ((((TypHandle*)((hdCall)->ptr))[2])->type))])((((TypHandle*)((hdCall)->ptr))[2])));
+    hdPnt = ((intptr_t)(((TypHandle*)((hdCall)->ptr))[1])&1 ? (((TypHandle*)((hdCall)->ptr))[1]) : (* EvTab[(((intptr_t)(((TypHandle*)((hdCall)->ptr))[1]) & 1) ? 1 : ((((TypHandle*)((hdCall)->ptr))[1])->type))])((((TypHandle*)((hdCall)->ptr))[1])));
+    hdElm = ((intptr_t)(((TypHandle*)((hdCall)->ptr))[2])&1 ? (((TypHandle*)((hdCall)->ptr))[2]) : (* EvTab[(((intptr_t)(((TypHandle*)((hdCall)->ptr))[2]) & 1) ? 1 : ((((TypHandle*)((hdCall)->ptr))[2])->type))])((((TypHandle*)((hdCall)->ptr))[2])));
 
 
-    hdRes = ((*TabProd[(((long)(hdPnt) & 1) ? 1 : ((hdPnt)->type))][(((long)(hdElm) & 1) ? 1 : ((hdElm)->type))])((hdPnt),(hdElm)));
+    hdRes = ((*TabProd[(((intptr_t)(hdPnt) & 1) ? 1 : ((hdPnt)->type))][(((intptr_t)(hdElm) & 1) ? 1 : ((hdElm)->type))])((hdPnt),(hdElm)));
     return hdRes;
 }
 
@@ -48,11 +49,11 @@ TypHandle FunOnLeft (TypHandle hdCall)
 
     if ( ((hdCall)->size) != 3*((size_t)sizeof(TypHandle)) )
         return Error("",0L,0L);
-    hdPnt = ((long)(((TypHandle*)((hdCall)->ptr))[1])&1 ? (((TypHandle*)((hdCall)->ptr))[1]) : (* EvTab[(((long)(((TypHandle*)((hdCall)->ptr))[1]) & 1) ? 1 : ((((TypHandle*)((hdCall)->ptr))[1])->type))])((((TypHandle*)((hdCall)->ptr))[1])));
-    hdElm = ((long)(((TypHandle*)((hdCall)->ptr))[2])&1 ? (((TypHandle*)((hdCall)->ptr))[2]) : (* EvTab[(((long)(((TypHandle*)((hdCall)->ptr))[2]) & 1) ? 1 : ((((TypHandle*)((hdCall)->ptr))[2])->type))])((((TypHandle*)((hdCall)->ptr))[2])));
+    hdPnt = ((intptr_t)(((TypHandle*)((hdCall)->ptr))[1])&1 ? (((TypHandle*)((hdCall)->ptr))[1]) : (* EvTab[(((intptr_t)(((TypHandle*)((hdCall)->ptr))[1]) & 1) ? 1 : ((((TypHandle*)((hdCall)->ptr))[1])->type))])((((TypHandle*)((hdCall)->ptr))[1])));
+    hdElm = ((intptr_t)(((TypHandle*)((hdCall)->ptr))[2])&1 ? (((TypHandle*)((hdCall)->ptr))[2]) : (* EvTab[(((intptr_t)(((TypHandle*)((hdCall)->ptr))[2]) & 1) ? 1 : ((((TypHandle*)((hdCall)->ptr))[2])->type))])((((TypHandle*)((hdCall)->ptr))[2])));
 
 
-    hdRes = ((*TabProd[(((long)(hdElm) & 1) ? 1 : ((hdElm)->type))][(((long)(hdPnt) & 1) ? 1 : ((hdPnt)->type))])((hdElm),(hdPnt)));
+    hdRes = ((*TabProd[(((intptr_t)(hdElm) & 1) ? 1 : ((hdElm)->type))][(((intptr_t)(hdPnt) & 1) ? 1 : ((hdPnt)->type))])((hdElm),(hdPnt)));
     return hdRes;
 }
 

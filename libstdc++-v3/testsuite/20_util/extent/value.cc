@@ -33,7 +33,7 @@ void test01()
   static_assert(extent<int[2], 1>::value == 0, "");
   static_assert(extent<int[2][4], 1>::value == 4, "");
   static_assert(extent<int[][4], 1>::value == 4, "");
-  static_assert(extent<int[10][4][6][8][12][2], 4>::value == 12, "");
+  static_assert(extent<int[3][4][6][8][12][2], 4>::value == 12, "");
   static_assert(test_property<extent, ClassType, 0>(0), "");
   static_assert(test_property<extent, ClassType[2], 0>(2), "");
   static_assert(test_property<extent, ClassType[2][4], 0>(2), "");
@@ -42,5 +42,5 @@ void test01()
   static_assert(extent<ClassType[2], 1>::value == 0, "");
   static_assert(extent<ClassType[2][4], 1>::value == 4, "");
   static_assert(extent<ClassType[][4], 1>::value == 4, "");
-  static_assert(extent<ClassType[10][4][6][8][12][2], 4>::value == 12, "");
+  static_assert(extent<ClassType[3][4][6][8][12][2], 4>::value == 12, "");
 }

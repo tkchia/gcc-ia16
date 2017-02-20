@@ -1,7 +1,7 @@
 // PR c++/52892
 // { dg-do compile { target c++11 } }
 
-constexpr __SIZE_TYPE__ fibonacci(__SIZE_TYPE__ val) {
+constexpr __UINT_LEAST32_TYPE__ fibonacci(__UINT_LEAST32_TYPE__ val) {
   return (val <= 2) ? 1 : fibonacci(val - 1) + fibonacci(val - 2);
 }
 

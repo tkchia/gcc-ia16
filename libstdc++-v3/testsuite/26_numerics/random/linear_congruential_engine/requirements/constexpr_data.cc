@@ -19,6 +19,7 @@
 
 #include <random>
 #include <testsuite_common_types.h>
+#include <stdint.h>
 
 namespace __gnu_test
 {
@@ -52,7 +53,7 @@ namespace __gnu_test
 int main()
 {
   __gnu_test::constexpr_member_data test;
-  typedef std::linear_congruential_engine<unsigned int, 41, 0, 2147483647> type;
+  typedef std::linear_congruential_engine<uint_least32_t, 41, 0, 2147483647> type;
   test.operator()<type>();
   return 0;
 }

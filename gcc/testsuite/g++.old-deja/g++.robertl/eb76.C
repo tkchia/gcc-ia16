@@ -1,4 +1,4 @@
-// { dg-do assemble  }
+// { dg-do assemble { target int32plus } }
 // { dg-options "-fno-short-enums" }
 // the template operator!= interferes.  It should be in a namespace.
 

@@ -1,9 +1,11 @@
-/* { dg-do compile } */
+/* { dg-do compile { target { stdint_types } } } */
 /* { dg-options "-Wno-psabi" } */
 /* { dg-require-effective-target int32plus } */
 
+#include <stdint.h>
+
 typedef short v16hi __attribute__ ((vector_size (32)));
-typedef int v8si __attribute__ ((vector_size (32)));
+typedef int32_t v8si __attribute__ ((vector_size (32)));
 typedef long long v4di __attribute__ ((vector_size (32)));
 
 int

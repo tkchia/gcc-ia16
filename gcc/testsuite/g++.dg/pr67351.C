@@ -1,9 +1,11 @@
-/* { dg-do compile } */
+/* { dg-do compile { target { stdint_types } } } */
 /* { dg-options "-O2 -fdump-tree-optimized" } */
+
+#include <stdint.h>
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;
-typedef unsigned int uint;
+typedef uint_least32_t uint;
 typedef unsigned long long uint64;
 
 class MyRgba

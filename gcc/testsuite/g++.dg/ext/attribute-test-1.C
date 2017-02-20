@@ -1,25 +1,27 @@
-// { dg-do run }
+// { dg-do run { target { stdint_types } } }
 // { dg-options "" }
 // PR c++/13989
+
+#include <stdint.h>
 
 extern "C" void abort();
 
 #define vector __attribute__((vector_size(16)))
 
 struct Constants {
-   inline vector unsigned int deadbeef(void) const {
-       return (vector unsigned int){0xdeadbeef, 0xabababab, 0x55555555, 0x12345678};
+   inline vector uint32_t deadbeef(void) const {
+       return (vector uint32_t){0xdeadbeef, 0xabababab, 0x55555555, 0x12345678};
    };
 };
 
-inline vector unsigned int const_deadbeef(Constants &C)
+inline vector uint32_t const_deadbeef(Constants &C)
 {
   return C.deadbeef();
 }
 
 union u {
-              unsigned int f[4];
-              vector unsigned int v;
+              uint32_t f[4];
+              vector uint32_t v;
 } data;
 
 int main()

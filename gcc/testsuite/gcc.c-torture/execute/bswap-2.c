@@ -3,7 +3,7 @@
 #ifdef __UINT32_TYPE__
 typedef __UINT32_TYPE__ uint32_t;
 #else
-typedef __UINT32_TYPE__ unsigned;
+typedef unsigned uint32_t;
 #endif
 
 struct bitfield {
@@ -31,15 +31,15 @@ union bf_or_uint32 {
 __attribute__ ((noinline, noclone)) uint32_t
 partial_read_le32 (union bf_or_uint32 in)
 {
-  return in.bfval.f0 | (in.bfval.f1 << 8)
-	 | (in.bfval.f2 << 16) | (in.bfval.f3 << 24);
+  return in.bfval.f0 | ((uint32_t)in.bfval.f1 << 8)
+    | ((uint32_t)in.bfval.f2 << 16) | ((uint32_t)in.bfval.f3 << 24);
 }
 
 __attribute__ ((noinline, noclone)) uint32_t
 partial_read_be32 (union bf_or_uint32 in)
 {
-  return in.bfval.f3 | (in.bfval.f2 << 8)
-	 | (in.bfval.f1 << 16) | (in.bfval.f0 << 24);
+  return in.bfval.f3 | ((uint32_t)in.bfval.f2 << 8)
+    | ((uint32_t)in.bfval.f1 << 16) | ((uint32_t)in.bfval.f0 << 24);
 }
 
 __attribute__ ((noinline, noclone)) uint32_t
@@ -52,7 +52,7 @@ fake_read_le32 (char *x, char *y)
   *y = 1;
   c2 = x[2];
   c3 = x[3];
-  return c0 | c1 << 8 | c2 << 16 | c3 << 24;
+  return c0 | (uint32_t)c1 << 8 | (uint32_t)c2 << 16 | (uint32_t)c3 << 24;
 }
 
 __attribute__ ((noinline, noclone)) uint32_t
@@ -65,7 +65,7 @@ fake_read_be32 (char *x, char *y)
   *y = 1;
   c2 = x[2];
   c3 = x[3];
-  return c3 | c2 << 8 | c1 << 16 | c0 << 24;
+  return c3 | (uint32_t)c2 << 8 | (uint32_t)c1 << 16 | (uint32_t)c0 << 24;
 }
 
 __attribute__ ((noinline, noclone)) uint32_t
@@ -78,7 +78,7 @@ incorrect_read_le32 (char *x, char *y)
   c2 = x[2];
   c3 = x[3];
   *y = 1;
-  return c0 | c1 << 8 | c2 << 16 | c3 << 24;
+  return c0 | (uint32_t)c1 << 8 | (uint32_t)c2 << 16 | (uint32_t)c3 << 24;
 }
 
 __attribute__ ((noinline, noclone)) uint32_t
@@ -91,7 +91,7 @@ incorrect_read_be32 (char *x, char *y)
   c2 = x[2];
   c3 = x[3];
   *y = 1;
-  return c3 | c2 << 8 | c1 << 16 | c0 << 24;
+  return c3 | (uint32_t)c2 << 8 | (uint32_t)c1 << 16 | (uint32_t)c0 << 24;
 }
 
 int

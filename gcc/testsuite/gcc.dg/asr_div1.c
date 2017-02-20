@@ -1,21 +1,23 @@
 /* Test division by const int generates only one shift.  */
-/* { dg-do run } */
+/* { dg-do run { target { stdint_types } } } */
 /* { dg-options "-O2 -fdump-rtl-combine-all" } */
 /* { dg-options "-O2 -fdump-rtl-combine-all -mtune=cortex-a53" { target aarch64*-*-* } } */
 /* { dg-require-effective-target int32plus } */
+
+#include <stdint.h>
 
 extern void abort (void);
 
 #define NOINLINE __attribute__((noinline))
 
-static NOINLINE int
-f1 (int n)
+static NOINLINE int_least32_t
+f1 (int_least32_t n)
 {
   return n / 33;
 }
 
-static NOINLINE int
-f2 (int n)
+static NOINLINE int_least32_t
+f2 (int_least32_t n)
 {
   return n / 77;
 }
@@ -23,9 +25,9 @@ f2 (int n)
 int
 main ()
 {
-  int a = 0xaaaaaaaa;
-  int b = 0x55555555;
-  int c;
+  int_least32_t a = 0xaaaaaaaa;
+  int_least32_t b = 0x55555555;
+  int_least32_t c;
   c = f1 (a);
   if (c != 0xfd6a052c)
     abort ();

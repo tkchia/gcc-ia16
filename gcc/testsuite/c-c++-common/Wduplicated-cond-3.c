@@ -1,6 +1,8 @@
 /* PR c/64249 */
-/* { dg-do compile } */
+/* { dg-do compile { target { stdint_types } } } */
 /* { dg-options "-Wall -Wno-duplicated-cond" } */
+
+#include <stdint.h>
 
 #ifndef __cplusplus
 # define bool _Bool
@@ -183,7 +185,7 @@ fn9 (int i, int j, int k)
     return 0;
 }
 
-int
+int_least32_t
 fn10 (void)
 {
   if (foo ())

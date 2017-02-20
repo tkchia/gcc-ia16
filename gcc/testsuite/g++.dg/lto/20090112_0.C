@@ -1,5 +1,9 @@
 // { dg-lto-do run }
-const char *func(int val) {
+// { dg-require-effective-target stdint_types }
+
+#include <stdint.h>
+
+const char *func(int_least32_t val) {
  switch (val) {
    case 2147483647: return "foo";
    default: return "";

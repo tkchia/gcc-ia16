@@ -9,7 +9,11 @@
 
 int x;
 
+#if __SIZEOF_SIZE_T__ == 2
+typedef __UINT_LEAST32_TYPE__ size_t;
+#else
 typedef __SIZE_TYPE__ size_t;
+#endif
 
 struct gdt
 {
@@ -21,7 +25,7 @@ struct gdt gdt_table[2]=
 {
     {
 		0,
-		( (((size_t)(&x))<<(24))&(-1<<(8)) ),
+		( (((size_t)(__SIZE_TYPE__)(&x))<<(24))&(-1<<(8)) ),
     },
 };
 }

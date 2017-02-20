@@ -1,5 +1,7 @@
 // PR c++/34918
-// { dg-do compile }
+// { dg-do compile { target { stdint_types } } }
 
-int v __attribute ((vector_size (8)));
-bool b = !(v - v);	// { dg-error "not convert .__vector.2. int. to .bool. in initialization" }
+#include <stdint.h>
+
+int32_t v __attribute ((vector_size (8)));
+bool b = !(v - v);	// { dg-error "not convert .__vector.2. \(long \)\?int. to .bool. in initialization" }

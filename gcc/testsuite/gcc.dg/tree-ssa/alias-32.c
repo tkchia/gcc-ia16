@@ -1,10 +1,16 @@
 /* { dg-do compile } */
 /* { dg-options "-O2 -fdump-tree-cddce1" } */
 
-int bar (short *p)
+#ifdef __INT_LEAST32_TYPE__
+#define int_least32_t __INT_LEAST32_TYPE__
+#else
+#define int_least32_t int
+#endif
+
+int_least32_t bar (short *p)
 {
-  int res = *p;
-  struct { int *q1; int *q2; } q;
+  int_least32_t res = *p;
+  struct { int_least32_t *q1; int_least32_t *q2; } q;
   q.q1 = __builtin_aligned_alloc (128, 128 * sizeof (int));
   q.q2 = __builtin_aligned_alloc (128, 128 * sizeof (int));
   *q.q1 = 1;

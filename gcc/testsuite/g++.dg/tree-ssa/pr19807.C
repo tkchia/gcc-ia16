@@ -1,8 +1,10 @@
-/* { dg-do compile } */
+/* { dg-do compile { target { stdint_types } } } */
 /* { dg-options "-O -fdump-tree-optimized" } */
 
-int a[4];
-int *x, *y, *z;
+#include <stdint.h>
+
+int32_t a[4];
+int32_t *x, *y, *z;
 
 void foo(void)
 {

@@ -3,15 +3,19 @@
 /* { dg-do compile { target c++11 } } */
 /* { dg-options "-Wall -Wconversion -Wsign-conversion -Wsign-promo" } */
 
+#ifndef __INT_LEAST32_TYPE__
+#define __INT_LEAST32_TYPE__ int
+#endif
+
 extern void f_c (char);
 extern void fsc (signed char);
 extern void fuc (unsigned char);
 extern void f_s (short);
 extern void fss (signed short);
 extern void fus (unsigned short);
-extern void f_i (int);
-extern void fsi (signed int);
-extern void fui (unsigned int);
+extern void f_i (__INT_LEAST32_TYPE__);
+extern void fsi (signed __INT_LEAST32_TYPE__);
+extern void fui (unsigned __INT_LEAST32_TYPE__);
 extern void f_l (long);
 extern void fsl (signed long);
 extern void ful (unsigned long);
@@ -46,8 +50,8 @@ void m(char16_t c0, char32_t c1)
     f_i (c1);	/* { dg-warning "change the sign" } */
     fsi (c1);	/* { dg-warning "change the sign" } */
     fui (c1);
-    f_l (c1);	/* { dg-warning "change the sign" "" { target { llp64 || ilp32 } } } */
-    fsl (c1);	/* { dg-warning "change the sign" "" { target { llp64 || ilp32 } } } */
+    f_l (c1);	/* { dg-warning "change the sign" "" { target { llp64 || { ilp32 || ia16-*-* } } } } */
+    fsl (c1);	/* { dg-warning "change the sign" "" { target { llp64 || { ilp32 || ia16-*-* } } } } */
     ful (c1);
     f_ll (c1);
     fsll (c1);

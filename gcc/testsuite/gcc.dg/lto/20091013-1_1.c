@@ -1,4 +1,7 @@
 /* { dg-xfail-if "cast to pointer of different size" { "avr-*-*" x86_64-*-mingw* } { "*" } { "" } } */
+
+#include <stdint.h>
+
 typedef struct HDC__ { int unused; } *HDC;
 typedef struct HFONT__ { int unused; } *HFONT;
 
@@ -75,7 +78,7 @@ static void update_font_code_page( DC *dc )
     if (dc->gdiFont)
         charset = WineEngGetTextCharsetInfo( dc->gdiFont, ((void *)0), 0 );
 
-    if (TranslateCharsetInfo( ((void *)(unsigned long)((unsigned long)charset)), &csi, 1) )
+    if (TranslateCharsetInfo( ((void *)(uintptr_t)((uintptr_t)charset)), &csi, 1) )
         dc->font_code_page = csi.ciACP;
     else {
         switch(charset) {

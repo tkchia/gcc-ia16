@@ -1,4 +1,7 @@
 /* { dg-xfail-if "cast to pointer of different size" { "avr-*-*" x86_64-*-mingw* } { "*" } { "" } } */
+
+#include <stdint.h>
+
 typedef struct HDC__ { int unused; } *HDC;
 typedef struct HFONT__ { int unused; } *HFONT;
 
@@ -14,7 +17,7 @@ typedef struct tagLOGFONTW
 typedef struct tagGdiFont GdiFont;
 typedef struct tagDC DC;
 
-extern unsigned int WineEngGetFontData(GdiFont*, unsigned int, unsigned int, void*, unsigned int);
+extern unsigned int WineEngGetFontData(GdiFont*, uint32_t, unsigned int, void*, unsigned int);
 
 struct list
 {
@@ -122,11 +125,11 @@ static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const FMAT2 *pma
 
 
     for ((font_elem_ptr) = (&gdi_font_list)->next; (font_elem_ptr) != (&gdi_font_list); (font_elem_ptr) = (font_elem_ptr)->next) {
-        ret = ((struct tagGdiFont *)((char *)(font_elem_ptr) - (unsigned long)(&((struct tagGdiFont *)0)->entry)));
+        ret = ((struct tagGdiFont *)((char *)(font_elem_ptr) - (uintptr_t)(&((struct tagGdiFont *)0)->entry)));
         if(!fontcmp(ret, &fd)) {
             if(!can_use_bitmap && !( ret->ft_face->face_flags & ( 1L << 0 ) )) continue;
             for ((hfontlist_elem_ptr) = (&ret->hfontlist)->next; (hfontlist_elem_ptr) != (&ret->hfontlist); (hfontlist_elem_ptr) = (hfontlist_elem_ptr)->next) {
-                hflist = ((struct tagHFONTLIST *)((char *)(hfontlist_elem_ptr) - (unsigned long)(&((struct tagHFONTLIST *)0)->entry)));
+                hflist = ((struct tagHFONTLIST *)((char *)(hfontlist_elem_ptr) - (uintptr_t)(&((struct tagHFONTLIST *)0)->entry)));
                 if(hflist->hfont == hfont)
                     return ret;
             }
@@ -137,7 +140,7 @@ static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const FMAT2 *pma
     }
 
     while(font_elem_ptr) {
-        ret = ((struct tagGdiFont *)((char *)(font_elem_ptr) - (unsigned long)(&((struct tagGdiFont *)0)->entry)));
+        ret = ((struct tagGdiFont *)((char *)(font_elem_ptr) - (uintptr_t)(&((struct tagGdiFont *)0)->entry)));
         if(!fontcmp(ret, &fd)) {
             if(!can_use_bitmap && !( ret->ft_face->face_flags & ( 1L << 0 ) )) continue;
             hflist = HeapAlloc(0, 0, sizeof(*hflist));
@@ -194,7 +197,7 @@ static int get_glyph_index_linked(GdiFont *font, unsigned int c, GdiFont **linke
     unsigned int g;
     CHILD_FONT *child_font;
 
-    for ((child_font) = ((CHILD_FONT *)((char *)((&font->child_fonts)->next) - (unsigned long)(&((CHILD_FONT *)0)->entry))); &(child_font)->entry != (&font->child_fonts); (child_font) = ((CHILD_FONT *)((char *)((child_font)->entry.next) - (unsigned long)(&((CHILD_FONT *)0)->entry))))
+    for ((child_font) = ((CHILD_FONT *)((char *)((&font->child_fonts)->next) - (uintptr_t)(&((CHILD_FONT *)0)->entry))); &(child_font)->entry != (&font->child_fonts); (child_font) = ((CHILD_FONT *)((char *)((child_font)->entry.next) - (uintptr_t)(&((CHILD_FONT *)0)->entry))))
     {
         if(!load_child_font(font, child_font))
             continue;
@@ -211,7 +214,7 @@ static int get_glyph_index_linked(GdiFont *font, unsigned int c, GdiFont **linke
 
 void load_sfnt_table ();
 
-unsigned int WineEngGetFontData(GdiFont *font, unsigned int table, unsigned int offset, void* buf,
+unsigned int WineEngGetFontData(GdiFont *font, uint32_t table, unsigned int offset, void* buf,
     unsigned int cbData)
 {
     unsigned long len;

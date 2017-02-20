@@ -8,6 +8,14 @@
 
 int i;
 
+#ifdef __ia16__
+#define BUFFER_SIZE 4112
+#define HEAP_SIZE 5000
+#else
+#define BUFFER_SIZE 41112
+#define HEAP_SIZE 50000
+#endif
+
 extern "C"
 void *memcpy (void *dest, const void *src, __SIZE_TYPE__ n)
 {
@@ -20,7 +28,7 @@ void *memcpy (void *dest, const void *src, __SIZE_TYPE__ n)
 }
 
 struct foo {
-  unsigned char buffer[41112];
+  unsigned char buffer[BUFFER_SIZE];
   foo() ;
   bool check () const;
 };
@@ -42,7 +50,7 @@ void *operator new (__SIZE_TYPE__ size, void *p)
   return p;
 }
 
-char heap[50000];
+char heap[HEAP_SIZE];
 
 int main ()
 {

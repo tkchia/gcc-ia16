@@ -3,6 +3,9 @@
 /* { dg-options "-O3 -Wall -Werror -fdump-tree-cunroll-details" } */
 /* { dg-final { scan-tree-dump "loop with 5 iterations completely unrolled" "cunroll" } } */
 /* { dg-final { scan-tree-dump "loop with 6 iterations completely unrolled" "cunroll" } } */
+/* { dg-require-effective-target stdint_types } */
+
+#include <stdint.h>
 
 #if __SIZEOF_INT__ < 4
   __extension__ typedef __INT32_TYPE__ int32_t;

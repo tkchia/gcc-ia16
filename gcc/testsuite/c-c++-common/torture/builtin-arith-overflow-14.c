@@ -1,6 +1,7 @@
 /* Test __builtin_{add,sub,mul}_overflow.  */
 /* { dg-do run } */
 /* { dg-skip-if "" { ! run_expensive_tests }  { "*" } { "-O0" "-O2" } } */
+/* { dg-skip-if "Does not fit in 64kB" { "ia16-*-*" } }  */
 
 #include "builtin-arith-overflow-12.h"
 

@@ -23,6 +23,6 @@
 void test01()
 {
   std::error_code ec;
-  if (ec == std::errc::not_supported)
+  if (ec == std::errc::not_enough_memory)
     { }
 }

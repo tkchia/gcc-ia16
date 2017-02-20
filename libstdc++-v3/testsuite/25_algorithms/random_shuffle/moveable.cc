@@ -34,7 +34,11 @@ using __gnu_test::rvalstruct;
 
 typedef test_container<rvalstruct, random_access_iterator_wrapper> Container;
 
+#ifdef __ia16__
+const unsigned int N = 1000;
+#else
 const unsigned int N = 10000;
+#endif
 int A[N]; // This is made global because we don't want it on the stack
 
 void fill_ascending()

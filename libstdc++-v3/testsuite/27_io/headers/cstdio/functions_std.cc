@@ -34,7 +34,9 @@ namespace gnu
   using std::fseek; 
   using std::perror; 
   using std::rewind; 
+#if _GLIBCXX_USE_TMPNAM
   using std::tmpnam; 
+#endif
   using std::feof; 
   using std::fprintf; 
   using std::fsetpos; 

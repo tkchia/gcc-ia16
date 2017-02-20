@@ -1,20 +1,21 @@
 /* Test for diagnostics for implicit conversions between integer types
    C++ equivalent of gcc/testsuite/gcc.dg/Wconversion-integer.c  */
 
-// { dg-do compile } 
+// { dg-do compile { target { stdint_types } } } 
 // { dg-options "-fsigned-char -Wconversion" } 
 
+#include <stdint.h>
 #include <limits.h>
 
 void fsc (signed char sc);
 void fuc (unsigned char uc);
-unsigned fui (unsigned int  ui);
-void fsi (signed int ui);
+unsigned fui (uint_least32_t ui);
+void fsi (int_least32_t ui);
 
 void h (int x)
 {
-  unsigned int ui = 3;
-  int   si = 3;
+  uint_least32_t ui = 3;
+  int_least32_t   si = 3;
   unsigned char uc = 3;
   signed char   sc = 3;
 

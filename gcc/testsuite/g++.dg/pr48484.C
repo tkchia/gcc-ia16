@@ -1,10 +1,12 @@
-/* { dg-do compile } */
+/* { dg-do compile { target { stdint_types } } } */
 /* { dg-options "-O -finline-functions -finline-small-functions -Wuninitialized" }  */
 /* { dg-add-options bind_pic_locally } */
 
+#include <stdint.h>
+
 struct SQObjectPtr
 {
-  int _type;
+  int_least32_t _type;
   SQObjectPtr operator = (long);
 };
 struct SQObjectPtrVec

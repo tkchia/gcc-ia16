@@ -13,4 +13,3 @@ oof (int mode)
    supported by match.pd patterns, we can optimize this at early
    stage of compilation, rather than relying on phiopt for that.  */
 /* { dg-final { scan-tree-dump-times "MIN_EXPR" 1 "gimple" } } */
-

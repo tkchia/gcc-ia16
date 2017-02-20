@@ -620,6 +620,7 @@ proc check_profiling_available { test_what } {
 	     || [istarget crisv32-*-*]
 	     || [istarget fido-*-elf]
 	     || [istarget h8300-*-*]
+	     || [istarget ia16-*-*]
 	     || [istarget lm32-*-*]
 	     || [istarget m32c-*-elf]
 	     || [istarget m68k-*-elf]

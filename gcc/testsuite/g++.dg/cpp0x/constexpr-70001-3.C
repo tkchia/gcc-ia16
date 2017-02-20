@@ -2,6 +2,7 @@
 
 // This is still slow to compile, only run it once.
 // { dg-do compile { target c++14_only } }
+// { dg-skip-if "Does not fit in 64kB" { "ia16-*-*" } }
 
 #include <array>
 #include <complex>

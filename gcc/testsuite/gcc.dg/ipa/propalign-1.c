@@ -13,7 +13,7 @@ foo (void *p)
 {
   uintptr_t a = (uintptr_t) p;
 
-  if (a % 4)
+  if (a % __BIGGEST_ALIGNMENT__)
     return fail_the_test (p);
   else
     return pass_the_test (p);

@@ -7,7 +7,11 @@ extern "C" void abort ();
 struct A
 {
   virtual void foo() = 0;
+#ifdef __ia16__
+  char large[3*1024];
+#else
   char large[33*1024];
+#endif
 };
 
 struct B

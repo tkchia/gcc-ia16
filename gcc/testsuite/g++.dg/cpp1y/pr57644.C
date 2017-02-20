@@ -1,8 +1,10 @@
 // { dg-do compile { target c++14 } }
 
+#include <stdint.h>
+
 struct Foo
 {
-  unsigned i: 32;
+  uint_least32_t i: 32;
 };
 
 int

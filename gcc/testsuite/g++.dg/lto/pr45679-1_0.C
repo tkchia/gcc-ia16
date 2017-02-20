@@ -1,6 +1,7 @@
 // { dg-lto-do link }
 // { dg-lto-options {{-O3 -Wno-multichar}} } 
 // { dg-extra-ld-options "-flto -flto-partition=1to1 -r -nostdlib" }
+// { dg-require-effective-target int32plus }
 
      extern "C" {
    typedef struct __locale_struct {

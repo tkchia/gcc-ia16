@@ -1,5 +1,7 @@
 /* PR preprocessor/63831 */
-/* { dg-do compile } */
+/* { dg-do compile { target { stdint_types } } } */
+
+#include <stdint.h>
 
 #ifdef __has_attribute
 typedef char T1[__has_attribute (__noreturn__) ? 1 : -1];
@@ -61,4 +63,4 @@ T18 t18;
 T19 t19;
 T20 t20;
 #endif
-int t21 = __has_attribute (noreturn) + __has_cpp_attribute (__malloc__);
+int_least32_t t21 = __has_attribute (noreturn) + __has_cpp_attribute (__malloc__);

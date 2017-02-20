@@ -5,7 +5,7 @@ struct s {
   int i;
 };
 
-#ifdef __hppa__ 
+#if defined (__hppa__) || defined (__ia16__)
 /* Register %r1 can't be fixed when generating PIC code.  */
 register struct s *reg __asm__( "4" );
 #else

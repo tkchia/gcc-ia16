@@ -10,6 +10,12 @@
 
 #define INTEGER_ARG  5
 
+#ifdef __ia16__
+#define ARGS_SIZE 2
+#else
+#define ARGS_SIZE 16
+#endif
+
 extern void abort(void);
 
 void foo(int arg)
@@ -21,7 +27,7 @@ void foo(int arg)
 void bar(int arg)
 {
   foo(arg);
-  __builtin_apply(foo, __builtin_apply_args(), 16);
+  __builtin_apply(foo, __builtin_apply_args(), ARGS_SIZE);
 }
 
 int main(void)

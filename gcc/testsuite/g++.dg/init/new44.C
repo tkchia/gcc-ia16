@@ -1,4 +1,5 @@
 // { dg-do compile }
+// { dg-options "-Wno-overflow" }
 
 // Test for PR c++/67927 - array new expression with excessive number
 // of elements not diagnosed.
@@ -24,6 +25,7 @@
 
 // For convenience.
 #define MAX __SIZE_MAX__
+#define MAX2 (__SIZE_MAX__/2 - (__SIZEOF_SIZE_T__ - 1))
 
 typedef __typeof__ (sizeof 0) size_t;
 
@@ -40,23 +42,11 @@ test_one_dim_char_array ()
     p = new char [MAX - 1];             // { dg-error "size of array" }
     p = new char [MAX - 2];             // { dg-error "size of array" }
     p = new char [MAX - 99];            // { dg-error "size of array" }
-    p = new char [MAX / 2];             // { dg-error "size of array" }
-    p = new char [MAX / 2 - 1];         // { dg-error "size of array" }
-    p = new char [MAX / 2 - 2];         // { dg-error "size of array" }
-
-    // Avoid testing the expressions below since whether or not they
-    // are accepted depends on the precision of size_t (which also
-    // determines the size of the cookie).
-    // p = new char [MAX / 2 - 3];
-    // p = new char [MAX / 2 - 4];
-    // p = new char [MAX / 2 - 5];
-    // p = new char [MAX / 2 - 6];
-
-    // The following expressions are accepted on ILP32 as well LP64
-    // (they will be diagnosed on LP128 if there ever is such a data
-    // model).
-    p = new char [MAX / 2 - 7];         // okay
-    p = new char [MAX / 2 - 8];         // okay
+    p = new char [MAX2 + 3];            // { dg-error "size of array" }
+    p = new char [MAX2 + 2];            // { dg-error "size of array" }
+    p = new char [MAX2 + 1];            // { dg-error "size of array" }
+    p = new char [MAX2];                // okay
+    p = new char [MAX2 - 1];            // okay
 }
 
 static void __attribute__ ((used))
@@ -75,12 +65,8 @@ test_one_dim_short_array ()
     p = new short [MAX / 2 - 6];        // { dg-error "size of array" }
     p = new short [MAX / 2 - 7];        // { dg-error "size of array" }
     p = new short [MAX / 2 - 8];        // { dg-error "size of array" }
-    p = new short [MAX / 4];            // { dg-error "size of array" }
-
-    // Avoid exercising data model-dependent expressions.
-    // p = new short [MAX / 4 - 1];
-
-    p = new short [MAX / 4 - 4];        // okay
+    p = new short [MAX2 / 2 + 1];       // { dg-error "size of array" }
+    p = new short [MAX2 / 2];           // okay
 }
 
 // Exercise new expression with two-dimensional arrays or char.
@@ -91,18 +77,11 @@ test_two_dim_char_array ()
     p = new char [1][MAX - 1];          // { dg-error "size of unnamed array" }
     p = new char [1][MAX - 2];          // { dg-error "size of unnamed array" }
     p = new char [1][MAX - 99];         // { dg-error "size of unnamed array" }
-    p = new char [1][MAX / 2];          // { dg-error "size of array" }
-    p = new char [1][MAX / 2 - 1];      // { dg-error "size of array" }
-    p = new char [1][MAX / 2 - 2];      // { dg-error "size of array" }
-
-    // Avoid exercising data model-dependent expressions.
-    // p = new char [1][MAX / 2 - 3];
-    // p = new char [1][MAX / 2 - 4];
-    // p = new char [1][MAX / 2 - 5];
-    // p = new char [1][MAX / 2 - 6];
-
-    p = new char [1][MAX / 2 - 7];      // okay
-    p = new char [1][MAX / 2 - 8];      // okay
+    p = new char [1][MAX2 + 3];         // { dg-error "size of \(unnamed \)\?array" }
+    p = new char [1][MAX2 + 2];         // { dg-error "size of \(unnamed \)\?array" }
+    p = new char [1][MAX2 + 1];         // { dg-error "size of array" }
+    p = new char [1][MAX2];             // okay
+    p = new char [1][MAX2 - 1];         // okay
 
     p = new char [2][MAX];              // { dg-error "size of unnamed array" }
     p = new char [2][MAX - 1];          // { dg-error "size of unnamed array" }
@@ -123,18 +102,11 @@ test_two_dim_char_array ()
     p = new char [MAX][MAX / 2 - 8];    // { dg-error "size of array" }
     p = new char [MAX][2];              // { dg-error "size of array" }
     p = new char [MAX][1];              // { dg-error "size of array" }
-    p = new char [MAX / 2][1];          // { dg-error "size of array" }
-    p = new char [MAX / 2 - 1][1];      // { dg-error "size of array" }
-    p = new char [MAX / 2 - 2][1];      // { dg-error "size of array" }
-
-    // Avoid exercising data model-dependent expressions.
-    // p = new char [MAX / 2 - 3][1];
-    // p = new char [MAX / 2 - 4][1];
-    // p = new char [MAX / 2 - 5][1];
-    // p = new char [MAX / 2 - 6][1];
-
-    p = new char [MAX / 2 - 7][1];      // okay
-    p = new char [MAX / 2 - 8][1];      // okay
+    p = new char [MAX2 + 3][1];         // { dg-error "size of array" }
+    p = new char [MAX2 + 2][1];         // { dg-error "size of array" }
+    p = new char [MAX2 + 1][1];         // { dg-error "size of array" }
+    p = new char [MAX2][1];             // okay
+    p = new char [MAX2 - 1][1];         // okay
 }
 
 
@@ -146,18 +118,11 @@ test_three_dim_char_array ()
     p = new char [1][1][MAX - 1];       // { dg-error "size of unnamed array" }
     p = new char [1][1][MAX - 2];       // { dg-error "size of unnamed array" }
     p = new char [1][1][MAX - 99];      // { dg-error "size of unnamed array" }
-    p = new char [1][1][MAX / 2];       // { dg-error "size of array" }
-    p = new char [1][1][MAX / 2 - 1];   // { dg-error "size of array" }
-    p = new char [1][1][MAX / 2 - 2];   // { dg-error "size of array" }
-
-    // Avoid exercising data model-dependent expressions.
-    // p = new char [1][1][MAX / 2 - 3];
-    // p = new char [1][1][MAX / 2 - 4];
-    // p = new char [1][1][MAX / 2 - 5];
-    // p = new char [1][1][MAX / 2 - 6];
-
-    p = new char [1][1][MAX / 2 - 7];   // okay
-    p = new char [1][1][MAX / 2 - 8];   // okay
+    p = new char [1][1][MAX2 + 3];      // { dg-error "size of \(unnamed \)\?array" }
+    p = new char [1][1][MAX2 + 2];      // { dg-error "size of \(unnamed \)\?array" }
+    p = new char [1][1][MAX2 + 1];      // { dg-error "size of array" }
+    p = new char [1][1][MAX2];          // okay
+    p = new char [1][1][MAX2 - 1];      // okay
 
     p = new char [1][2][MAX];           // { dg-error "size of unnamed array" }
     p = new char [1][2][MAX - 1];       // { dg-error "size of unnamed array" }
@@ -172,14 +137,9 @@ test_three_dim_char_array ()
     p = new char [1][2][MAX / 2 - 6];   // { dg-error "size of unnamed array" }
     p = new char [1][2][MAX / 2 - 7];   // { dg-error "size of unnamed array" }
     p = new char [1][2][MAX / 2 - 8];   // { dg-error "size of unnamed array" }
-    p = new char [1][2][MAX / 4];       // { dg-error "size of array" }
-
-    // Avoid exercising data model-dependent expressions.
-    // p = new char [1][2][MAX / 4 - 1];
-    // p = new char [1][2][MAX / 4 - 2];
-
-    p = new char [1][2][MAX / 4 - 3];   // okay
-    p = new char [1][2][MAX / 4 - 4];   // okay
+    p = new char [1][2][MAX2 / 2 + 1];  // { dg-error "size of \(unnamed \)\?array" }
+    p = new char [1][2][MAX2 / 2];      // okay
+    p = new char [1][2][MAX2 / 2 - 1];  // okay
 
     p = new char [2][1][MAX];           // { dg-error "size of unnamed array" }
     p = new char [2][1][MAX - 1];       // { dg-error "size of unnamed array" }
@@ -194,14 +154,9 @@ test_three_dim_char_array ()
     p = new char [2][1][MAX / 2 - 6];   // { dg-error "size of array" }
     p = new char [2][1][MAX / 2 - 7];   // { dg-error "size of array" }
     p = new char [2][1][MAX / 2 - 8];   // { dg-error "size of array" }
-    p = new char [2][1][MAX / 4];       // { dg-error "size of array" }
-
-    // Avoid exercising data model-dependent expressions.
-    // p = new char [2][1][MAX / 4 - 1];
-    // p = new char [2][1][MAX / 4 - 2];
-
-    p = new char [2][1][MAX / 4 - 3];   // okay
-    p = new char [2][1][MAX / 4 - 4];   // okay
+    p = new char [2][1][MAX2 / 2 + 1];  // { dg-error "size of array" }
+    p = new char [2][1][MAX2 / 2];      // okay
+    p = new char [2][1][MAX2 / 2 - 1];  // okay
 
     p = new char [2][2][MAX];           // { dg-error "size of unnamed array" }
     p = new char [2][2][MAX - 1];       // { dg-error "size of unnamed array" }
@@ -289,8 +244,12 @@ test_N_dim_char_array ()
 {
 #if __SIZEOF_SIZE_T__ == 8
     enum { N = 256 };
-#else
+#elif __SIZEOF_SIZE_T__ == 4
     enum { N = 16 };
+#elif __SIZEOF_SIZE_T__ == 2
+    enum { N = 4 };
+#else
+    #error Adjust the testcase to handle this size_t
 #endif
 
     p = new char        [N][N][N][N][N][N][N];
@@ -319,23 +278,11 @@ test_one_dim_byte_array (void *p)
     p = new (p) B [MAX - 1];            // { dg-error "size of array" }
     p = new (p) B [MAX - 2];            // { dg-error "size of array" }
     p = new (p) B [MAX - 99];           // { dg-error "size of array" }
-    p = new (p) B [MAX / 2];            // { dg-error "size of array" }
-    p = new (p) B [MAX / 2 - 1];        // { dg-error "size of array" }
-    p = new (p) B [MAX / 2 - 2];        // { dg-error "size of array" }
-
-    // Avoid testing the expressions below since whether or not they
-    // are accepted depends on the precision of size_t (which determines
-    // the size of the cookie).
-    // p = new (p) B [MAX / 2 - 3];
-    // p = new (p) B [MAX / 2 - 4];
-    // p = new (p) B [MAX / 2 - 5];
-    // p = new (p) B [MAX / 2 - 6];
-
-    // The following expressions are accepted on ILP32 as well LP64
-    // (they will be diagnosed on LP128 if there ever is such a data
-    // model).
-    p = new (p) B [MAX / 2 - 7];         // okay
-    p = new (p) B [MAX / 2 - 8];         // okay
+    p = new (p) B [MAX2 + 3];           // { dg-error "size of array" }
+    p = new (p) B [MAX2 + 2];           // { dg-error "size of array" }
+    p = new (p) B [MAX2 + 1];           // { dg-error "size of array" }
+    p = new (p) B [MAX2];               // okay
+    p = new (p) B [MAX2 - 1];           // okay
 }
 
 // Exercise placement new expression with two-dimensional arrays.
@@ -346,18 +293,11 @@ test_placement_two_dim_byte_struct_array (void *p)
     p = new (p) B [1][MAX - 1];         // { dg-error "size of unnamed array" }
     p = new (p) B [1][MAX - 2];         // { dg-error "size of unnamed array" }
     p = new (p) B [1][MAX - 99];        // { dg-error "size of unnamed array" }
-    p = new (p) B [1][MAX / 2];         // { dg-error "size of array" }
-    p = new (p) B [1][MAX / 2 - 1];     // { dg-error "size of array" }
-    p = new (p) B [1][MAX / 2 - 2];     // { dg-error "size of array" }
-
-    // Avoid exercising data model-dependent expressions.
-    // p = new (p) B [1][MAX / 2 - 3];
-    // p = new (p) B [1][MAX / 2 - 4];
-    // p = new (p) B [1][MAX / 2 - 5];
-    // p = new (p) B [1][MAX / 2 - 6];
-
-    p = new (p) B [1][MAX / 2 - 7];      // okay
-    p = new (p) B [1][MAX / 2 - 8];      // okay
+    p = new (p) B [1][MAX2 + 3];        // { dg-error "size of \(unnamed \)\?array" }
+    p = new (p) B [1][MAX2 + 2];        // { dg-error "size of \(unnamed \)\?array" }
+    p = new (p) B [1][MAX2 + 1];        // { dg-error "size of array" }
+    p = new (p) B [1][MAX2];            // okay
+    p = new (p) B [1][MAX2 - 1];        // okay
 
     p = new (p) B [2][MAX];             // { dg-error "size of unnamed array" }
     p = new (p) B [2][MAX - 1];         // { dg-error "size of unnamed array" }
@@ -378,18 +318,11 @@ test_placement_two_dim_byte_struct_array (void *p)
     p = new (p) B [MAX][MAX / 2 - 8];   // { dg-error "size of array" }
     p = new (p) B [MAX][2];             // { dg-error "size of array" }
     p = new (p) B [MAX][1];             // { dg-error "size of array" }
-    p = new (p) B [MAX / 2][1];         // { dg-error "size of array" }
-    p = new (p) B [MAX / 2 - 1][1];     // { dg-error "size of array" }
-    p = new (p) B [MAX / 2 - 2][1];     // { dg-error "size of array" }
-
-    // Avoid exercising data model-dependent expressions.
-    // p = new (p) B [MAX / 2 - 3][1];
-    // p = new (p) B [MAX / 2 - 4][1];
-    // p = new (p) B [MAX / 2 - 5][1];
-    // p = new (p) B [MAX / 2 - 6][1];
-
-    p = new (p) B [MAX / 2 - 7][1];      // okay
-    p = new (p) B [MAX / 2 - 8][1];      // okay
+    p = new (p) B [MAX2 + 3][1];        // { dg-error "size of array" }
+    p = new (p) B [MAX2 + 2][1];        // { dg-error "size of array" }
+    p = new (p) B [MAX2 + 1][1];        // { dg-error "size of array" }
+    p = new (p) B [MAX2][1];            // okay
+    p = new (p) B [MAX2 - 1][1];        // okay
 }
 
 
@@ -401,18 +334,11 @@ test_placement_three_dim_byte_struct_array (void *p)
     p = new (p) B [1][1][MAX - 1];      // { dg-error "size of unnamed array" }
     p = new (p) B [1][1][MAX - 2];      // { dg-error "size of unnamed array" }
     p = new (p) B [1][1][MAX - 99];     // { dg-error "size of unnamed array" }
-    p = new (p) B [1][1][MAX / 2];      // { dg-error "size of array" }
-    p = new (p) B [1][1][MAX / 2 - 1];  // { dg-error "size of array" }
-    p = new (p) B [1][1][MAX / 2 - 2];  // { dg-error "size of array" }
-
-    // Avoid exercising data model-dependent expressions.
-    // p = new (p) B [1][1][MAX / 2 - 3];
-    // p = new (p) B [1][1][MAX / 2 - 4];
-    // p = new (p) B [1][1][MAX / 2 - 5];
-    // p = new (p) B [1][1][MAX / 2 - 6];
-
-    p = new (p) B [1][1][MAX / 2 - 7];   // okay
-    p = new (p) B [1][1][MAX / 2 - 8];   // okay
+    p = new (p) B [1][1][MAX2 + 3];     // { dg-error "size of \(unnamed \)\?array" }
+    p = new (p) B [1][1][MAX2 + 2];     // { dg-error "size of \(unnamed \)\?array" }
+    p = new (p) B [1][1][MAX2 + 1];     // { dg-error "size of array" }
+    p = new (p) B [1][1][MAX2];         // okay
+    p = new (p) B [1][1][MAX2 - 1]  ;   // okay
 
     p = new (p) B [1][2][MAX];          // { dg-error "size of unnamed array" }
     p = new (p) B [1][2][MAX - 1];      // { dg-error "size of unnamed array" }
@@ -427,14 +353,9 @@ test_placement_three_dim_byte_struct_array (void *p)
     p = new (p) B [1][2][MAX / 2 - 6];  // { dg-error "size of unnamed array" }
     p = new (p) B [1][2][MAX / 2 - 7];  // { dg-error "size of unnamed array" }
     p = new (p) B [1][2][MAX / 2 - 8];  // { dg-error "size of unnamed array" }
-    p = new (p) B [1][2][MAX / 4];      // { dg-error "size of array" }
-
-    // Avoid exercising data model-dependent expressions.
-    // p = new (p) B [1][2][MAX / 4 - 1];
-    // p = new (p) B [1][2][MAX / 4 - 2];
-
-    p = new (p) B [1][2][MAX / 4 - 3];   // okay
-    p = new (p) B [1][2][MAX / 4 - 4];   // okay
+    p = new (p) B [1][2][MAX2 / 2 + 1]; // { dg-error "size of \(unnamed \)\?array" }
+    p = new (p) B [1][2][MAX2 / 2];     // okay
+    p = new (p) B [1][2][MAX2 / 2 - 1]; // okay
 
     p = new (p) B [2][1][MAX];          // { dg-error "size of unnamed array" }
     p = new (p) B [2][1][MAX - 1];      // { dg-error "size of unnamed array" }
@@ -449,14 +370,9 @@ test_placement_three_dim_byte_struct_array (void *p)
     p = new (p) B [2][1][MAX / 2 - 6];  // { dg-error "size of array" }
     p = new (p) B [2][1][MAX / 2 - 7];  // { dg-error "size of array" }
     p = new (p) B [2][1][MAX / 2 - 8];  // { dg-error "size of array" }
-    p = new (p) B [2][1][MAX / 4];      // { dg-error "size of array" }
-
-    // Avoid exercising data model-dependent expressions.
-    // p = new (p) B [2][1][MAX / 4 - 1];
-    // p = new (p) B [2][1][MAX / 4 - 2];
-
-    p = new (p) B [2][1][MAX / 4 - 3];   // okay
-    p = new (p) B [2][1][MAX / 4 - 4];   // okay
+    p = new (p) B [2][1][MAX2 / 2 + 1]; // { dg-error "size of array" }
+    p = new (p) B [2][1][MAX2 / 2];     // okay
+    p = new (p) B [2][1][MAX2 / 2 - 1]; // okay
 
     p = new (p) B [2][2][MAX];          // { dg-error "size of unnamed array" }
     p = new (p) B [2][2][MAX - 1];      // { dg-error "size of unnamed array" }
