@@ -27,4 +27,4 @@
   ""
 
 #define LIB_SPEC	\
-  ""
+  "%{!T*:-Tdos-com.ld}"
