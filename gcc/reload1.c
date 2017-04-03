@@ -5290,9 +5290,6 @@ reload_reg_free_p (unsigned int regno, int opnum, enum reload_type type)
       for (i = 0; i < reload_n_operands; i++)
 	if (TEST_HARD_REG_BIT (reload_reg_used_in_input[i], regno))
 	  return 0;
-      if (TEST_HARD_REG_BIT (reload_reg_used_for_inherit, regno)
-	  && TEST_HARD_REG_BIT (reload_reg_used_in_op_addr, regno))
-        return 0;
 
       return (!TEST_HARD_REG_BIT (reload_reg_used_in_op_addr_reload, regno));
 
@@ -5556,8 +5553,7 @@ reloads_unique_chain_p (int r1, int r2)
     if (i != r1 && i != r2 && rld[i].in)
       {
 	/* If our reload is mentioned at all, it isn't a simple chain.  */
-	if (reg_mentioned_p (rld[r1].in, rld[i].in)
-	    || reg_mentioned_p (rld[r2].in, rld[i].in))
+	if (reg_mentioned_p (rld[r1].in, rld[i].in))
 	  return false;
       }
   return true;
