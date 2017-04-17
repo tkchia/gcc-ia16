@@ -1,6 +1,7 @@
 /* GNU Compiler Collection target macros for ia16-*-elf targets.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
    Contributed by Rask Ingemann Lambertsen <rask@sygehus.dk>
+   Changes by Andrew Jenner <andrew@codesourcery.com>
 
    This file is part of GCC.
 

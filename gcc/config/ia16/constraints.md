@@ -1,6 +1,7 @@
 ;  Constraint definitions for Intel 16-bit x86.
-;  Copyright (C) 2006, 2007 Free Software Foundation, Inc.
+;  Copyright (C) 2006-2017 Free Software Foundation, Inc.
 ;  Contributed by Rask Ingemann Lambertsen <rask@sygehus.dk>
+;  Changes by Andrew Jenner <andrew@codesourcery.com>
 ;
 ;  This file is part of GCC.
 ;
