@@ -6,6 +6,7 @@
    exceed the maximum object size specified by -Walloc-size-larger-than.  */
 /* { dg-do compile } */
 /* { dg-options "-O2 -Wall -Walloc-size-larger-than=1234" } */
+/* { dg-require-effective-target size32plus } */
 
 #define INT_MAX    __INT_MAX__
 #define INT_MIN    (-INT_MAX - 1)

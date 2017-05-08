@@ -5,7 +5,7 @@
 
 char d [5];
 
-void* memcpy (void*, const void*, unsigned long);
+void* memcpy (void*, const void*, __SIZE_TYPE__);
 extern char* strcpy (char*, const char*);
 
 void f (int i, int j)
