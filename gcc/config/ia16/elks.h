@@ -21,22 +21,22 @@
 
 /* Controlling the Compilation Driver, gcc.  */
 
-#define LINK_SPEC	\
+#define LINK_SPEC				\
   ""
 
 #define LIB_SPEC        \
-  "-lc -lelks -lnosys "	\
+  "-lc -lelks -lnosys "							\
   "%{mseparate-code-segment:-T elks-separate.ld%s;:-T elks-combined.ld%s}"
 
-#define STARTFILE_SPEC  \
+#define STARTFILE_SPEC				\
   "crt0%O%s"
 
-#define ENDFILE_SPEC    \
+#define ENDFILE_SPEC				\
   ""
 
 /* Run-time Target Specification */
-#define TARGET_OS_CPP_BUILTINS()	\
-	do { builtin_define_std ("ELKS"); } while (0)
+#define TARGET_OS_CPP_BUILTINS()			\
+  do { builtin_define_std ("ELKS"); } while (0)
 
 #undef TARGET_OBJFMT_CPP_BUILTINS
 

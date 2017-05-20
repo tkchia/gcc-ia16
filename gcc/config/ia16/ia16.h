@@ -31,8 +31,8 @@
 #define TARGET_TUNE_8BIT	(ia16_features & 16)
 
 /* Run-time Target Specification */
-#define TARGET_CPU_CPP_BUILTINS()	\
-	do { builtin_define_std ("ia16"); } while (0)
+#define TARGET_CPU_CPP_BUILTINS()		\
+  do { builtin_define_std ("ia16"); } while (0)
 
 /* Storage Layout
  *
@@ -92,40 +92,40 @@
  * Basic Characteristics of Registers
  */
 #define FIRST_PSEUDO_REGISTER 15
-#define FIXED_REGISTERS \
-         { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1 }
-#define CALL_USED_REGISTERS \
-         { 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1 }
+#define FIXED_REGISTERS					\
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1 }
+#define CALL_USED_REGISTERS				\
+  { 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1 }
 
 /* Order of Allocation of Registers.  */
 /* The goal is to create opportunities for using load/store multiple
  * instructions as well as good register allocation in general.  */
-#define REG_ALLOC_ORDER \
-	{ 2, 3, 4, 5, 0, 1,  6, 7, 10,  9, 8, 11, 12, 13, 14 }
-/*	 al ah dl dh cl ch  bl bh  bp  di si  es  sp  cc  ap */
+#define REG_ALLOC_ORDER						\
+  { 2, 3, 4, 5, 0, 1,  6, 7, 10,  9, 8, 11, 12, 13, 14 }
+/* al ah dl dh cl ch  bl bh  bp  di si  es  sp  cc  ap */
 
 /* How Values Fit in Registers.  */
 /* FIXME: Not documented: CCmode is 32 bits.  */
 /* Must not return 0 or subreg_get_info() may divide by zero.  */
 /* FIXME: Handling of XFmode needs to use GET_MODE_PRECISION(). */
-#define HARD_REGNO_NREGS(REGNO, MODE) \
+#define HARD_REGNO_NREGS(REGNO, MODE)				\
   (MAX (ia16_hard_regno_nregs[GET_MODE_SIZE(MODE)][REGNO], 1))
 
 /* There are more cases than those caught here, but HARD_REGNO_MODE_OK()
    forbids them. Catch multireg values ending in SI_REG. */
-#define HARD_REGNO_NREGS_HAS_PADDING(REGNO, MODE) \
-	((REGNO) < SI_REG && (REGNO) + GET_MODE_SIZE(MODE) == SI_REG + 2)
+#define HARD_REGNO_NREGS_HAS_PADDING(REGNO, MODE)			\
+  ((REGNO) < SI_REG && (REGNO) + GET_MODE_SIZE(MODE) == SI_REG + 2)
 
-#define HARD_REGNO_NREGS_WITH_PADDING(REGNO, MODE) \
-	(GET_MODE_SIZE(MODE))
+#define HARD_REGNO_NREGS_WITH_PADDING(REGNO, MODE)	\
+  (GET_MODE_SIZE(MODE))
 
-#define REGMODE_NATURAL_SIZE(MODE)	\
-	(GET_MODE_SIZE(MODE) == 1 || GET_MODE_CLASS(MODE) == MODE_CC ? \
-	 1 : UNITS_PER_WORD)
+#define REGMODE_NATURAL_SIZE(MODE)				 \
+  (GET_MODE_SIZE(MODE) == 1 || GET_MODE_CLASS(MODE) == MODE_CC ? \
+   1 : UNITS_PER_WORD)
 
 /* Complex modes must not cross the boundary between 8-bit and 16-bit
    registers because subreg_get_info() will fail in that case.  */
-#define HARD_REGNO_MODE_OK(REGNO, MODE) \
+#define HARD_REGNO_MODE_OK(REGNO, MODE)					\
   (GET_MODE_CLASS(MODE) == MODE_CC ? (REGNO) == CC_REG :		\
    (REGNO) == CC_REG ? GET_MODE_CLASS(MODE) == MODE_CC :		\
    GET_MODE_SIZE(MODE) > 16 ? 0 :					\
@@ -143,8 +143,8 @@
  *    This will fail for registers in class UP_QI_REGS.
  * Used in: rtlanal.c, combine.c, regclass.c and local-alloc.c.
  */
-#define MODES_TIEABLE_P(MODE1, MODE2)	\
-	(GET_MODE_SIZE(MODE2) > 1 && GET_MODE_SIZE(MODE1) > 1)
+#define MODES_TIEABLE_P(MODE1, MODE2)				\
+  (GET_MODE_SIZE(MODE2) > 1 && GET_MODE_SIZE(MODE1) > 1)
 
 /* Handling Leaf Functions
  *
@@ -162,7 +162,7 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
   AL_REGS,	   /* Ral 000004  .  .  .  .  .  .  .  .  .  .  .  . al  .  . */
   AH_REGS,	   /* Rah 000010  .  .  .  .  .  .  .  .  .  .  . ah  .  .  . */
   AX_REGS,	     /* a 000014  .  .  .  .  .  .  .  .  .  .  . -- ax  .  . */
-  DL_REGS,	   /* Rdl 000020  .  .  .  .  .  .  .  .  .  . dl  .  .  .  . */ 
+  DL_REGS,	   /* Rdl 000020  .  .  .  .  .  .  .  .  .  . dl  .  .  .  . */
   DH_REGS,	   /* Rdh 000040  .  .  .  .  .  .  .  .  . dh  .  .  .  .  . */
   DX_REGS,	     /* d 000060  .  .  .  .  .  .  .  .  . -- dx  .  .  .  . */
   DXAX_REGS,	     /* A 000074  .  .  .  .  .  .  .  .  . -- dx -- ax  .  . */
@@ -189,13 +189,13 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 };
 #define N_REG_CLASSES ((int) LIM_REG_CLASSES)
 
-#define REG_CLASS_NAMES \
-{ "NO_REGS", "AL_REGS", "AH_REGS", "AX_REGS", "DL_REGS", "DH_REGS", \
-  "DX_REGS", "DXAX_REGS", "BX_REGS", "BXDX_REGS", "CL_REGS", \
-  "CX_REGS", "LO_QI_REGS", "UP_QI_REGS", "QI_REGS", \
-  "SI_REGS", "QISI_REGS", "DI_REGS", "INDEX_REGS", \
-  "BP_REGS", "BASE_W_INDEX_REGS", "BASE_REGS", "SEGMENT_REGS", "HI_REGS", \
-  "GENERAL_REGS", "SEG_GENERAL_REGS", "ALL_REGS" }
+#define REG_CLASS_NAMES							\
+  { "NO_REGS", "AL_REGS", "AH_REGS", "AX_REGS", "DL_REGS", "DH_REGS",	\
+      "DX_REGS", "DXAX_REGS", "BX_REGS", "BXDX_REGS", "CL_REGS",	\
+      "CX_REGS", "LO_QI_REGS", "UP_QI_REGS", "QI_REGS",			\
+      "SI_REGS", "QISI_REGS", "DI_REGS", "INDEX_REGS",			\
+      "BP_REGS", "BASE_W_INDEX_REGS", "BASE_REGS", "SEGMENT_REGS", "HI_REGS", \
+      "GENERAL_REGS", "SEG_GENERAL_REGS", "ALL_REGS" }
 
 #define REG_CLASS_CONTENTS {	 /* 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */ \
   { 000000 }, /* NO_REGS,	     4  2  1  4  2  1  4  2  1  4  2  1  4  2  1 */ \
@@ -240,12 +240,16 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 
 /* FIXME: Documentation:
  * It is unclear if these definitions should be guarded by REG_OK_STRICT or not.  */
-#define REGNO_MODE_OK_FOR_BASE_P(num, mode)	((num) < FIRST_PSEUDO_REGISTER && \
-	TEST_HARD_REG_BIT (reg_class_contents[MODE_BASE_REG_CLASS (mode)], (num)))
-#define REGNO_MODE_OK_FOR_REG_BASE_P(num, mode)	((num) < FIRST_PSEUDO_REGISTER && \
-	TEST_HARD_REG_BIT (reg_class_contents[MODE_BASE_REG_REG_CLASS (mode)], (num)))
-#define REGNO_OK_FOR_INDEX_P(num)		((num) < FIRST_PSEUDO_REGISTER && \
-	TEST_HARD_REG_BIT (reg_class_contents[INDEX_REG_CLASS], (num)))
+#define REGNO_MODE_OK_FOR_BASE_P(num, mode)     \
+  ((num) < FIRST_PSEUDO_REGISTER &&		\
+   TEST_HARD_REG_BIT (reg_class_contents[MODE_BASE_REG_CLASS (mode)], (num)))
+#define REGNO_MODE_OK_FOR_REG_BASE_P(num, mode)				  \
+  ((num) < FIRST_PSEUDO_REGISTER &&					  \
+   TEST_HARD_REG_BIT (reg_class_contents[MODE_BASE_REG_REG_CLASS (mode)], \
+		      (num)))
+#define REGNO_OK_FOR_INDEX_P(num)	\
+  ((num) < FIRST_PSEUDO_REGISTER &&	\
+   TEST_HARD_REG_BIT (reg_class_contents[INDEX_REG_CLASS], (num)))
 
 #define PREFERRED_RELOAD_CLASS(X,CLASS) CLASS
 
@@ -269,22 +273,22 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
  * TODO: A target hook for reload_reg_class_lower().
  * FIXME: CLASS_MAX_NREGS (GENERAL_REGS, XFmode) returns 12.  10 is correct.
  */
-#define CLASS_MAX_NREGS(class, mode) \
-	((class) == BASE_W_INDEX_REGS && reload_in_progress ? 4 :	\
-	 (class) == INDEX_REGS && reload_in_progress ? 4 :		\
-	 (class) == BASE_REGS && reload_in_progress ? 4 :		\
-	 (class) == BX_REGS && reload_in_progress ? 4 :			\
-	 (class) == CX_REGS && reload_in_progress ? 4 :			\
-	 (reg_classes_intersect_p (QI_REGS, (class)) ?			\
- 	 GET_MODE_SIZE (mode) :						\
-	 (GET_MODE_SIZE (mode) + 1U) / 2U) + 0U)
+#define CLASS_MAX_NREGS(class, mode)				\
+  ((class) == BASE_W_INDEX_REGS && reload_in_progress ? 4 :	\
+   (class) == INDEX_REGS && reload_in_progress ? 4 :		\
+   (class) == BASE_REGS && reload_in_progress ? 4 :		\
+   (class) == BX_REGS && reload_in_progress ? 4 :		\
+   (class) == CX_REGS && reload_in_progress ? 4 :		\
+   (reg_classes_intersect_p (QI_REGS, (class)) ?		\
+    GET_MODE_SIZE (mode) :					\
+    (GET_MODE_SIZE (mode) + 1U) / 2U) + 0U)
 
 /* HI_REGS cannot change mode to QImode.  We cannot change mode to a
  * larger mode without increasing the number of hard regs used.
  * TODO: This will change when x87 FPUs are supported.  */
 #define CANNOT_CHANGE_MODE_CLASS(FROM, TO, CLASS)	\
-	(GET_MODE_SIZE(TO) > GET_MODE_SIZE(FROM)	\
-	 || ((TO) == QImode && reg_classes_intersect_p (HI_REGS, (CLASS))))
+  (GET_MODE_SIZE(TO) > GET_MODE_SIZE(FROM)				\
+   || ((TO) == QImode && reg_classes_intersect_p (HI_REGS, (CLASS))))
 
 /* Stack Layout and Calling Conventions
  * Basic Stack Layout
@@ -301,10 +305,10 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
    count > 0.
    TODO: Make this work by pushing the frame pointer before the saved regs
    when not using ENTER.  */
-#define RETURN_ADDR_RTX(COUNT, FRAME)				       	      \
-	((COUNT) == 0							      \
-	 ? gen_rtx_MEM (Pmode, arg_pointer_rtx)				      \
-	 : NULL_RTX)
+#define RETURN_ADDR_RTX(COUNT, FRAME)		\
+  ((COUNT) == 0					\
+   ? gen_rtx_MEM (Pmode, arg_pointer_rtx)	\
+   : NULL_RTX)
 
 /* Exception Handling Support */
 /* XXX needs work.  */
@@ -329,12 +333,12 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 /* FIXME Documentation: The offset is in units and is positive if
    STACK_GROWS_UPWARD.  */
 
-#define ELIMINABLE_REGS \
-	{	{ ARG_POINTER_REGNUM, STACK_POINTER_REGNUM },	\
-		{ ARG_POINTER_REGNUM, FRAME_POINTER_REGNUM },	\
-		{ FRAME_POINTER_REGNUM, STACK_POINTER_REGNUM }	}
-#define INITIAL_ELIMINATION_OFFSET(from_reg, to_reg, offset_var) \
-	offset_var = ia16_initial_elimination_offset (from_reg, to_reg)
+#define ELIMINABLE_REGS					\
+  { { ARG_POINTER_REGNUM, STACK_POINTER_REGNUM },	\
+    { ARG_POINTER_REGNUM, FRAME_POINTER_REGNUM },	\
+    { FRAME_POINTER_REGNUM, STACK_POINTER_REGNUM } }
+#define INITIAL_ELIMINATION_OFFSET(from_reg, to_reg, offset_var)	\
+  offset_var = ia16_initial_elimination_offset (from_reg, to_reg)
 
 /* Passing Function Arguments on the Stack */
 #define PUSH_ARGS		1
@@ -349,7 +353,7 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 #define FUNCTION_ARG_REGNO_P(regno)		0
 
 /* How Scalar Function Values Are Returned */
-#define LIBCALL_VALUE(mode)	\
+#define LIBCALL_VALUE(mode)						\
   (HARD_REGNO_MODE_OK (A_REG, mode) ? gen_rtx_REG (mode, A_REG) : NULL_RTX)
 #define FUNCTION_VALUE_REGNO_P(N)	((N) == A_REG)
 
@@ -362,7 +366,7 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 /* Function Entry and Exit */
 /* Thunks support is missing.  */
 /* Stack adjustment at function exit isn't needed with a frame pointer.  */
-#define EXIT_IGNORE_STACK \
+#define EXIT_IGNORE_STACK						\
   (get_frame_size() > 0 || crtl->args.info > 0 || cfun->calls_alloca)
 
 /* Generating Code for Profiling */
@@ -405,20 +409,21 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
  * TODO: Now that we have ia16_costs, use it.  But that needs
  * stuff in ia16-protos.h.
  */
-#define REGISTER_MOVE_COST(mode, from, to) \
+#define REGISTER_MOVE_COST(mode, from, to)				\
   (COSTS_N_INSNS (from == ALL_REGS || to == ALL_REGS ? 16000 : 2))
 
-#define MEMORY_MOVE_COST(mode, class, in) \
+#define MEMORY_MOVE_COST(mode, class, in)				\
   ((TARGET_TUNE_8BIT ? (GET_MODE_SIZE (mode) - 1) * COSTS_N_INSNS (4) : 0) + \
-  ((class) == AX_REGS ? (in ? COSTS_N_INSNS (8) : COSTS_N_INSNS (11)) : \
-  (in ? COSTS_N_INSNS (9) : COSTS_N_INSNS (12))))
+   ((class) == AX_REGS ? (in ? COSTS_N_INSNS (8) : COSTS_N_INSNS (11)) : \
+    (in ? COSTS_N_INSNS (9) : COSTS_N_INSNS (12))))
 
 /* A taken branch costs 13 cycles and a not taken branch costs 4 cycles.
  * Add to that 4 (or 8) cycles to fetch the branch instruction (two bytes)
  * itself.
  */
-#define BRANCH_COST(speed_p, predictable_p) (TARGET_TUNE_8BIT ? \
-   COSTS_N_INSNS (8) : COSTS_N_INSNS (4) + COSTS_N_INSNS (8))
+#define BRANCH_COST(speed_p, predictable_p)	\
+  (TARGET_TUNE_8BIT ? COSTS_N_INSNS (8) :	\
+   COSTS_N_INSNS (4) + COSTS_N_INSNS (8))
 #define SLOW_BYTE_ACCESS	(TARGET_TUNE_8BIT ? 0 : 1)
 
 /* These probably need some tweaking.  Leave the defaults for now.
@@ -452,8 +457,8 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 
 /* Output of Uninitialized Variables.  */
 
-#define ASM_OUTPUT_ALIGNED_BSS(stream, decl, name, size, alignment) \
-	asm_output_aligned_bss(stream, decl, name, size, alignment)
+#define ASM_OUTPUT_ALIGNED_BSS(stream, decl, name, size, alignment)	\
+  asm_output_aligned_bss(stream, decl, name, size, alignment)
 
 /* Output and Generation of Labels.  */
 
@@ -461,7 +466,7 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 #define GLOBAL_ASM_OP   "\t.global\t"
 
 #undef ASM_GENERATE_INTERNAL_LABEL
-#define ASM_GENERATE_INTERNAL_LABEL(BUF,PREFIX,NUMBER)  \
+#define ASM_GENERATE_INTERNAL_LABEL(BUF,PREFIX,NUMBER)			\
   sprintf ((BUF), LOCAL_LABEL_PREFIX "%s%ld", (PREFIX), (long)(NUMBER))
 
 /* Used by target hook TARGET_ASM_GLOBALIZE_LABEL. */
@@ -475,11 +480,12 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 
 /* Output of Assembler Instructions.  */
 
-#define REGISTER_NAMES { "c", "ch", "a", "ah", "d", "dh", "b", "bh", \
-                         "si", "di", "bp", "es", "sp", "cc", "argp" }
-#define ADDITIONAL_REGISTER_NAMES \
-	{ { "cl", 0 }, {"al", 2 }, { "dl", 4 }, { "bl", 6 }, \
-	  { "cx", 0 }, {"ax", 2 }, { "dx", 4 }, { "bx", 6 } }
+#define REGISTER_NAMES							\
+  { "c", "ch", "a", "ah", "d", "dh", "b", "bh", "si", "di", "bp", "es", "sp", \
+    "cc", "argp" }
+#define ADDITIONAL_REGISTER_NAMES			\
+  { { "cl", 0 }, {"al", 2 }, { "dl", 4 }, { "bl", 6 },	\
+    { "cx", 0 }, {"ax", 2 }, { "dx", 4 }, { "bx", 6 } }
 #define PRINT_OPERAND(stream, x, code)	ia16_print_operand (stream, x, code)
 #define PRINT_OPERAND_ADDRESS(stream, x) ia16_print_operand_address (stream, x)
 #define REGISTER_PREFIX "%"
@@ -487,44 +493,50 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 #define IMMEDIATE_PREFIX "$"
 
 /* This is complicated slightly because there is no 8-bit push/pop.  */
-#define ASM_OUTPUT_REG_PUSH(stream, regno) \
-  do { \
-    fputs ("\tpush\t" REGISTER_PREFIX, stream); \
-    if (regno < SI_REG) \
-      {  \
-	putc (reg_names[(regno) & 6][0], stream); \
-	putc ('x', stream); \
-      } \
-    else \
-      fputs (reg_names[regno], stream); \
-    putc ('\n', stream); \
-  } while (0);
+#define ASM_OUTPUT_REG_PUSH(stream, regno)		\
+  do							\
+    {							\
+      fputs ("\tpush\t" REGISTER_PREFIX, stream);	\
+      if (regno < SI_REG)				\
+	{						\
+	  putc (reg_names[(regno) & 6][0], stream);	\
+	  putc ('x', stream);				\
+	}						\
+      else						\
+	fputs (reg_names[regno], stream);		\
+      putc ('\n', stream);				\
+    }							\
+  while (0);
 
-#define ASM_OUTPUT_REG_POP(stream, regno) \
-  do { \
-    fputs ("\tpop\t" REGISTER_PREFIX, stream); \
-    if (regno < SI_REG) \
-      { \
-	putc (reg_names[(regno) & 6][0], stream); \
-	putc ('x', stream); \
-      } \
-    else \
-      fputs (reg_names[regno], stream); \
-    putc ('\n', stream); \
-  } while (0);
+#define ASM_OUTPUT_REG_POP(stream, regno)		\
+  do							\
+    {							\
+      fputs ("\tpop\t" REGISTER_PREFIX, stream);	\
+      if (regno < SI_REG)				\
+	{						\
+	  putc (reg_names[(regno) & 6][0], stream);	\
+	  putc ('x', stream);				\
+	}						\
+      else						\
+	fputs (reg_names[regno], stream);		\
+      putc ('\n', stream);				\
+    }							\
+  while (0);
 
 /* Output of Dispatch Tables.  */
-#define ASM_OUTPUT_ADDR_DIFF_ELT(stream, body, value, rel) \
-	fprintf (stream, "\t.word\t.%u-.%u\n", value, rel)
+#define ASM_OUTPUT_ADDR_DIFF_ELT(stream, body, value, rel)	\
+  fprintf (stream, "\t.word\t.%u-.%u\n", value, rel)
 
 /* Assembler Commands for Alignment.  */
 #undef ASM_OUTPUT_SKIP
-#define ASM_OUTPUT_SKIP(stream, nbytes) asm_fprintf (stream, "\t.skip\t%wu,0\n", nbytes)
-#define ASM_OUTPUT_ALIGN(stream, power) fprintf (stream, "\t.p2align\t%u\n", power)
-#define ASM_OUTPUT_ALIGN_WITH_NOP(stream, power) \
-	fprintf (stream, "\t.p2align\t%u\n", power)
-#define ASM_OUTPUT_MAX_SKIP_ALIGN(stream, power, max_skip) \
-	fprintf (stream, "\t.p2align\t%u,,%u\n", power, max_skip)
+#define ASM_OUTPUT_SKIP(stream, nbytes)			\
+  asm_fprintf (stream, "\t.skip\t%wu,0\n", nbytes)
+#define ASM_OUTPUT_ALIGN(stream, power)		\
+  fprintf (stream, "\t.p2align\t%u\n", power)
+#define ASM_OUTPUT_ALIGN_WITH_NOP(stream, power)	\
+  fprintf (stream, "\t.p2align\t%u\n", power)
+#define ASM_OUTPUT_MAX_SKIP_ALIGN(stream, power, max_skip)	\
+  fprintf (stream, "\t.p2align\t%u,,%u\n", power, max_skip)
 
 /* Controlling Debugging Information Format  */
 /* Macros Affecting All Debugging Formats  */

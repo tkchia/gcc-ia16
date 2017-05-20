@@ -262,7 +262,7 @@
 ;REGNO (operands[0]) != ES_REG
 ;   && (df_regs_ever_live_p (ES_REG) || call_used_regs[ES_REG])
 ;   && peep2_regno_dead_p (0, ES_REG)
-;   && 
+;   &&
 (define_peephole2
   [(match_scratch:HI 6 "Q")
    (set (match_operand:HI 0 "register_operand")
@@ -356,18 +356,18 @@
 {
   switch (INTVAL (operands[0]))
     {
-      case 32:
-	return ("pusha\;pusha");
-      case 18:
-	return ("pushw\t%%ds\;pusha");
-      case 16:
-	return ("pusha");
-      case  4:
-	return ("pushw\t%%ds\;pushw\t%%ds");
-      case  2:
-	return ("pushw\t%%ds");
-      default:
-	gcc_unreachable ();
+    case 32:
+      return ("pusha\;pusha");
+    case 18:
+      return ("pushw\t%%ds\;pusha");
+    case 16:
+      return ("pusha");
+    case  4:
+      return ("pushw\t%%ds\;pushw\t%%ds");
+    case  2:
+      return ("pushw\t%%ds");
+    default:
+      gcc_unreachable ();
     }
 })
 
@@ -399,12 +399,12 @@
 {
   switch (INTVAL (operands[0]))
     {
-      case  4:
-	return ("popw\t%1\;popw\t%1");
-      case  2:
-	return ("popw\t%1");
-      default:
-	gcc_unreachable ();
+    case  4:
+      return ("popw\t%1\;popw\t%1");
+    case  2:
+      return ("popw\t%1");
+    default:
+      gcc_unreachable ();
     }
 })
 
@@ -412,33 +412,25 @@
 ; 'sub $-128, dest' is one byte shorter than 'add $128, dest'.
 ; TODO Non-clobber versions.
 (define_peephole2
-	[(parallel
-	[(set (match_operand:MO 0 "nonimmediate_operand")
-	      (plus:MO (match_dup 0) (const_int 128)))
-	 (clobber (reg:CC CC_REG))]
-	)]
-	""
-	[(parallel
-	[(set (match_dup 0) (minus:MO (match_dup 0) (const_int -128)))
-	 (clobber (reg:CC CC_REG))]
-	)]
-	""
+  [(parallel [(set (match_operand:MO 0 "nonimmediate_operand")
+		   (plus:MO (match_dup 0) (const_int 128)))
+	      (clobber (reg:CC CC_REG))])]
+  ""
+  [(parallel [(set (match_dup 0) (minus:MO (match_dup 0) (const_int -128)))
+	      (clobber (reg:CC CC_REG))])]
+  ""
 )
 
 ; 'add $-128, dest' is one byte shorter than 'sub $128, dest'.
 ; TODO Non-clobber versions.
 (define_peephole2
-	[(parallel
-	[(set (match_operand:MO 0 "nonimmediate_operand")
-	      (minus:MO (match_dup 0) (const_int 128)))
-	 (clobber (reg:CC CC_REG))]
-	)]
-	""
-	[(parallel
-	[(set (match_dup 0) (plus:MO (match_dup 0) (const_int -128)))
-	 (clobber (reg:CC CC_REG))]
-	)]
-	""
+  [(parallel [(set (match_operand:MO 0 "nonimmediate_operand")
+		   (minus:MO (match_dup 0) (const_int 128)))
+	      (clobber (reg:CC CC_REG))])]
+  ""
+  [(parallel [(set (match_dup 0) (plus:MO (match_dup 0) (const_int -128)))
+	      (clobber (reg:CC CC_REG))])]
+  ""
 )
 
 ; "and" can sign-extend an 8-bit immediate. "test" can't. Optimize
@@ -595,12 +587,12 @@
 )
 
 (define_insn "*andhi3_const255_noclobber"
-	[(set (match_operand:HI 0 "nonimmediate_operand" "=qm")
-	      (and:HI (match_operand:HI 1 "nonimmediate_operand" "0")
-	              (const_int 255)))]
-	""
+  [(set (match_operand:HI 0 "nonimmediate_operand" "=qm")
+	(and:HI (match_operand:HI 1 "nonimmediate_operand" "0")
+		(const_int 255)))]
+  ""
 {
-	return "movb\t$0,\t%H0";
+  return "movb\t$0,\t%H0";
 })
 
 ; Optimize "movw mem, reg; andw $x, reg" into "movb mem, reg; andw $x, reg"

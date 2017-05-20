@@ -21,11 +21,11 @@
 
 /* Controlling the Compilation Driver, gcc.  */
 
-#define STARTFILE_SPEC	\
+#define STARTFILE_SPEC				\
   ""
 
-#define ENDFILE_SPEC	\
+#define ENDFILE_SPEC				\
   ""
 
-#define LIB_SPEC	\
+#define LIB_SPEC				\
   "%{!T*:-Tdos-com.ld}"

@@ -56,26 +56,26 @@
 
 ; General purpose register classes.
 (define_register_constraint "T"	"SEG_GENERAL_REGS"
-	"All general and segment registers.")
+  "All general and segment registers.")
 (define_register_constraint "q" "QI_REGS"
-	"The 8-bit registers.")
+  "The 8-bit registers.")
 (define_register_constraint "l"	"LO_QI_REGS"
-	"The lower half of pairs of 8-bit registers.")
+  "The lower half of pairs of 8-bit registers.")
 (define_register_constraint "u"	"UP_QI_REGS"
-	"The upper half of pairs of 8-bit registers.")
+  "The upper half of pairs of 8-bit registers.")
 (define_register_constraint "B"	"BASE_REGS"
-	"The @code{bx}, @code{si}, @code{di} and @code{bp} registers.")
+  "The @code{bx}, @code{si}, @code{di} and @code{bp} registers.")
 (define_register_constraint "w"	"BASE_W_INDEX_REGS"
-	"The @code{bx} and @code{bp} registers.")
+  "The @code{bx} and @code{bp} registers.")
 (define_register_constraint "x"	"INDEX_REGS"
-	"The @code{si} and @code{di} registers.")
+  "The @code{si} and @code{di} registers.")
 
 ; Special groups of registers.
 (define_register_constraint "A"	"DXAX_REGS"  "The @code{dx:ax} register pair.")
 (define_register_constraint "j"	"BXDX_REGS"  "The @code{bx:dx} register pair.")
 (define_register_constraint "Q" "SEGMENT_REGS"	"The @code{es} register.")
 (define_register_constraint "k"	"QISI_REGS"
-	"SImode registers with two 8-bit low parts.")
+  "SImode registers with two 8-bit low parts.")
 
 ; Constraints for integer constants.
 (define_constraint	"Z"	"The constant 0."

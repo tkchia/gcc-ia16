@@ -99,21 +99,21 @@ unsigned char ia16_hard_regno_nregs[17][FIRST_PSEUDO_REGISTER] =
 
 /* Register Classes.  */
 enum reg_class const ia16_regno_class[FIRST_PSEUDO_REGISTER] = {
-	/*  0 cl */ CL_REGS,
-	/*  1 ch */ CX_REGS,
-	/*  2 al */ AL_REGS,
-	/*  3 ah */ AH_REGS,
-	/*  4 dl */ DL_REGS,
-	/*  5 dh */ DH_REGS,
-	/*  6 bl */ BX_REGS,
-	/*  7 bh */ BX_REGS,
-	/*  8 si */ SI_REGS,
-	/*  9 di */ DI_REGS,
-	/* 10 bp */ BP_REGS,
-	/* 11 es */ SEGMENT_REGS,
-	/* 12 sp */ HI_REGS,
-	/* 13 cc */ ALL_REGS,
-	/* 14 ap */ ALL_REGS,
+  /*  0 cl */ CL_REGS,
+  /*  1 ch */ CX_REGS,
+  /*  2 al */ AL_REGS,
+  /*  3 ah */ AH_REGS,
+  /*  4 dl */ DL_REGS,
+  /*  5 dh */ DH_REGS,
+  /*  6 bl */ BX_REGS,
+  /*  7 bh */ BX_REGS,
+  /*  8 si */ SI_REGS,
+  /*  9 di */ DI_REGS,
+  /* 10 bp */ BP_REGS,
+  /* 11 es */ SEGMENT_REGS,
+  /* 12 sp */ HI_REGS,
+  /* 13 cc */ ALL_REGS,
+  /* 14 ap */ ALL_REGS,
 };
 
 /* Processor target table, indexed by processor number */
@@ -210,10 +210,10 @@ int ia16_save_reg_p (unsigned int r)
  */
 HOST_WIDE_INT ia16_first_parm_offset (void)
 {
-	/* Start off with 2 bytes to skip over the saved pc register.  */
-	HOST_WIDE_INT offset = GET_MODE_SIZE (Pmode);
+  /* Start off with 2 bytes to skip over the saved pc register.  */
+  HOST_WIDE_INT offset = GET_MODE_SIZE (Pmode);
 
-	return (offset);
+  return (offset);
 }
 
 /* Eliminating Frame Pointer and Arg Pointer */
@@ -261,7 +261,7 @@ ia16_initial_elimination_offset (unsigned int from, unsigned int to)
 
   if (ARG_POINTER_REGNUM == from && STACK_POINTER_REGNUM == to)
     return (ia16_initial_arg_pointer_offset ()
-	  + ia16_initial_frame_pointer_offset ());
+	    + ia16_initial_frame_pointer_offset ());
 
   gcc_unreachable ();
 }
@@ -395,7 +395,7 @@ ia16_select_cc_mode (enum rtx_code op, rtx x, rtx y,
     case NE:
       /* TODO: Explain why we check nonimmediate_operand(x) here.  */
       if ((y == const0_rtx || y == constm1_rtx)
-	   && nonimmediate_operand (x, GET_MODE (x)))
+	  && nonimmediate_operand (x, GET_MODE (x)))
 	return y == const0_rtx ? CCZ_Cmode : CCZ_NCmode;
       else
 	return CCZmode;
@@ -428,7 +428,7 @@ ia16_select_cc_mode (enum rtx_code op, rtx x, rtx y,
       return immediate_operand (y, GET_MODE (y)) ? CCCZ_Cmode : CCCZmode;
 
     default:
-    return CCmode;
+      return CCmode;
     }
 }
 
@@ -466,9 +466,9 @@ ia16_canonicalize_comparison (int *code, rtx *op0, rtx *op1,
 static bool
 ia16_fixed_condition_code_regs (unsigned int *reg1, unsigned int *reg2)
 {
-	*reg1 = CC_REG;
-	*reg2 = INVALID_REGNUM;
-	return (true);
+  *reg1 = CC_REG;
+  *reg2 = INVALID_REGNUM;
+  return (true);
 }
 
 #undef  TARGET_CC_MODES_COMPATIBLE
@@ -480,103 +480,102 @@ ia16_cc_modes_compatible (enum machine_mode mode1, enum machine_mode mode2)
 {
   switch (mode1)
     {
+    case CCSCmode:
+      switch (mode2)
+	{
+	case CCSCZmode:
+	  return (CCSCZmode);
+	case CCSCmode:
+	case CCCmode:
+	  return (CCSCmode);
+	default:
+	  return (CCmode);
+	}
 
-      case CCSCmode:
-	switch (mode2)
-	  {
-	    case CCSCZmode:
-	      return (CCSCZmode);
-	    case CCSCmode:
-	    case CCCmode:
-	      return (CCSCmode);
-	    default:
-	      return (CCmode);
-	  }
+    case CCSOZmode:
+      switch (mode2)
+	{
+	case CCSOZmode:
+	case CCSOmode:
+	case CCSZmode:
+	case CCZmode:
+	  return (CCSOZmode);
+	default:
+	  return (CCmode);
+	}
 
-      case CCSOZmode:
-	switch (mode2)
-	  {
-	    case CCSOZmode:
-	    case CCSOmode:
-	    case CCSZmode:
-	    case CCZmode:
-	      return (CCSOZmode);
-	    default:
-	      return (CCmode);
-	  }
+    case CCSOmode:
+      switch (mode2)
+	{
+	case CCSOZmode:
+	case CCSOmode:
+	  return (mode2);
+	case CCSmode:
+	  return (CCSOmode);
+	default:
+	  return (CCmode);
+	}
 
-      case CCSOmode:
-	switch (mode2)
-	  {
-	    case CCSOZmode:
-	    case CCSOmode:
-	      return (mode2);
-	    case CCSmode:
-	      return (CCSOmode);
-	    default:
-	      return (CCmode);
-	  }
+    case CCSmode:
+      switch (mode2)
+	{
+	case CCSZmode:
+	case CCSOmode:
+	case CCSOZmode:
+	  return (mode2);
+	default:
+	  return (CCmode);
+	}
 
-      case CCSmode:
-	switch (mode2)
-	  {
-	    case CCSZmode:
-	    case CCSOmode:
-	    case CCSOZmode:
-	      return (mode2);
-	    default:
-	      return (CCmode);
-	  }
+    case CCCZmode:
+      switch (mode2)
+	{
+	case CCSCZmode:
+	  return (CCSCZmode);
+	case CCCZmode:
+	case CCZmode:
+	case CCCmode:
+	  return (CCCZmode);
+	default:
+	  return (CCmode);
+	}
 
-      case CCCZmode:
-	switch (mode2)
-	  {
-	    case CCSCZmode:
-	      return (CCSCZmode);
-	    case CCCZmode:
-	    case CCZmode:
-	    case CCCmode:
-	      return (CCCZmode);
-	    default:
-	      return (CCmode);
-	  }
+    case CCZmode:
+      switch (mode2)
+	{
+	case CCSCZmode:
+	case CCSOZmode:
+	case CCSZmode:
+	case CCCZmode:
+	case CCZmode:
+	  return (mode2);
+	case CCSOmode:
+	  return (CCSOZmode);
+	case CCCmode:
+	  return (CCCZmode);
+	default:
+	  return (CCmode);
+	}
 
-      case CCZmode:
-	switch (mode2)
-	  {
-	    case CCSCZmode:
-	    case CCSOZmode:
-	    case CCSZmode:
-	    case CCCZmode:
-	    case CCZmode:
-	      return (mode2);
-	    case CCSOmode:
-	      return (CCSOZmode);
-	    case CCCmode:
-	      return (CCCZmode);
-	    default:
-	      return (CCmode);
-	  }
+    case CCCmode:
+      switch (mode2)
+	{
+	case CCSCZmode:
+	case CCSCmode:
+	case CCCZmode:
+	case CCCmode:
+	  return (mode2);
+	case CCZmode:
+	  return (CCCZmode);
+	default:
+	  return (CCmode);
+	}
 
-      case CCCmode:
-	switch (mode2)
-	  {
-	    case CCSCZmode:
-	    case CCSCmode:
-	    case CCCZmode:
-	    case CCCmode:
-	      return (mode2);
-	    case CCZmode:
-	      return (CCCZmode);
-	    default:
-	      return (CCmode);
-	  }
-
-      case CCmode:
-      default:
-	return (CCmode);
+    case CCmode:
+    default:
+      return (CCmode);
     }
-    gcc_unreachable ();
+  gcc_unreachable ();
 }
 
 /* Describing Relative Costs of Operations */
@@ -637,8 +636,8 @@ struct processor_costs {
 extern const  struct processor_costs *ia16_costs;
 extern struct processor_costs ia16_size_costs;
 
-#define IA16_COST(F)	\
-	(MAX (ia16_costs->F, ia16_costs->byte_fetch * ia16_size_costs.F))
+#define IA16_COST(F)							\
+  (MAX (ia16_costs->F, ia16_costs->byte_fetch * ia16_size_costs.F))
 
 #define C(x)	COSTS_N_INSNS(x)
 
@@ -660,50 +659,50 @@ ia16_constant_cost (rtx x, enum machine_mode mode, int outer_code)
   if (n == 1)
     switch (outer_code)
       {
-	case PLUS:
-	case MINUS:
-	case ASHIFT:
-	case ASHIFTRT:
-	case LSHIFTRT:
-	case ROTATE:
-	case ROTATERT:
-	case EQ:
-	case NE:
-	case LTU:
-	case GEU:
-	case LEU:
-	case GTU:
-	case GT:
-	case LT:
-	case LE:
-	case GE:
-	  return (C (0));
+      case PLUS:
+      case MINUS:
+      case ASHIFT:
+      case ASHIFTRT:
+      case LSHIFTRT:
+      case ROTATE:
+      case ROTATERT:
+      case EQ:
+      case NE:
+      case LTU:
+      case GEU:
+      case LEU:
+      case GTU:
+      case GT:
+      case LT:
+      case LE:
+      case GE:
+	return (C (0));
 
-	default:
-	  break;
+      default:
+	break;
       }
   if (n == 0)
     switch (outer_code)
       {
-	case MINUS:
-	case EQ:
-	case NE:
-	case LTU:
-	case GEU:
-	case LEU:
-	case GTU:
-	case GT:
-	case LT:
-	case LE:
-	case GE:
-	  return (C (0));
+      case MINUS:
+      case EQ:
+      case NE:
+      case LTU:
+      case GEU:
+      case LEU:
+      case GTU:
+      case GT:
+      case LT:
+      case LE:
+      case GE:
+	return (C (0));
 
-	default:
-	  break;
+      default:
+	break;
       }
   if ((outer_code == PLUS && n == -1)
       || ((outer_code == AND || outer_code == XOR)
-	 && (n == 255 || n == -256)))
+	  && (n == 255 || n == -256)))
     return (C (0));
 
   /* Most instructions can sign extend 8-bit constants.  Exceptions:
@@ -714,9 +713,9 @@ ia16_constant_cost (rtx x, enum machine_mode mode, int outer_code)
    */
   if ((outer_code != SET && n >= -128 && n <= 127)
       || (outer_code == AND
-	 && ((n & 0xff00) == 0xff00 || (n & 0x00ff) == 0x00ff))
+	  && ((n & 0xff00) == 0xff00 || (n & 0x00ff) == 0x00ff))
       || ((outer_code == IOR || outer_code == XOR)
-	 && ((n & 0xff00) == 0x0000 || (n & 0xff00) == 0x0000))
+	  && ((n & 0xff00) == 0x0000 || (n & 0xff00) == 0x0000))
       || (outer_code == PLUS && (n & 0x00ff) == 0x0000))
     return (C (ia16_costs->byte_fetch));
   else
@@ -735,7 +734,7 @@ ia16_default_address_cost (rtx r1, rtx r2, rtx c)
 
   /* If r1 == r2, a "movw" instruction is needed.  */
   if (rtx_equal_p (r1, r2))
-     total += IA16_COST (move);
+    total += IA16_COST (move);
 
   return (total);
 }
@@ -777,7 +776,7 @@ ia16_i808x_address_cost (rtx r1, rtx r2, rtx c)
 /* Size costs for IA-16 instructions.  Used when optimizing for size.
  * EA sizes are not included except for xlat.
  */
- struct processor_costs ia16_size_costs = {
+struct processor_costs ia16_size_costs = {
   /* byte_fetch */	1,
   /* ea_calc */		ia16_default_address_cost,
   /* move */		C (2),
@@ -1080,46 +1079,46 @@ ia16_address_cost (rtx address, machine_mode, addr_space_t, bool)
 static bool
 ia16_xlat_cost (rtx x, int *total)
 {
-      if (GET_MODE (x) != QImode)
-        return (false);
-      if (GET_CODE (XEXP (x, 0)) == PLUS)
-	{
-	  rtx plus, zext, op1, base;
+  if (GET_MODE (x) != QImode)
+    return (false);
+  if (GET_CODE (XEXP (x, 0)) == PLUS)
+    {
+      rtx plus, zext, op1, base;
 
-	  plus = XEXP (x, 0);
-	  zext = XEXP (plus, 0);
-	  base = XEXP (plus, 1);
-	  if (GET_CODE (zext) == SUBREG)
-	    zext = SUBREG_REG (zext);
-	  if (((GET_CODE (zext) != ZERO_EXTEND && GET_CODE (zext) != ZERO_EXTRACT
-	        && (GET_CODE (zext) != AND || !CONST_INT_P (XEXP (zext, 1))
-	            || INTVAL (XEXP (zext, 1)) != 255))
-	        && (GET_CODE (zext) != LSHIFTRT || !CONST_INT_P (XEXP (zext, 1))))
-	      || (!general_operand (base, Pmode)))
-	    return (false);
-	
-	  op1 = XEXP (zext, 0);
-/*	  op2 = XEXP (zext, 1); */
-	  if (GET_CODE (op1) == SUBREG)
-	    op1 = SUBREG_REG (op1);
-	  if (!REG_P (op1) && !MEM_P (op1)
-	      && (GET_CODE (op1) != LSHIFTRT /*|| !CONST_INT_P (op2)*/))
-	    return (false);
-	  *total = IA16_COST (xlat);
+      plus = XEXP (x, 0);
+      zext = XEXP (plus, 0);
+      base = XEXP (plus, 1);
+      if (GET_CODE (zext) == SUBREG)
+	zext = SUBREG_REG (zext);
+      if (((GET_CODE (zext) != ZERO_EXTEND && GET_CODE (zext) != ZERO_EXTRACT
+	    && (GET_CODE (zext) != AND || !CONST_INT_P (XEXP (zext, 1))
+		|| INTVAL (XEXP (zext, 1)) != 255))
+	   && (GET_CODE (zext) != LSHIFTRT || !CONST_INT_P (XEXP (zext, 1))))
+	  || (!general_operand (base, Pmode)))
+	return (false);
 
-	  /* We may need to load the extendee into a register.  */
-	  if (!REG_P (op1))
-	    *total += IA16_COST (int_load[M_QI]);
+      op1 = XEXP (zext, 0);
+      /*      op2 = XEXP (zext, 1); */
+      if (GET_CODE (op1) == SUBREG)
+	op1 = SUBREG_REG (op1);
+      if (!REG_P (op1) && !MEM_P (op1)
+	  && (GET_CODE (op1) != LSHIFTRT /*|| !CONST_INT_P (op2)*/))
+	return (false);
+      *total = IA16_COST (xlat);
 
-	  /* We may need to load the base into a register.  */
-	  if (CONSTANT_P (base))
-	    *total += IA16_COST (imm_load[M_HI]);
-	  else if (MEM_P (base))
-	    *total += IA16_COST (int_load[M_HI])
-		      + ia16_address_cost_internal (XEXP (base, 0));
-	  return (true);	
-	}
-      return (false);
+      /* We may need to load the extendee into a register.  */
+      if (!REG_P (op1))
+	*total += IA16_COST (int_load[M_QI]);
+
+      /* We may need to load the base into a register.  */
+      if (CONSTANT_P (base))
+	*total += IA16_COST (imm_load[M_HI]);
+      else if (MEM_P (base))
+	*total += IA16_COST (int_load[M_HI])
+	  + ia16_address_cost_internal (XEXP (base, 0));
+      return (true);
+    }
+  return (false);
 }
 
 #undef  TARGET_RTX_COSTS
@@ -1192,12 +1191,12 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
 	return (false);
       }
 
-    /* It is not easy to give an accurate cost of a memory access.  "movw" is
-     * handled above.  Return a reasonable estimate for arithmetic or logic
-     * instructions.  */
+      /* It is not easy to give an accurate cost of a memory access.  "movw" is
+       * handled above.  Return a reasonable estimate for arithmetic or logic
+       * instructions.  */
     case MEM:
       if ((outer_code == ZERO_EXTEND || outer_code == SET)
-	&& ia16_xlat_cost (x, total))
+	  && ia16_xlat_cost (x, total))
 	return (true);
       *total = ia16_address_cost_internal (XEXP (x, 0));
       /* This is never called recursively from the SET case.  */
@@ -1227,7 +1226,7 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
       *total = ia16_costs->byte_fetch * COSTS_N_INSNS (4);
       return true;
 
-    /* This is usually "xor reg,reg" or "mov $0, dest".  */
+      /* This is usually "xor reg,reg" or "mov $0, dest".  */
     case ZERO_EXTEND:
       if (outer_code == IOR || outer_code == XOR)
 	*total = 0;
@@ -1246,7 +1245,7 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
       *total = IA16_COST (sign_extend[M_MOD (GET_MODE (XEXP (x, 0)))]);
       return false;
 
-    /* TODO: Constant shift/rotate when !TARGET_SHIFT_IMM.  */
+      /* TODO: Constant shift/rotate when !TARGET_SHIFT_IMM.  */
     case ASHIFTRT:
       if (outer_code != COMPARE && CONST_INT_P (XEXP (x, 1)))
 	{
@@ -1266,7 +1265,7 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
       /* Sometimes we get the ASHIFT and the constant for free.  */
       if (code == ASHIFT && mode == HImode
 	  && (outer_code == PLUS || outer_code == MINUS
-	     || outer_code == IOR || outer_code == XOR)
+	      || outer_code == IOR || outer_code == XOR)
           && CONST_INT_P (XEXP (x, 1))
           && INTVAL (XEXP (x, 1)) == 8)
 	{
@@ -1287,7 +1286,7 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
     case ROTATERT:
       if (CONST_INT_P (XEXP (x, 1)))
 	if (mode == HImode && outer_code != COMPARE
-	 && INTVAL (XEXP (x, 1)) == 8)
+	    && INTVAL (XEXP (x, 1)) == 8)
 	  {
 	    /* This is implemented using movb or xchgb.  */
 	    *total = IA16_COST (add[O_REGREG])
@@ -1307,9 +1306,9 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
       else
 	*total = MAX (ia16_costs->shift_start[I_REG]
 		      + ia16_costs->shift_bit
-			* GET_MODE_BITSIZE (GET_MODE (XEXP (x, 1))) / 2,
+		      * GET_MODE_BITSIZE (GET_MODE (XEXP (x, 1))) / 2,
 		      ia16_size_costs.shift_start[I_REG]
-			* ia16_costs->byte_fetch);
+		      * ia16_costs->byte_fetch);
 
       /* (subreg:QI (ashift:HI (zero_extend:HI (mem:QI ...))) 0) */
       if (outer_code == SUBREG
@@ -1354,7 +1353,7 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
 	  /* Compute costs correctly for widening multiplication.  */
 	  if ((GET_CODE (op0) == SIGN_EXTEND || GET_CODE (op1) == ZERO_EXTEND)
 	      && GET_MODE_SIZE (GET_MODE (XEXP (op0, 0))) * 2
-	         == GET_MODE_SIZE (mode))
+	      == GET_MODE_SIZE (mode))
 	    {
 	      int is_mulwiden = 0;
 	      enum machine_mode inner_mode = GET_MODE (op0);
@@ -1365,7 +1364,7 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
 		{
 		  if (GET_CODE (op0) == SIGN_EXTEND)
 		    is_mulwiden = trunc_int_for_mode (INTVAL (op1), inner_mode)
-			          == INTVAL (op1);
+		      == INTVAL (op1);
 		  else
 		    is_mulwiden = !(INTVAL (op1) & ~GET_MODE_MASK (inner_mode));
 	        }
@@ -1385,7 +1384,7 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
           return true;
 	}
 
-    /* FIXME: Docs are unclear about UDIV/UMOD on floating point modes.  */
+      /* FIXME: Docs are unclear about UDIV/UMOD on floating point modes.  */
     case UDIV:
     case UMOD:
       if (FLOAT_MODE_P (mode))
@@ -1402,7 +1401,7 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
 	*total = IA16_COST (s_divide[M_MOD (mode)][I_RTX (XEXP (x, 0))]);
       return false;
 
-    /* FIXME: This might be too pessimistic when rtx_equal_p (op0, op1).  */
+      /* FIXME: This might be too pessimistic when rtx_equal_p (op0, op1).  */
     case PLUS:
       if (FLOAT_MODE_P (mode))
 	{
@@ -1420,14 +1419,14 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
 	  && rtx_equal_p (XEXP (x, 0), XEXP (x, 1)))
 	{
 	  *total = 1 + IA16_COST (add[I_RTX (x)])
-		   * (mode == QImode ? 1 : GET_MODE_SIZE (mode) / UNITS_PER_WORD);
+	    * (mode == QImode ? 1 : GET_MODE_SIZE (mode) / UNITS_PER_WORD);
 	  return (false);
 	}
       /* Compute cost of "leaw" instruction.  */
       if (mode == HImode)
 	{
 	  if (GET_CODE (XEXP (x, 0)) == PLUS
-	    && CONSTANT_P (XEXP (x,1)))
+	      && CONSTANT_P (XEXP (x,1)))
 	    {
 	      rtx op0 = XEXP (XEXP (x, 0), 0);
 	      rtx op1 = XEXP (XEXP (x, 0), 1);
@@ -1467,7 +1466,7 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
       /* Sometimes we get both the AND and the constant for free.  */
       if (code == AND && mode == HImode
 	  && (outer_code == PLUS || outer_code == MINUS
-	     || outer_code == IOR || outer_code == XOR)
+	      || outer_code == IOR || outer_code == XOR)
           && CONST_INT_P (XEXP (x, 1))
           && INTVAL (XEXP (x, 1)) == -256)
 	{
@@ -1478,10 +1477,10 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
     case XOR:
       if (CONSTANT_P (XEXP (x, 1)))
 	*total = IA16_COST (add_imm[I_RTX (XEXP (x, 0))])
-	       * (mode == QImode ? 1 : GET_MODE_SIZE (mode) / UNITS_PER_WORD);
+	  * (mode == QImode ? 1 : GET_MODE_SIZE (mode) / UNITS_PER_WORD);
       else
 	*total = IA16_COST (add[I_RTX (XEXP (x, 0))])
-	       * (mode == QImode ? 1 : GET_MODE_SIZE (mode) / UNITS_PER_WORD);
+	  * (mode == QImode ? 1 : GET_MODE_SIZE (mode) / UNITS_PER_WORD);
       return false;
 
     case NEG:
@@ -1499,7 +1498,7 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
 
     case NOT:
       *total = IA16_COST (add[I_RTX (XEXP (x, 0))])
-	     * (mode == QImode ? 1 : GET_MODE_SIZE (mode) / UNITS_PER_WORD);
+	* (mode == QImode ? 1 : GET_MODE_SIZE (mode) / UNITS_PER_WORD);
       return false;
 
     case COMPARE:
@@ -1558,7 +1557,7 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
       return false;
 
     case FLOAT_EXTEND:
-	*total = 0;
+      *total = 0;
       return false;
 
     case ABS:
@@ -1567,7 +1566,7 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
       else
 	/* This is expanded to cwtd, xorw and subw.  */
 	*total = IA16_COST (sign_extend[M_MOD (mode)])
-	       + IA16_COST (add[I_REG]) * 2;
+	  + IA16_COST (add[I_REG]) * 2;
       return false;
 
     case SQRT:
@@ -1602,19 +1601,19 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
 	*total = 0;
       else if (carry_not_flag_operator (x, mode))
 	*total = IA16_COST (add[O_REGREG])
-	       + outer_code == SET ? COSTS_N_INSNS (ia16_costs->byte_fetch) : 0
-	       + outer_code == NEG ? IA16_COST (add[I_REG]) : 0;
+	  + outer_code == SET ? COSTS_N_INSNS (ia16_costs->byte_fetch) : 0
+	  + outer_code == NEG ? IA16_COST (add[I_REG]) : 0;
       else if (outer_code != SET)
 	*total = 0;
       else if (carry_flag_operator (x, mode))
 	*total = IA16_COST (add[O_REGREG]);
       else if (code == LT)
 	*total = COSTS_N_INSNS (ia16_costs->byte_fetch)
-	       + IA16_COST (sign_extend[M_MOD (HImode)]);
+	  + IA16_COST (sign_extend[M_MOD (HImode)]);
       else if (code == EQ)
 	*total = COSTS_N_INSNS (ia16_costs->byte_fetch)
-	       + IA16_COST (shift_1bit[I_REG])
-	       + IA16_COST (sign_extend[M_MOD (HImode)]);
+	  + IA16_COST (shift_1bit[I_REG])
+	  + IA16_COST (sign_extend[M_MOD (HImode)]);
       return true;
 
     case UNSPEC:
@@ -1622,11 +1621,11 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
       *total = COSTS_N_INSNS (ia16_costs->byte_fetch);
       return false;
 
-    /* cse_insn() likes to compute costs of EXPR_LIST rtxes.  */
+      /* cse_insn() likes to compute costs of EXPR_LIST rtxes.  */
     case EXPR_LIST:
 
-    /* TODO */
-    /* Check outer_code here (e.g. SET, MINUS).  */
+      /* TODO */
+      /* Check outer_code here (e.g. SET, MINUS).  */
     case IF_THEN_ELSE:
     case PC:
     case CLZ:
@@ -1639,7 +1638,7 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
     case CONCAT:
       return false;
 
-    /* See comment above get_last_value (const_rtx) in combine.c.  */
+      /* See comment above get_last_value (const_rtx) in combine.c.  */
     case CLOBBER:
       return false;
 
@@ -1683,20 +1682,21 @@ ia16_option_override (void)
 static void
 ia16_asm_file_start (void)
 {
-	const char *arch, *code;
+  const char *arch, *code;
 
-	if (TARGET_FSTSW_AX)
-		arch = "i286";
-	else if (TARGET_PUSH_IMM)
-		arch = "i186";
-	else
-		arch = "i8086";
-	code = "16";
+  if (TARGET_FSTSW_AX)
+    arch = "i286";
+  else if (TARGET_PUSH_IMM)
+    arch = "i186";
+  else
+    arch = "i8086";
+  code = "16";
 
-	fprintf (asm_out_file,	"\t.arch %s,jumps\n"
-				"\t.code%s\n"
-				"\t.att_syntax prefix\n", arch, code);
-	default_file_start ();
+  fprintf (asm_out_file,
+	   "\t.arch %s,jumps\n"
+	   "\t.code%s\n"
+	   "\t.att_syntax prefix\n", arch, code);
+  default_file_start ();
 }
 
 /* Output of Data */
@@ -1720,11 +1720,11 @@ ia16_asm_file_start (void)
 #define TARGET_ASM_UNALIGNED_TI_OP	"\t.octa\t"
 
 static const char *reg_QInames[SI_REG] = {
-	"cl", "ch", "al", "ah", "dl", "dh", "bl", "bh"
+  "cl", "ch", "al", "ah", "dl", "dh", "bl", "bh"
 };
 
 static const char *reg_HInames[SP_REG+1] = {
-	"cx", 0, "ax", 0, "dx", 0, "bx", 0, "si", "di", "bp", "es", "sp"
+  "cx", 0, "ax", 0, "dx", 0, "bx", 0, "si", "di", "bp", "es", "sp"
 };
 
 /* E is known not to be null when this is called.  These non-standard codes are
@@ -1762,12 +1762,12 @@ ia16_print_operand (FILE *file, rtx e, int code)
 
   switch (GET_CODE (x))
     {
-      case REG:
+    case REG:
       regno = REGNO (x);
       if (code != 'R')
 	fputs (REGISTER_PREFIX, file);
       if (GET_MODE_SIZE (mode) >= 2
-       && (regno >= SI_REG || (regno & 1) == 0))
+	  && (regno >= SI_REG || (regno & 1) == 0))
 	fputs (reg_HInames[regno], file);
       else if (GET_MODE_SIZE (mode) == 1 && regno < SI_REG)
 	fputs (reg_QInames[regno], file);
@@ -1777,7 +1777,7 @@ ia16_print_operand (FILE *file, rtx e, int code)
 	                        GET_MODE_NAME (GET_MODE (x)));
       break;
 
-      case CONST_VECTOR:
+    case CONST_VECTOR:
       fprintf (file, "%s" HOST_WIDE_INT_PRINT_DEC, IMMEDIATE_PREFIX,
 	       (UINTVAL (XVECEXP (x, 0, 0)) & 0xff)
 	       + 256 * INTVAL (XVECEXP (x, 0, 1)));
@@ -1785,33 +1785,33 @@ ia16_print_operand (FILE *file, rtx e, int code)
 
       /* TODO: handle floating point constants here.  */
 
-      case CONST_INT:
-      case CONST:
-      case SYMBOL_REF:
-      case LABEL_REF:
+    case CONST_INT:
+    case CONST:
+    case SYMBOL_REF:
+    case LABEL_REF:
       fputs (IMMEDIATE_PREFIX, file);
       /* fall through */
 
-      case CODE_LABEL:
+    case CODE_LABEL:
       output_addr_const (file, x);
       break;
 
-      case MEM:
+    case MEM:
       ia16_print_operand_address (file, XEXP (x, 0));
       break;
 
-      default:
+    default:
       debug_rtx (e);
       output_operand_lossage ("Invalid or unsupported operand %s (code"
 			      " %c).", rtx_name [GET_CODE (e)], code);
-	break;
+      break;
   }
 }
 
-#define INDEX_REG_P(x) \
-	TEST_HARD_REG_BIT (reg_class_contents[INDEX_REGS], REGNO (x))
-#define BASE_REG_REG_P(x) \
-	TEST_HARD_REG_BIT (reg_class_contents[BASE_W_INDEX_REGS], REGNO (x))
+#define INDEX_REG_P(x)							\
+  TEST_HARD_REG_BIT (reg_class_contents[INDEX_REGS], REGNO (x))
+#define BASE_REG_REG_P(x)						\
+  TEST_HARD_REG_BIT (reg_class_contents[BASE_W_INDEX_REGS], REGNO (x))
 
 /* Strictly check an address X and optionally split into its components.
  * If there is only one register, it will be the base register.
@@ -1820,37 +1820,37 @@ ia16_print_operand (FILE *file, rtx e, int code)
 static bool
 ia16_parse_address_strict (rtx x, rtx *p_rb, rtx *p_ri, rtx *p_c)
 {
-	rtx tmp;
-	rtx rb, ri, c;
-	enum machine_mode mode;
+  rtx tmp;
+  rtx rb, ri, c;
+  enum machine_mode mode;
 
-	if (!ia16_parse_address (x, &rb, &ri, &c))
-		return (0 == 1);
-	mode = GET_MODE (x);
+  if (!ia16_parse_address (x, &rb, &ri, &c))
+    return (0 == 1);
+  mode = GET_MODE (x);
 
-	/* Swap the registers if necessary.  */
-	if (rb && ri && INDEX_REG_P (rb) && BASE_REG_REG_P (ri))
-	  {
-		tmp = rb; rb = ri; ri = tmp;
-	  }
-	/* Check register classes for base + index.  */
-	if (rb && ri
-	    && (!INDEX_REG_P (ri)
-		|| !BASE_REG_REG_P (rb)))
-		return (0 == 1);
+  /* Swap the registers if necessary.  */
+  if (rb && ri && INDEX_REG_P (rb) && BASE_REG_REG_P (ri))
+    {
+      tmp = rb; rb = ri; ri = tmp;
+    }
+  /* Check register classes for base + index.  */
+  if (rb && ri
+      && (!INDEX_REG_P (ri)
+	  || !BASE_REG_REG_P (rb)))
+    return (0 == 1);
 
-	/* Check register class for base.  */
-	if (rb && !ri && !REGNO_MODE_OK_FOR_BASE_P (REGNO (rb), mode))
-		return (0 == 1);
+  /* Check register class for base.  */
+  if (rb && !ri && !REGNO_MODE_OK_FOR_BASE_P (REGNO (rb), mode))
+    return (0 == 1);
 
-	if (p_rb)
-		*p_rb = rb;
-	if (p_ri)
-		*p_ri = ri;
-	if (p_c)
-		*p_c = c;
+  if (p_rb)
+    *p_rb = rb;
+  if (p_ri)
+    *p_ri = ri;
+  if (p_c)
+    *p_c = c;
 
-	return (0 == 0);
+  return (0 == 0);
 }
 
 /* Possible asm operands and their address expressions:
@@ -1863,23 +1863,24 @@ ia16_parse_address_strict (rtx x, rtx *p_rb, rtx *p_ri, rtx *p_c)
 void
 ia16_print_operand_address (FILE *file, rtx e)
 {
-	rtx rb, ri, c;
+  rtx rb, ri, c;
 
-	if (!ia16_parse_address_strict (e, &rb, &ri, &c)) {
-        	debug_rtx (e);
-        	output_operand_lossage ("Invalid IA16 address expression.");
-        	return;
-	}
-	if (c)
-		output_addr_const (file, c);
-	if (rb)
-		fprintf (file, "(%s%s",
-		         REGISTER_PREFIX, reg_HInames[REGNO (rb)]);
-	if (ri)
-		fprintf (file, ",%s%s",
-			 REGISTER_PREFIX, reg_HInames[REGNO (ri)]);
-	if (rb)
-		putc (')', file);
+  if (!ia16_parse_address_strict (e, &rb, &ri, &c))
+    {
+      debug_rtx (e);
+      output_operand_lossage ("Invalid IA16 address expression.");
+      return;
+    }
+  if (c)
+    output_addr_const (file, c);
+  if (rb)
+    fprintf (file, "(%s%s",
+	     REGISTER_PREFIX, reg_HInames[REGNO (rb)]);
+  if (ri)
+    fprintf (file, ",%s%s",
+	     REGISTER_PREFIX, reg_HInames[REGNO (ri)]);
+  if (rb)
+    putc (')', file);
 }
 
 /* Helper function for gen_prologue().  Generates RTL to push REGNO, which
@@ -1963,47 +1964,51 @@ ia16_trampoline_init (rtx tr, tree fn, rtx sc)
 bool
 ia16_parse_address_internal (rtx e, rtx *p_r1, rtx *p_r2, rtx *p_c)
 {
-	rtx x, y;
-	rtx r1 = NULL, r2 = NULL, c = NULL;
+  rtx x, y;
+  rtx r1 = NULL, r2 = NULL, c = NULL;
 
-	if (REG_P (e))
-		r1 = e;
-	else if (GET_CODE(e) == PLUS) {
-		x = XEXP (e, 0);
-		y = XEXP (e, 1);
-		if (GET_CODE (x) == PLUS) {
-			r1 = XEXP (x, 0);
-			r2 = XEXP (x, 1);
-			c  = y;
-		} else if (REG_P (y)) {
-			r1 = x;
-			r2 = y;
-		} else {
-			r1 = x;
-			c  = y;
-		}
-	} else {
-		c = e;
+  if (REG_P (e))
+    r1 = e;
+  else if (GET_CODE(e) == PLUS)
+    {
+      x = XEXP (e, 0);
+      y = XEXP (e, 1);
+      if (GET_CODE (x) == PLUS)
+	{
+	  r1 = XEXP (x, 0);
+	  r2 = XEXP (x, 1);
+	  c  = y;
 	}
-
-	/* Deal with the most obvious brokenness.  */
-	if ((r1 && !REG_P (r1)) || (r2 && !REG_P (r2)) ||
-            (c && !CONSTANT_P (c))) {
-		return (0 == 1);
+      else if (REG_P (y))
+	{
+	  r1 = x;
+	  r2 = y;
 	}
+      else
+	{
+	  r1 = x;
+	  c  = y;
+	}
+    }
+  else
+    c = e;
 
-	/* Check that we have at least a base or a displacement.  */
-	if (!c && !r1)
-		return (0 == 1);
+  /* Deal with the most obvious brokenness.  */
+  if ((r1 && !REG_P (r1)) || (r2 && !REG_P (r2)) || (c && !CONSTANT_P (c)))
+    return false;
 
-	if (p_r1)
-		*p_r1 = r1;
-	if (p_r2)
-		*p_r2 = r2;
-	if (p_c)
-		*p_c = c;
+  /* Check that we have at least a base or a displacement.  */
+  if (!c && !r1)
+    return false;
 
-	return (0 == 0);
+  if (p_r1)
+    *p_r1 = r1;
+  if (p_r2)
+    *p_r2 = r2;
+  if (p_c)
+    *p_c = c;
+
+  return true;
 }
 
 /* Addressing Modes.  */
@@ -2068,7 +2073,7 @@ bool ia16_arith_operands_p (enum rtx_code code, rtx *operands)
 	 2) CODE is MINUS and op1 is zero.  */
       if ((RTX_COMM_ARITH == GET_RTX_CLASS (code)
 	   || (MINUS == code
-	      && operands[1] == CONST0_RTX (GET_MODE (operands[1]))))
+	       && operands[1] == CONST0_RTX (GET_MODE (operands[1]))))
 	  && rtx_equal_p (operands[0], operands[2]))
 	return (true);
     }
