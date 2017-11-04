@@ -53,3 +53,6 @@ extern bool	ia16_non_overlapping_mem_p (rtx m1, rtx m2);
 extern void	ia16_expand_prologue (void);
 extern void	ia16_expand_epilogue (bool sibcall);
 extern void	ia16_register_pragmas (void);
+extern rtx	ia16_expand_weird_pointer_plus_expr (tree treeop0, tree treeop1,
+						     rtx target, machine_mode mode,
+						     unsigned modifier);

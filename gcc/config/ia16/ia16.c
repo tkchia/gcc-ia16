@@ -335,10 +335,7 @@ ia16_function_ok_for_sibcall (tree decl, tree exp ATTRIBUTE_UNUSED)
   return decl != 0;
 }
 
-/* Addressing Modes
-
-   TODO: Make offset overflows do something that is not silly.  Adding 1 to
-   0x0000:0xffff should give, say, 0x0000:0x0000.  */
+/* Addressing Modes */
 
 #undef  TARGET_ADDR_SPACE_ADDRESS_MODE
 #define TARGET_ADDR_SPACE_ADDRESS_MODE ia16_as_address_mode
@@ -535,8 +532,8 @@ ia16_as_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
   else
     {
       x = force_reg (SImode, x);
-      r1 = copy_to_reg (gen_rtx_SUBREG (HImode, x, 0));
-      r9 = copy_to_reg (gen_rtx_SUBREG (HImode, x, 2));
+      r1 = force_reg (HImode, gen_rtx_SUBREG (HImode, x, 0));
+      r9 = force_reg (HImode, gen_rtx_SUBREG (HImode, x, 2));
     }
 
   x = gen_rtx_PLUS (HImode, r1, gen_seg_override (r9));
@@ -2611,4 +2608,31 @@ ia16_expand_epilogue (bool sibcall)
     }
   if (!sibcall)
     emit_jump_insn (gen_simple_return ());
+}
+
+rtx
+ia16_expand_weird_pointer_plus_expr (tree treeop0, tree treeop1, rtx target,
+				     machine_mode mode, unsigned modifier)
+{
+  enum expand_modifier mod = (enum expand_modifier) modifier;
+  rtx op0, op1, seg, op0_off, off, sum;
+
+  gcc_assert (mode == SImode);
+
+  op0 = expand_expr (treeop0, NULL_RTX, SImode, mod);
+  op1 = expand_expr (treeop1, NULL_RTX, HImode, mod);
+
+  seg = gen_rtx_SUBREG (HImode, op0, 2);
+  op0_off = force_reg (HImode, gen_rtx_SUBREG (HImode, op0, 0));
+
+  off = force_reg (HImode, gen_rtx_PLUS (HImode, op0_off, op1));
+
+  if (target && REG_P (target))
+    sum = target;
+  else
+    sum = gen_reg_rtx (SImode);
+
+  emit_move_insn (gen_rtx_SUBREG (HImode, sum, 0), off);
+  emit_move_insn (gen_rtx_SUBREG (HImode, sum, 2), seg);
+  return sum;
 }

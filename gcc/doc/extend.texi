@@ -1458,9 +1458,16 @@ supported.
 If a pointer arithmetic operation causes the pointer's offset portion to
 wrap around---from @code{0xFFFF} to @code{0x0000}, or vice versa---the
 resulting pointer is undefined.  This may change in the future.
-@c Currently far pointers are treated as plain old 32-bit integers (except
-@c when dereferenced), so 0x1234:0xFFFF wraps around to 0x1235:0x0000, but
-@c this is silly and does not really make sense.
+@c
+@c (Nov 2017) I have modified gcc-ia16 so that it does far pointer
+@c arithmetic in the same fashion as in classical DOS compilers, i.e. only
+@c the low 16-bit offset is frobbed.  However, it is still not as efficient
+@c as it should be (`movw %es, %dx; movw %dx, %es; ...'), and it probably
+@c needs to be more rigorously tested.
+@c
+@c Before the hack, gcc-ia16 treated far pointers as plain old 32-bit
+@c integers, so that 0x1234:0xFFFF wrapped around to 0x1235:0x0000, which
+@c made no sense.  -- tkchia
 
 @item
 Many kinds of useful operations involving far addresses are not yet

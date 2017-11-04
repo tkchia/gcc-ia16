@@ -591,6 +591,12 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
    TARGET_ADDR_SPACE_WEIRD_P (as), which should return true if the given
    address space breaks certain assumptions made by optimization passes.  */
 #define TARGET_ADDR_SPACE_WEIRD_P(as)	((as) == ADDR_SPACE_FAR)
+/* We also hack gcc/expr.c to recognize TARGET_ADDR_SPACE_WEIRD_P (as) ---
+   as well as another macro TARGET_EXPAND_WEIRD_POINTER_PLUS_EXPR (treeop0,
+   treeop1, target, mode, modifier).  The latter macro should say how to
+   convert a POINTER_PLUS_EXPR node into RTL, when the pointer operand
+   (treeop0) belongs to a "weird" address space.  */
+#define TARGET_EXPAND_WEIRD_POINTER_PLUS_EXPR ia16_expand_weird_pointer_plus_expr
 
 /* Which processor to tune code generation for.  These must be in sync
    with processor_target_table in ia16.c.  */

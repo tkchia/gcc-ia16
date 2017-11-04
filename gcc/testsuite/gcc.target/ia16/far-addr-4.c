@@ -1,12 +1,9 @@
 /* { dg-do run } */
-/* { dg-xfail-run-if "" *-*-* } */
 /* { dg-options "-O3 -fno-inline --save-temps" } */
 
-/* FAIL: Arithmetic on a far pointer that causes the offset component to
-   wrap around.  This should really just leave the segment component alone,
-   like classical IA-16 compilers do.  Sometimes it does this --- e.g. if
-   `-fno-inline' is removed and read_displaced (...) is inlined --- but
-   sometimes it does not.  */
+/* Arithmetic on a far pointer that causes the offset component to wrap
+   around.  This should really just leave the segment component alone, like
+   classical IA-16 compilers do.  */
 
 int puts (const char *);
 void abort (void);

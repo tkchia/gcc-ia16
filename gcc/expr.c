@@ -8274,6 +8274,15 @@ expand_expr_real_2 (sepops ops, rtx target, machine_mode tmode,
       }
 
     case POINTER_PLUS_EXPR:
+#ifdef TARGET_ADDR_SPACE_WEIRD_P
+# ifdef TARGET_EXPAND_WEIRD_POINTER_PLUS_EXPR
+      /* Special case for ia16-elf.  */
+      if (TARGET_ADDR_SPACE_WEIRD_P (TYPE_ADDR_SPACE
+	  (TREE_TYPE (TREE_TYPE (treeop0)))))
+	return TARGET_EXPAND_WEIRD_POINTER_PLUS_EXPR (treeop0, treeop1,
+						      target, tmode, modifier);
+# endif
+#endif
       /* Even though the sizetype mode and the pointer's mode can be different
          expand is able to handle this correctly and get the correct result out
          of the PLUS_EXPR code.  */
