@@ -2,6 +2,7 @@
 ;  Copyright (C) 2005-2017 Free Software Foundation, Inc.
 ;  Contributed by Rask Ingemann Lambertsen <rask@sygehus.dk>
 ;  Changes by Andrew Jenner <andrew@codesourcery.com>
+;  Changes by TK Chia
 ;
 ;  This file is part of GCC.
 ;
@@ -630,3 +631,37 @@
   operands[4] = simplify_gen_subreg (QImode, operands[0], HImode, 0);
   operands[5] = simplify_gen_subreg (QImode, operands[1], HImode, 0);
 })
+
+; Try to rewrite
+;	movw	%es,	%bx
+;	movw	%bx,	%es
+; into
+;	movw	%es,	%bx
+; This sequence is generated during reload, when far pointers are used in a
+; loop; this might be due to address -> pointer and pointer -> address
+; conversions.
+(define_peephole2
+  [(set (match_operand:HI 0 "register_operand")
+	(match_operand:HI 1 "register_operand"))
+   (set (match_dup 1) (match_dup 0))]
+  ""
+  [(set (match_dup 0) (match_dup 1))]
+  ""
+)
+
+; Try to rewrite
+;	movw	%es,	%bx
+;	movw	mem,	%bx
+; into
+;	movw	mem,	%bx
+; This sequence (plus "movw %bx, %es" between the two instructions) is
+; generated during reload, when far pointers are used in a loop; this might
+; be due to address -> pointer and pointer -> address conversions.
+(define_peephole2
+  [(set (match_operand:HI 0 "register_operand")
+	(match_operand:HI 1 "register_operand"))
+   (set (match_dup 0) (match_operand:HI 2 "general_operand"))]
+  ""
+  [(set (match_dup 0) (match_dup 2))]
+  ""
+)
