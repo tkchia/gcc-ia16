@@ -651,6 +651,7 @@
 
 ; Try to rewrite
 ;	movw	%es,	%bx
+;   [	movw	%bx,	%es	]
 ;	movw	mem,	%bx
 ; into
 ;	movw	mem,	%bx
