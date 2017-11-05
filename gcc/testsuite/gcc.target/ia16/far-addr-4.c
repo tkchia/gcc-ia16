@@ -17,10 +17,19 @@ read_displaced (unsigned long addr, unsigned disp)
   return ((volatile unsigned long __far *) addr2) [disp];
 }
 
+static inline unsigned long
+read_neg_displaced (unsigned long addr, unsigned disp)
+{
+  unsigned long addr2;
+
+  __asm ("" : "=k" (addr2) : "0" (addr));
+  return *((volatile unsigned long __far *) addr2 - disp);
+}
+
 int
 main (void)
 {
-  unsigned long w0, w1, w2, w3, w4, w5, w6, w7;
+  unsigned long w0, w1, w2, w3, w4, w5, w6, w7, w8, w9, w10, w11, w12, w13;
 
   /* Read longword at 0x0008:0x0000. */
   w0 = *(volatile unsigned long __far *) 0x80000;
@@ -62,6 +71,39 @@ main (void)
   if (w7 != w0)
     abort ();
   puts ("w7 == w0");
+
+  /* Read longword at ((__far *) 0 - 0xff80), which should be the same
+     as 0x80, and 0:0x80 == 0x8:0.  */
+  w8 = read_neg_displaced (0ul, 0xff80u / sizeof (unsigned long));
+  if (w8 != w0)
+    abort ();
+  puts ("w8 == w0");
+
+  /* And so on... */
+  w9 = read_neg_displaced (4ul, 0xff84u / sizeof (unsigned long));
+  if (w9 != w0)
+    abort ();
+  puts ("w9 == w0");
+
+  w10 = read_neg_displaced (8ul, 0xff88u / sizeof (unsigned long));
+  if (w10 != w0)
+    abort ();
+  puts ("w10 == w0");
+
+  w11 = read_neg_displaced (0x10ul, 0xff90u / sizeof (unsigned long));
+  if (w11 != w0)
+    abort ();
+  puts ("w11 == w0");
+
+  w12 = read_neg_displaced (0x20ul, 0xffa0u / sizeof (unsigned long));
+  if (w12 != w0)
+    abort ();
+  puts ("w12 == w0");
+
+  w13 = read_neg_displaced (0x40ul, 0xffc0u / sizeof (unsigned long));
+  if (w13 != w0)
+    abort ();
+  puts ("w13 == w0");
 
   return 0;
 }
