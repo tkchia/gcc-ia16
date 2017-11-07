@@ -2619,7 +2619,7 @@ ia16_expand_weird_pointer_plus_expr (tree treeop0, tree treeop1, rtx target,
 
   gcc_assert (mode == SImode);
 
-  op0 = expand_expr (treeop0, NULL_RTX, SImode, mod);
+  op0 = force_reg (SImode, expand_expr (treeop0, NULL_RTX, SImode, mod));
   op1 = expand_expr (treeop1, NULL_RTX, HImode, mod);
 
   seg = gen_rtx_SUBREG (HImode, op0, 2);
