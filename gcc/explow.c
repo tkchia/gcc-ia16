@@ -281,12 +281,7 @@ convert_memory_address_addr_space_1 (machine_mode to_mode ATTRIBUTE_UNUSED,
   /* Special case for ia16-elf pointer -> address and address -> pointer
      conversions.  Is there a better way?  */
   if (GET_MODE (x) != to_mode)
-    {
-      if (to_mode == targetm.addr_space.pointer_mode (as))
-	x = targetm.delegitimize_address (x);
-      else
-	x = targetm.addr_space.legitimize_address (x, x, to_mode, as);
-    }
+    x = targetm.addr_space.legitimize_address (x, x, to_mode, as);
 # endif
 
   if (GET_MODE (x) != to_mode && GET_MODE (x) != VOIDmode)

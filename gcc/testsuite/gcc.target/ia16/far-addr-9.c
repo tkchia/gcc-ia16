@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O0" } */
+/* { dg-options "-O0 --save-temps" } */
 
 /* Test for a pointer arithmetic bug reported by Bart Oldeman --- see
    https://github.com/tkchia/gcc-ia16/issues/4 .  */

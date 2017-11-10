@@ -497,47 +497,76 @@ ia16_as_zero_address_valid (addr_space_t addrspace)
 
 static rtx
 ia16_as_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
-			    machine_mode mode ATTRIBUTE_UNUSED,
-			    addr_space_t as)
+			    machine_mode mode, addr_space_t as)
 {
-  rtx r1, r9;
+  rtx r1, r2, c, off, r9;
+
   if (as != ADDR_SPACE_FAR)
     return x;
-  /* A far address will likely appear in the form
+
+  switch (mode)
+  {
+  case HImode:
+    /* We want a far address, while x is possibly a far pointer.
+
+       A far _pointer_ will likely appear in the form
 
 	(... (reg/f:SI <i>) ...)
 
-     i.e. an expression involving a register _pair_.  Split this up into
-     its segment and offset components, and pretend that it is actually just
-     a HImode operand, like so:
+       i.e. an expression involving a register _pair_.  To form a far
+       _address_, split this up into its segment and offset components, and
+       pretend that the result is actually just a HImode operand, like so:
 
 	(set (reg:HI <o>) (subreg:HI (reg/f:SI <i>) 0))
 	(set (reg:HI <s>) (subreg:HI (reg/f:SI <i>) 2))
 	(... (plus:HI (unspec:HI [(reg:HI <s>)] UNSPEC_SEG_OVERRIDE)
 		      (reg:HI <o>)) ...)
 
-     This is (partially) in accord with gcc/rtl.h (see a comment at struct
-     address_info), which says that `(unspec ...)' is typically used to
-     represent segments.  */
+       This is (partially) in accord with gcc/rtl.h (see a comment at struct
+       address_info), which says that `(unspec ...)' is typically used to
+       represent segments.  */
 
-  if (ia16_have_seg_override_p (x))
+    if (ia16_have_seg_override_p (x))
+      return x;
+
+    if (GET_MODE (x) == HImode)
+      {
+	/* This sometimes occurs due to GCC's internal probing.  */
+	r1 = force_reg (HImode, x);
+	r9 = force_reg (HImode, const0_rtx);
+      }
+    else
+      {
+	x = force_reg (SImode, x);
+	r1 = force_reg (HImode, gen_rtx_SUBREG (HImode, x, 0));
+	r9 = force_reg (HImode, gen_rtx_SUBREG (HImode, x, 2));
+      }
+
+    x = gen_rtx_PLUS (HImode, r1, gen_seg_override (r9));
     return x;
 
-  if (GET_MODE (x) == HImode)
-    {
-      /* This sometimes occurs due to GCC's internal probing.  */
-      r1 = force_reg (HImode, x);
-      r9 = force_reg (HImode, const0_rtx);
-    }
-  else
-    {
-      x = force_reg (SImode, x);
-      r1 = force_reg (HImode, gen_rtx_SUBREG (HImode, x, 0));
-      r9 = force_reg (HImode, gen_rtx_SUBREG (HImode, x, 2));
-    }
+  case SImode:
+    /* We want a far pointer, while x is possibly a far address.  */
+    if (! ia16_parse_address (x, &r1, &r2, &c, &r9))
+      return x;
 
-  x = gen_rtx_PLUS (HImode, r1, gen_seg_override (r9));
-  return x;
+    if (! r9)
+      return x;
+
+    off = NULL_RTX;
+    if (r1)
+      off = r2 ? gen_rtx_PLUS (HImode, r1, r2) : r1;
+    if (c)
+      off = off ? gen_rtx_PLUS (HImode, x, c) : c;
+
+    x = gen_reg_rtx (SImode);
+    emit_move_insn (gen_rtx_SUBREG (HImode, x, 0), off);
+    emit_move_insn (gen_rtx_SUBREG (HImode, x, 2), r9);
+    return x;
+
+  default:
+    gcc_unreachable ();
+  }
 }
 
 #undef	TARGET_ADDR_SPACE_SUBSET_P
@@ -585,32 +614,6 @@ ia16_as_convert (rtx op, tree from_type, tree to_type)
     }
   else
     gcc_unreachable ();
-}
-
-#undef  TARGET_DELEGITIMIZE_ADDRESS
-#define TARGET_DELEGITIMIZE_ADDRESS ia16_delegitimize_address
-
-static rtx
-ia16_delegitimize_address (rtx x)
-{
-  rtx r1, r2, c, off, r9;
-
-  if (! ia16_parse_address (x, &r1, &r2, &c, &r9))
-    return x;
-
-  if (! r9)
-    return x;
-
-  off = NULL_RTX;
-  if (r1)
-    off = r2 ? gen_rtx_PLUS (HImode, r1, r2) : r1;
-  if (c)
-    off = off ? gen_rtx_PLUS (HImode, x, c) : c;
-
-  x = gen_reg_rtx (SImode);
-  emit_move_insn (gen_rtx_SUBREG (HImode, x, 0), off);
-  emit_move_insn (gen_rtx_SUBREG (HImode, x, 2), r9);
-  return x;
 }
 
 /* Condition Code Status */
@@ -2615,19 +2618,19 @@ ia16_expand_weird_pointer_plus_expr (tree treeop0, tree treeop1, rtx target,
 				     machine_mode mode, unsigned modifier)
 {
   enum expand_modifier mod = (enum expand_modifier) modifier;
-  rtx op0, op1, seg, op0_off, off, sum;
+  rtx op0 = NULL_RTX, op1 = NULL_RTX, seg, op0_off, off, sum;
 
   gcc_assert (mode == SImode);
 
-  op0 = force_reg (SImode, expand_expr (treeop0, NULL_RTX, SImode, mod));
-  op1 = expand_expr (treeop1, NULL_RTX, HImode, mod);
+  expand_operands (treeop0, treeop1, NULL_RTX, &op0, &op1, mod);
+  op0 = force_reg (SImode, op0);
 
   seg = gen_rtx_SUBREG (HImode, op0, 2);
-  op0_off = force_reg (HImode, gen_rtx_SUBREG (HImode, op0, 0));
+  op0_off = gen_rtx_SUBREG (HImode, op0, 0);
 
   off = force_reg (HImode, gen_rtx_PLUS (HImode, op0_off, op1));
 
-  if (target && REG_P (target))
+  if (target && REG_P (target) && GET_MODE (target) == mode)
     sum = target;
   else
     sum = gen_reg_rtx (SImode);
