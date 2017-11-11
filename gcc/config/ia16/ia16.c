@@ -349,7 +349,7 @@ ia16_as_address_mode (addr_space_t addrspace)
       return HImode;
     /* A far address is actually a HImode value which is "coloured" with a
        segment term -- (plus:HI ...  (unspec:HI ...  UNSPEC_SEG_OVERRIDE)).
-       See ia16_as_legitimize_address (...) below.  */
+       See ia16_as_convert_weird_memory_address (...) below.  */
     case ADDR_SPACE_FAR:
       return HImode;
     default:
@@ -400,9 +400,10 @@ ia16_have_seg_override_p (rtx x)
       /* Basis case.  */
       return (XINT (x, 1) == UNSPEC_SEG_OVERRIDE);
     case PLUS:
-    case MINUS:
       return ia16_have_seg_override_p (XEXP (x, 0)) ||
 	     ia16_have_seg_override_p (XEXP (x, 1));
+    case MINUS:
+      return ia16_have_seg_override_p (XEXP (x, 0));
     default:
       return false;
     }
@@ -411,7 +412,6 @@ ia16_have_seg_override_p (rtx x)
 #define REGNO_OK_FOR_SEGMENT_P(num) \
 	((num) < FIRST_PSEUDO_REGISTER && \
 	 TEST_HARD_REG_BIT (reg_class_contents[SEGMENT_REGS], (num)))
-
 
 #undef  TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P
 #define TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P ia16_as_legitimate_address_p
@@ -492,19 +492,17 @@ ia16_as_zero_address_valid (addr_space_t addrspace)
     }
 }
 
-#undef  TARGET_ADDR_SPACE_LEGITIMIZE_ADDRESS
-#define TARGET_ADDR_SPACE_LEGITIMIZE_ADDRESS ia16_as_legitimize_address
-
-static rtx
-ia16_as_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
-			    machine_mode mode, addr_space_t as)
+rtx
+ia16_as_convert_weird_memory_address (machine_mode to_mode, rtx x,
+				      addr_space_t as,
+				      bool in_const ATTRIBUTE_UNUSED,
+				      bool no_emit)
 {
   rtx r1, r2, c, off, r9;
 
-  if (as != ADDR_SPACE_FAR)
-    return x;
+  gcc_assert (as == ADDR_SPACE_FAR);
 
-  switch (mode)
+  switch (to_mode)
   {
   case HImode:
     /* We want a far address, while x is possibly a far pointer.
@@ -528,6 +526,9 @@ ia16_as_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
 
     if (ia16_have_seg_override_p (x))
       return x;
+
+    if (no_emit)
+      return NULL_RTX;
 
     if (GET_MODE (x) == HImode)
       {
@@ -553,6 +554,9 @@ ia16_as_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
     if (! r9)
       return x;
 
+    if (no_emit)
+      return NULL_RTX;
+
     off = NULL_RTX;
     if (r1)
       off = r2 ? gen_rtx_PLUS (HImode, r1, r2) : r1;
@@ -565,8 +569,141 @@ ia16_as_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
     return x;
 
   default:
+    fprintf (stderr, "Trying to convert this far address/pointer to an "
+		     "unexpected mode %u:\n", (unsigned) to_mode);
+    debug_rtx (x);
     gcc_unreachable ();
   }
+}
+
+rtx
+ia16_expand_weird_pointer_plus_expr (tree treeop0, tree treeop1, rtx target,
+				     machine_mode mode, unsigned modifier)
+{
+  enum expand_modifier mod = (enum expand_modifier) modifier;
+  rtx op0 = NULL_RTX, op1 = NULL_RTX, seg, op0_off, off, sum;
+
+  gcc_assert (mode == SImode);
+
+  expand_operands (treeop0, treeop1, NULL_RTX, &op0, &op1, mod);
+  op0 = force_reg (SImode, op0);
+
+  seg = gen_rtx_SUBREG (HImode, op0, 2);
+  op0_off = gen_rtx_SUBREG (HImode, op0, 0);
+
+  off = force_reg (HImode, gen_rtx_PLUS (HImode, op0_off, op1));
+
+  if (target && REG_P (target) && GET_MODE (target) == mode)
+    sum = target;
+  else
+    sum = gen_reg_rtx (SImode);
+
+  emit_move_insn (gen_rtx_SUBREG (HImode, sum, 0), off);
+  emit_move_insn (gen_rtx_SUBREG (HImode, sum, 2), seg);
+  return sum;
+}
+
+/* Subroutine of ia16_as_legitimize_address.  */
+static void
+ia16_split_seg_override_and_offset (rtx x, rtx *ovr, rtx *off)
+{
+  machine_mode m = GET_MODE (x);
+  rtx op0, op1;
+  rtx op0_ovr, op0_off, op1_ovr, op1_off;
+
+  switch (GET_CODE (x))
+    {
+    case UNSPEC:
+      if (XINT (x, 1) == UNSPEC_SEG_OVERRIDE)
+	{
+	  *ovr = x;
+	  *off = NULL_RTX;
+	  break;
+	}
+      /* fall through */
+    default:
+      *ovr = NULL_RTX;
+      *off = x;
+      break;
+
+    case PLUS:
+      op0 = XEXP (x, 0);
+      op1 = XEXP (x, 1);
+
+      ia16_split_seg_override_and_offset (op0, &op0_ovr, &op0_off);
+      ia16_split_seg_override_and_offset (op1, &op1_ovr, &op1_off);
+
+      gcc_assert (! op0_ovr || ! op1_ovr);
+      *ovr = op0_ovr ? op0_ovr : op1_ovr;
+
+      if (! op0_off)
+	*off = op1_off;
+      else if (! op1_off)
+	*off = op0_off;
+      else
+	*off = gen_rtx_PLUS (m, op0_off, op1_off);
+      break;
+
+    case MINUS:
+      op0 = XEXP (x, 0);
+      op1 = XEXP (x, 1);
+
+      ia16_split_seg_override_and_offset (op0, &op0_ovr, &op0_off);
+      *ovr = op0_ovr;
+      if (! op0_off)
+	*off = op1;
+      else
+	*off = gen_rtx_PLUS (m, op0_off, op1);
+    }
+}
+
+#undef	TARGET_ADDR_SPACE_LEGITIMIZE_ADDRESS
+#define	TARGET_ADDR_SPACE_LEGITIMIZE_ADDRESS ia16_as_legitimize_address
+
+static rtx
+ia16_as_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
+			    machine_mode mode ATTRIBUTE_UNUSED,
+			    addr_space_t as ATTRIBUTE_UNUSED)
+{
+  rtx ovr, off, newx;
+
+  if (as == ADDR_SPACE_GENERIC
+      || ia16_as_legitimate_address_p (mode, x, false, as))
+    return x;
+
+  /* We must be able to transform an expression like
+   *
+   *	                       (plus:HI)
+   *	                      /         \
+   *	              (plus:HI)         (mem:HI)
+   *	                /  \               |
+   *	(unspec:HI [.] 1)  (reg:HI 25)  (plus:HI)
+   *	            |                     /  \
+   *	      (reg:HI 26)       (reg:HI 15)  (const_int 4)
+   *
+   * (q.v. https://github.com/tkchia/gcc-ia16/issues/6) into something
+   * resembling an IA-16 addressing mode.
+   *
+   * Because of the segment override term (unspec:HI [.] 1), we cannot
+   * simply force-fit the whole thing into a (reg:HI) with force_reg (...)
+   * and call it a day.
+   *
+   * What we can do is to split the expression into its segment override and
+   * offset components.  Then we _can_ try to force the offset component
+   * into a single (reg:HI), if needed.
+   */
+  gcc_assert (GET_MODE (x) == HImode);
+
+  ia16_split_seg_override_and_offset (x, &ovr, &off);
+  gcc_assert (ovr != NULL_RTX);
+  if (off == NULL_RTX)
+    off = const0_rtx;
+
+  newx = gen_rtx_PLUS (HImode, off, ovr);
+  if (ia16_as_legitimate_address_p (mode, newx, false, as))
+    return newx;
+
+  return gen_rtx_PLUS (HImode, force_reg (HImode, off), ovr);
 }
 
 #undef	TARGET_ADDR_SPACE_SUBSET_P
@@ -2611,31 +2748,4 @@ ia16_expand_epilogue (bool sibcall)
     }
   if (!sibcall)
     emit_jump_insn (gen_simple_return ());
-}
-
-rtx
-ia16_expand_weird_pointer_plus_expr (tree treeop0, tree treeop1, rtx target,
-				     machine_mode mode, unsigned modifier)
-{
-  enum expand_modifier mod = (enum expand_modifier) modifier;
-  rtx op0 = NULL_RTX, op1 = NULL_RTX, seg, op0_off, off, sum;
-
-  gcc_assert (mode == SImode);
-
-  expand_operands (treeop0, treeop1, NULL_RTX, &op0, &op1, mod);
-  op0 = force_reg (SImode, op0);
-
-  seg = gen_rtx_SUBREG (HImode, op0, 2);
-  op0_off = gen_rtx_SUBREG (HImode, op0, 0);
-
-  off = force_reg (HImode, gen_rtx_PLUS (HImode, op0_off, op1));
-
-  if (target && REG_P (target) && GET_MODE (target) == mode)
-    sum = target;
-  else
-    sum = gen_reg_rtx (SImode);
-
-  emit_move_insn (gen_rtx_SUBREG (HImode, sum, 0), off);
-  emit_move_insn (gen_rtx_SUBREG (HImode, sum, 2), seg);
-  return sum;
 }

@@ -277,14 +277,17 @@ convert_memory_address_addr_space_1 (machine_mode to_mode ATTRIBUTE_UNUSED,
 				     bool no_emit ATTRIBUTE_UNUSED)
 {
 #ifndef POINTERS_EXTEND_UNSIGNED
-# ifdef MODE_SEGMENT_REG_CLASS
+# ifdef TARGET_ADDR_SPACE_WEIRD_P
+#  ifdef TARGET_ADDR_SPACE_CONVERT_WEIRD_MEMORY_ADDRESS
   /* Special case for ia16-elf pointer -> address and address -> pointer
      conversions.  Is there a better way?  */
-  if (GET_MODE (x) != to_mode)
-    x = targetm.addr_space.legitimize_address (x, x, to_mode, as);
+  if (GET_MODE (x) != to_mode && TARGET_ADDR_SPACE_WEIRD_P (as))
+    x = TARGET_ADDR_SPACE_CONVERT_WEIRD_MEMORY_ADDRESS (to_mode, x, as,
+							in_const, no_emit);
+#  endif
 # endif
 
-  if (GET_MODE (x) != to_mode && GET_MODE (x) != VOIDmode)
+  if (! x || (GET_MODE (x) != to_mode && GET_MODE (x) != VOIDmode))
     {
       fprintf (stderr,
 	       "trying to convert pointer or address in address space %d\n"

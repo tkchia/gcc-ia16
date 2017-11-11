@@ -7523,6 +7523,17 @@ This macro is defined in the IA-16 backend to implement @code{__far} pointer
 arithmetic in a proper way.
 @end defmac
 
+@defmac TARGET_ADDR_SPACE_CONVERT_WEIRD_MEMORY_ADDRESS (@var{to_mode}, @var{x}, @var{as}, @var{in_const}, @var{no_emit})
+This macro is not needed for most targets.  If defined, @emph{and} if
+@code{POINTERS_EXTEND_UNSIGNED} is undefined, this macro says how to convert
+from addresses to pointers, or from pointers to addresses, for ``weird''
+address spaces.  The arguments have the same meanings as in
+@samp{convert_memory_address_addr_space_1 ()}.
+
+This macro is defined in the IA-16 backend to implement conversions between
+@code{__far} pointers and @code{__far} addresses.
+@end defmac
+
 @node Misc
 @section Miscellaneous Parameters
 @cindex parameters, miscellaneous

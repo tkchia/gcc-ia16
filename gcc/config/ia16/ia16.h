@@ -597,6 +597,11 @@ enum reg_class {	/*	 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
    convert a POINTER_PLUS_EXPR node into RTL, when the pointer operand
    (treeop0) belongs to a "weird" address space.  */
 #define TARGET_EXPAND_WEIRD_POINTER_PLUS_EXPR ia16_expand_weird_pointer_plus_expr
+/* And, we hack gcc/explow.c to recognize a new macro to actually do address
+   RTX -> pointer RTX and pointer RTX -> address RTX conversions for operands
+   pointing into "weird" address spaces.  */
+#define TARGET_ADDR_SPACE_CONVERT_WEIRD_MEMORY_ADDRESS \
+	ia16_as_convert_weird_memory_address
 
 /* Which processor to tune code generation for.  These must be in sync
    with processor_target_table in ia16.c.  */
