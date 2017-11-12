@@ -583,9 +583,11 @@ ia16_expand_weird_pointer_plus_expr (tree treeop0, tree treeop1, rtx target,
   enum expand_modifier mod = (enum expand_modifier) modifier;
   rtx op0 = NULL_RTX, op1 = NULL_RTX, seg, op0_off, off, sum;
 
-  gcc_assert (mode == SImode);
+  gcc_assert (mode == SImode || mode == VOIDmode);
 
   expand_operands (treeop0, treeop1, NULL_RTX, &op0, &op1, mod);
+  gcc_assert (GET_MODE (op0) == SImode || GET_MODE (op0) == VOIDmode);
+  gcc_assert (GET_MODE (op1) == HImode || GET_MODE (op1) == VOIDmode);
   op0 = force_reg (SImode, op0);
 
   seg = gen_rtx_SUBREG (HImode, op0, 2);
