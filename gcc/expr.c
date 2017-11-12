@@ -7760,7 +7760,7 @@ expand_expr_addr_expr_1 (tree exp, rtx target, machine_mode tmode,
 
       result = convert_memory_address_addr_space (tmode, result, as);
       result = pointer_plus_constant (tmode, result, bitpos / BITS_PER_UNIT,
-				      as, modifier);
+				      as);
       if (modifier < EXPAND_SUM)
 	result = force_operand (result, target);
     }
