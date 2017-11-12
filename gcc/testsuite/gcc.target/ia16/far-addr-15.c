@@ -1,22 +1,16 @@
 /* { dg-do compile } */
-/* { dg-xfail-if "" *-*-* } */
-/* { dg-excess-errors "" } */
 /* { dg-options "-O0 --save-temps" } */
 
-/* FAIL: Casting an array within a far structure to a pointer.  Bug was
-   reported by Bart Oldeman --- https://github.com/tkchia/gcc-ia16/issues/3 .
+/* Casting an array within a far structure to a pointer.  Bug was reported
+   by Bart Oldeman --- https://github.com/tkchia/gcc-ia16/issues/3 .
 
-   A workaround for now is to write the function call as something like
-   `farstr(&p->str[0]);' .
+   The bug was caused by c_build_qualified_type (...) (in gcc/c/c-typeck.c)
+   failing to propagate the address space information of an array's element
+   type to the array type itself.
 
-   About the bug: apparently somehow, at some point in the compilation, the
-   fact that the array `p->str' is in the far address space gets lost.  GCC
-   thus thinks that the array -> pointer conversion also needs to cast a
-   generic (near) pointer to a far pointer, leading to weirdness.
-
-   This seems to be a bug in the type logic of GCC's machine-independent
-   GENERIC tree code.  If so, it may well apply to other GCC ports that
-   support named address spaces.  */
+   A similar routine exists on the C++ side, but (as of Nov 2017) the GNU
+   C++ compiler does not yet support named address spaces, so will not
+   currently trigger this bug.  */
 
 struct string1 {
   char str[1];

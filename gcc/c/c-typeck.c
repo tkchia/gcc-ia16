@@ -13508,6 +13508,14 @@ c_build_qualified_type (tree type, int type_quals, tree orig_qual_type,
 
 	  t = build_variant_type_copy (type);
 	  TREE_TYPE (t) = element_type;
+	  /* Fix https://github.com/tkchia/gcc-ia16/issues/3 .  An array
+	     type was not marked as having the same address space as its
+	     element type.  This led to a compiler crash when trying to cast
+	     a far array to a far pointer.  -- tkchia  */
+	  TYPE_ADDR_SPACE (t) = TYPE_ADDR_SPACE (element_type);
+	  /* We should probably copy these too...  -- tkchia  */
+	  TYPE_READONLY (t) = TYPE_READONLY (element_type);
+	  TYPE_VOLATILE (t) = TYPE_VOLATILE (element_type);
 
           if (TYPE_STRUCTURAL_EQUALITY_P (element_type)
               || (domain && TYPE_STRUCTURAL_EQUALITY_P (domain)))
