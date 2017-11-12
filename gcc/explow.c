@@ -186,6 +186,24 @@ plus_constant (machine_mode mode, rtx x, HOST_WIDE_INT c,
     return x;
 }
 
+/* Like plus_constant, but X is assumed to be a pointer somewhere into an
+   address space AS, and AS may be "weird" (TARGET_ADDR_SPACE_WEIRD_P).  */
+
+rtx
+pointer_plus_constant (machine_mode mode, rtx x, HOST_WIDE_INT c,
+		       addr_space_t as, unsigned modifier, bool inplace)
+{
+#ifdef TARGET_ADDR_SPACE_WEIRD_P
+# ifdef TARGET_EXPAND_WEIRD_POINTER_PLUS_EXPR
+  if (TARGET_ADDR_SPACE_WEIRD_P (as))
+    return TARGET_EXPAND_WEIRD_POINTER_PLUS_EXPR (x, gen_int_mode (c, mode),
+						  inplace ? x : NULL_RTX,
+						  mode);
+# endif
+#endif
+  return plus_constant (mode, x, c, inplace);
+}
+
 /* If X is a sum, return a new sum like X but lacking any constant terms.
    Add all the removed constant terms into *CONSTPTR.
    X itself is not altered.  The result != X if and only if

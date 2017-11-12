@@ -577,17 +577,15 @@ ia16_as_convert_weird_memory_address (machine_mode to_mode, rtx x,
 }
 
 rtx
-ia16_expand_weird_pointer_plus_expr (tree treeop0, tree treeop1, rtx target,
-				     machine_mode mode, unsigned modifier)
+ia16_expand_weird_pointer_plus_expr (rtx op0, rtx op1, rtx target,
+				     machine_mode mode)
 {
-  enum expand_modifier mod = (enum expand_modifier) modifier;
-  rtx op0 = NULL_RTX, op1 = NULL_RTX, seg, op0_off, off, sum;
+  rtx seg, op0_off, off, sum;
 
   gcc_assert (mode == SImode || mode == VOIDmode);
-
-  expand_operands (treeop0, treeop1, NULL_RTX, &op0, &op1, mod);
   gcc_assert (GET_MODE (op0) == SImode || GET_MODE (op0) == VOIDmode);
   gcc_assert (GET_MODE (op1) == HImode || GET_MODE (op1) == VOIDmode);
+
   op0 = force_reg (SImode, op0);
 
   seg = gen_rtx_SUBREG (HImode, op0, 2);
@@ -595,7 +593,7 @@ ia16_expand_weird_pointer_plus_expr (tree treeop0, tree treeop1, rtx target,
 
   off = force_reg (HImode, gen_rtx_PLUS (HImode, op0_off, op1));
 
-  if (target && REG_P (target) && GET_MODE (target) == mode)
+  if (target && REG_P (target) && GET_MODE (target) == SImode)
     sum = target;
   else
     sum = gen_reg_rtx (SImode);

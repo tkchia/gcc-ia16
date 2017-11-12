@@ -7505,18 +7505,18 @@ This macro is defined in the IA-16 backend to suppress certain optimizations
 over @code{__far} pointers.
 @end defmac
 
-@defmac TARGET_EXPAND_WEIRD_POINTER_PLUS_EXPR (@var{tree_op0}, @var{tree_op1}, @var{target}, @var{mode}, @var{modifier})
+@defmac TARGET_EXPAND_WEIRD_POINTER_PLUS_EXPR (@var{op0}, @var{op1}, @var{target}, @var{mode})
 This macro is not needed for most targets.  If defined, it says how to do
 pointer arithmetic over ``weird'' address spaces.
 
-More precisely, GCC invokes this macro on the operands of a
+More precisely, GCC invokes this macro on the processed operands of a
 @code{POINTER_PLUS_EXPR} tree, if the pointer/reference operand points into
 an address space for which @code{TARGET_ADDR_SPACE_WEIRD_P} is true.
 
-@var{tree_op0} will be the first operand in the @code{POINTER_PLUS_EXPR}
-expression (i.e., the pointer/reference), and @var{tree_op1} the second
-operand (i.e., the unsigned displacement).  The arguments @var{target},
-@var{mode}, and @var{modifier} have the same meanings as in
+@var{op0} will be an RTX expanded from the first operand in the
+@code{POINTER_PLUS_EXPR} expression (i.e., the pointer/reference), and
+@var{op1} an RTX for the second operand (i.e., the unsigned displacement).
+The arguments @var{target} and @var{mode} have the same meanings as in
 @samp{expand_expr ()} and @samp{expand_expr_real ()}.
 
 This macro is defined in the IA-16 backend to implement @code{__far} pointer

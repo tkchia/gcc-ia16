@@ -31,9 +31,8 @@ extern HOST_WIDE_INT
 extern enum machine_mode
 		ia16_cc_modes_compatible (enum machine_mode mode1, enum machine_mode mode2);
 
-extern rtx	ia16_expand_weird_pointer_plus_expr (tree treeop0, tree treeop1,
-						     rtx target, machine_mode mode,
-						     unsigned modifier);
+extern rtx	ia16_expand_weird_pointer_plus_expr (rtx op0, rtx op1, rtx target,
+						     machine_mode mode);
 extern rtx	ia16_as_convert_weird_memory_address (machine_mode to_mode,
 						      rtx x, addr_space_t as,
 						      bool in_const, bool no_emit);

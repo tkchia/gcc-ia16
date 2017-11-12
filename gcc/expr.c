@@ -7759,7 +7759,8 @@ expand_expr_addr_expr_1 (tree exp, rtx target, machine_mode tmode,
       gcc_assert ((bitpos % BITS_PER_UNIT) == 0);
 
       result = convert_memory_address_addr_space (tmode, result, as);
-      result = plus_constant (tmode, result, bitpos / BITS_PER_UNIT);
+      result = pointer_plus_constant (tmode, result, bitpos / BITS_PER_UNIT,
+				      as, modifier);
       if (modifier < EXPAND_SUM)
 	result = force_operand (result, target);
     }
@@ -8279,8 +8280,13 @@ expand_expr_real_2 (sepops ops, rtx target, machine_mode tmode,
       /* Special case for ia16-elf.  */
       if (TARGET_ADDR_SPACE_WEIRD_P (TYPE_ADDR_SPACE
 	  (TREE_TYPE (TREE_TYPE (treeop0)))))
-	return TARGET_EXPAND_WEIRD_POINTER_PLUS_EXPR (treeop0, treeop1,
-						      target, tmode, modifier);
+	{
+	  rtx op0 = NULL_RTX, op1 = NULL_RTX;
+
+	  expand_operands (treeop0, treeop1, NULL_RTX, &op0, &op1, modifier);
+	  return TARGET_EXPAND_WEIRD_POINTER_PLUS_EXPR (op0, op1, target,
+							tmode);
+	}
 # endif
 #endif
       /* Even though the sizetype mode and the pointer's mode can be different

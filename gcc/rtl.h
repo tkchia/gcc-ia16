@@ -2658,6 +2658,8 @@ get_full_set_src_cost (rtx x, machine_mode mode, struct full_rtx_costs *c)
 /* In explow.c */
 extern HOST_WIDE_INT trunc_int_for_mode	(HOST_WIDE_INT, machine_mode);
 extern rtx plus_constant (machine_mode, rtx, HOST_WIDE_INT, bool = false);
+extern rtx pointer_plus_constant (machine_mode, rtx, HOST_WIDE_INT,
+				  addr_space_t, unsigned, bool = false);
 
 /* In rtl.c */
 extern rtx rtx_alloc_stat (RTX_CODE MEM_STAT_DECL);
