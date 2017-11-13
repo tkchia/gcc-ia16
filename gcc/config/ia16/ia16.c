@@ -651,9 +651,9 @@ ia16_split_seg_override_and_offset (rtx x, rtx *ovr, rtx *off)
       ia16_split_seg_override_and_offset (op0, &op0_ovr, &op0_off);
       *ovr = op0_ovr;
       if (! op0_off)
-	*off = op1;
+	*off = gen_rtx_NEG (m, op1);
       else
-	*off = gen_rtx_PLUS (m, op0_off, op1);
+	*off = gen_rtx_MINUS (m, op0_off, op1);
     }
 }
 
