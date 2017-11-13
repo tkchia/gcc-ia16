@@ -530,14 +530,6 @@ ia16_as_convert_weird_memory_address (machine_mode to_mode, rtx x,
     if (no_emit)
       return NULL_RTX;
 
-    if (GET_MODE (x) == HImode)
-      {
-	/* This sometimes occurs due to GCC's internal probing.  */
-	r1 = force_reg (HImode, x);
-	r9 = force_reg (HImode, const0_rtx);
-      }
-    else
-
     gcc_assert (GET_MODE (x) == SImode || GET_MODE (x) == VOIDmode);
 
     x = force_reg (SImode, x);
