@@ -537,11 +537,12 @@ ia16_as_convert_weird_memory_address (machine_mode to_mode, rtx x,
 	r9 = force_reg (HImode, const0_rtx);
       }
     else
-      {
-	x = force_reg (SImode, x);
-	r1 = force_reg (HImode, gen_rtx_SUBREG (HImode, x, 0));
-	r9 = force_reg (HImode, gen_rtx_SUBREG (HImode, x, 2));
-      }
+
+    gcc_assert (GET_MODE (x) == SImode || GET_MODE (x) == VOIDmode);
+
+    x = force_reg (SImode, x);
+    r1 = force_reg (HImode, gen_rtx_SUBREG (HImode, x, 0));
+    r9 = force_reg (HImode, gen_rtx_SUBREG (HImode, x, 2));
 
     x = gen_rtx_PLUS (HImode, r1, gen_seg_override (r9));
     return x;
@@ -695,8 +696,15 @@ ia16_as_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
   gcc_assert (GET_MODE (x) == HImode);
 
   ia16_split_seg_override_and_offset (x, &ovr, &off);
-  gcc_assert (ovr != NULL_RTX);
-  if (off == NULL_RTX)
+
+  /* This (lack of a segment override) sometimes occurs due to GCC's
+     internal probing.  Specifically, tree-ssa-loop-ivopts.c creates
+     nonsense addresses in order to gauge the costs of using different
+     addressing modes.  We just fabricate something semi-sane here.  */
+  if (! ovr)
+    ovr = gen_seg_override (force_reg (HImode, const0_rtx));
+
+  if (! off)
     off = const0_rtx;
 
   newx = gen_rtx_PLUS (HImode, off, ovr);
