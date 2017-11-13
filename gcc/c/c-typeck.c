@@ -13513,9 +13513,9 @@ c_build_qualified_type (tree type, int type_quals, tree orig_qual_type,
 	     element type.  This led to a compiler crash when trying to cast
 	     a far array to a far pointer.  -- tkchia  */
 	  TYPE_ADDR_SPACE (t) = TYPE_ADDR_SPACE (element_type);
-	  /* We should probably copy these too...  -- tkchia  */
-	  TYPE_READONLY (t) = TYPE_READONLY (element_type);
-	  TYPE_VOLATILE (t) = TYPE_VOLATILE (element_type);
+	  /* composite_type () does not allow any other qualifiers on array
+	     types, so do _not_ copy TYPE_READONLY (.), TYPE_VOLATILE (.),
+	     etc., over to the new type.  -- tkchia  */
 
           if (TYPE_STRUCTURAL_EQUALITY_P (element_type)
               || (domain && TYPE_STRUCTURAL_EQUALITY_P (domain)))
