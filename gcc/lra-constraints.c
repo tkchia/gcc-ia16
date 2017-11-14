@@ -3016,27 +3016,17 @@ process_address_1 (int nop, bool check_only_p,
 	  fprintf (stderr, "ad.segment: 2\n");
 	  debug_rtx (*subterm);
 # endif
-	  rtx_insn *last;
 	  enum reg_class cl = MODE_SEGMENT_REG_CLASS (GET_MODE (*term),
 				GET_MODE (*subterm), XINT (*term, 1));
-	  push_to_sequence (*before);
-	  last = get_last_insn ();
 	  if (cl != NO_REGS)
 	    {
-	      rtx new_seg_reg = lra_create_new_reg (GET_MODE (*subterm),
-						    NULL_RTX, cl, "seg");
-	      rtx_insn *insn = emit_insn (gen_rtx_SET (new_seg_reg, *subterm));
-	      if (recog_memoized (insn) >= 0)
-		*subterm = new_seg_reg;
-	      else
-		delete_insns_since (last);
-# if 0
-	      fprintf (stderr, "ad.segment: 3\n");
-	      debug_rtx (*subterm);
-# endif
-	      *before = get_insns ();
+	      if (process_addr_reg (subterm, check_only_p, before, NULL, cl))
+		change_p = true;
 	    }
-	  end_sequence ();
+# if 0
+	  fprintf (stderr, "ad.segment: 3\n");
+	  debug_rtx (*subterm);
+# endif
 	}
     }
 #endif
