@@ -1,4 +1,4 @@
-/* { dg-do compile } */
+/* { dg-do assemble } */
 /* { dg-xfail-if "" *-*-* } */
 /* { dg-excess-errors "" } */
 /* { dg-options "-O3 -fno-inline --save-temps" } */

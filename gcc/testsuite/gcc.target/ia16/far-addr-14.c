@@ -1,4 +1,4 @@
-/* { dg-do compile } */
+/* { dg-do assemble } */
 /* { dg-options "-Og --save-temps" } */
 
 /* Second test case for a pointer processing bug reported by Bart Oldeman

@@ -1,4 +1,4 @@
-/* { dg-do compile } */
+/* { dg-do assemble } */
 /* { dg-options "-O0 --save-temps" } */
 
 /* Casting an array within a far structure to a pointer.  Bug was reported

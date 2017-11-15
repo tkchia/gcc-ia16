@@ -1,4 +1,4 @@
-/* { dg-do compile } */
+/* { dg-do assemble } */
 /* { dg-options "-Os --save-temps" } */
 
 /* Test for a far pointer processing bug reported by Bart Oldeman --- see

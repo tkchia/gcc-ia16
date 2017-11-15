@@ -1,4 +1,4 @@
-/* { dg-do compile } */
+/* { dg-do assemble } */
 /* { dg-options "-O3 -fno-inline --save-temps" } */
 
 /* Test for basic far pointer functionality.  Also test that the preprocessor
