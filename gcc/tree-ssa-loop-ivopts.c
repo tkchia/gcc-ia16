@@ -2852,6 +2852,13 @@ add_candidate_1 (struct ivopts_data *data,
   if (pos != IP_ORIGINAL)
     {
       orig_type = TREE_TYPE (base);
+#ifdef TARGET_ADDR_SPACE_WEIRD_P
+      /* Special case hack for ia16-elf.  */
+      if (POINTER_TYPE_P (orig_type)
+	  && TARGET_ADDR_SPACE_WEIRD_P (TYPE_ADDR_SPACE
+					(TREE_TYPE (orig_type))))
+	return NULL;
+#endif
       type = generic_type_for (orig_type);
       if (type != orig_type)
 	{

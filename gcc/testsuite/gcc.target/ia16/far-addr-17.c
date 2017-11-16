@@ -8,10 +8,7 @@
    nonsense "far" addresses --- with no segment override --- and passes them
    to TARGET_ADDR_SPACE_LEGITIMIZE_ADDRESS, in order to estimate the costs
    of using various types of addresses.  So we need to make sure that
-   TARGET_ADDR_SPACE_LEGITIMIZE_ADDRESS can gracefully handle such things.
-
-   (Note that (as of Nov 2017) this particular routine actually compiles to
-   better code if `-fivopts' is simply turned off.)  */
+   TARGET_ADDR_SPACE_LEGITIMIZE_ADDRESS can gracefully handle such things.  */
 
 unsigned my_strlen(char __far * fname)
 {
