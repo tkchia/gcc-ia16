@@ -1268,7 +1268,7 @@ As an extension, GNU C supports named address spaces as
 defined in the N1275 draft of ISO/IEC DTR 18037.  Support for named
 address spaces in GCC will evolve as the draft technical report
 changes.  Calling conventions for any target might also change.  At
-present, only the AVR, SPU, M32C, RL78, and x86 targets support
+present, only the AVR, SPU, M32C, RL78, IA-16, and x86 targets support
 address spaces other than the generic address space.
 
 Address space identifiers may be used exactly like any other C type
@@ -1471,8 +1471,56 @@ resulting pointer is undefined.  This may change in the future.
 @item
 Many kinds of useful operations involving far addresses are not yet
 supported.  These include placing a static storage @emph{variable} in the
-@code{__far} space, and creating a far function pointer (e.g., @code{size_t
-(__far *pf) (int);}).
+@code{__far} space, and invoking a far @emph{function}.
+@c
+@c The N1275 draft does not actually support the notion of functions in
+@c separate address spaces: (5.1.2) "Note that, since a function is not an
+@c object, address-space type qualifiers cannot be used with functions."
+@c
+@c However, GCC _does_ seem to allow declarations of far function pointers
+@c (perhaps unintentionally).  One needs to say e.g.
+@c	typedef int fn_t (char);
+@c	typedef __far fn_t *p_far_fn_t;
+@c Trying to call a function via such a pointer will currently crash GCC.
+@c
+@c The classical `int (__far *) (char);' declaration syntax does not work
+@c (see below).  -- tkchia
+
+@item
+For far pointer declarations, the GCC named address space syntax---which
+follows N1275---differs somewhat from the syntax used in classical DOS
+compilers such as Open Watcom C/C++ and Borland's Turbo C.  The code
+
+@smallexample
+char __far *p, *q;
+@end smallexample
+
+declares both @code{p} and @code{q} as far pointers under GCC, but under
+Open Watcom it declares only @code{p} as a far pointer, and @code{q} as a
+generic pointer.  Moreover, GCC does @emph{not} support the Watcom-style
+syntax
+
+@smallexample
+char __far *p, __far *q;
+@end smallexample
+
+and conversely Open Watcom does not allow placing the word @samp{__far}
+before @samp{char}, which GCC allows:
+
+@smallexample
+__far char *p, *q;
+@end smallexample
+@c
+@c Bart Oldeman suggested (https://github.com/tkchia/gcc-ia16/issues/11
+@c #issuecomment-344935397) that it would be good for GCC to issue compiler
+@c warnings for cases like
+@c	char __far *p, *q;
+@c
+@c I quite agree, but the C parser code (gcc/c/c-parser.c) looks quite hairy
+@c at the moment, plus named address spaces are also used for other
+@c platforms.  So I am not sure I want to touch the code before really
+@c thinking things through.  Perhaps someone who is not me can step up to the
+@c task. :-)  -- tkchia
 
 @end itemize
 
