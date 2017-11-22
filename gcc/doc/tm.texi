@@ -10437,6 +10437,20 @@ This macro is defined in the IA-16 backend to suppress certain optimizations
 over @code{__far} pointers.
 @end defmac
 
+@defmac TARGET_WARN_ADDR_SPACE_SYNTAX_P (@var{as})
+This macro is not needed for most targets.  For the IA-16 target, it is used
+to issue a warning for declarations such as
+
+@smallexample
+char __far *p, *q;
+@end smallexample
+
+which might be parsed differently under GCC (@code{*q} is in @code{__far}
+space) and under older IA-16 compilers (@code{*q} is in generic space).  If
+defined, the macro should return true if such a warning might apply to
+declarations involving address space @var{as}.
+@end defmac
+
 @defmac TARGET_EXPAND_WEIRD_POINTER_PLUS_EXPR (@var{op0}, @var{op1}, @var{target}, @var{mode})
 This macro is not needed for most targets.  If defined, it says how to do
 pointer arithmetic over ``weird'' address spaces.

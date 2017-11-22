@@ -1495,32 +1495,15 @@ compilers such as Open Watcom C/C++ and Borland's Turbo C.  The code
 char __far *p, *q;
 @end smallexample
 
-declares both @code{p} and @code{q} as far pointers under GCC, but under
-Open Watcom it declares only @code{p} as a far pointer, and @code{q} as a
-generic pointer.  Moreover, GCC does @emph{not} support the Watcom-style
-syntax
+declares @code{p} and @code{q} as far pointers under GCC, but under Open
+Watcom it declares only @code{p} as a far pointer, and @code{q} as a generic
+pointer.
 
-@smallexample
-char __far *p, __far *q;
-@end smallexample
-
-and conversely Open Watcom does not allow placing the word @samp{__far}
-before @samp{char}, which GCC allows:
-
-@smallexample
-__far char *p, *q;
-@end smallexample
-@c
-@c Bart Oldeman suggested (https://github.com/tkchia/gcc-ia16/issues/11
-@c #issuecomment-344935397) that it would be good for GCC to issue compiler
-@c warnings for cases like
-@c	char __far *p, *q;
-@c
-@c I quite agree, but the C parser code (gcc/c/c-parser.c) looks quite hairy
-@c at the moment, plus named address spaces are also used for other
-@c platforms.  So I am not sure I want to touch the code before really
-@c thinking things through.  Perhaps someone who is not me can step up to the
-@c task. :-)  -- tkchia
+@opindex Waddress
+@opindex Wall
+If @option{-Waddress} (or @option{-Wall}) is enabled, GCC will warn about
+cases like the above, where a declaration can be interpreted differently
+under GCC's grammar and Watcom-style grammar.
 
 @end itemize
 

@@ -1637,6 +1637,9 @@ c_parser_declaration_or_fndef (c_parser *parser, bool fndef_ok,
   tree prefix_attrs;
   tree all_prefix_attrs;
   bool diagnosed_no_specs = false;
+#ifdef TARGET_WARN_ADDR_SPACE_SYNTAX_P
+  bool diagnosed_addr_space_syntax = false;
+#endif
   location_t here = c_parser_peek_token (parser)->location;
 
   if (static_assert_ok
@@ -1807,6 +1810,28 @@ c_parser_declaration_or_fndef (c_parser *parser, bool fndef_ok,
       bool dummy = false;
       timevar_id_t tv;
       tree fnbody;
+#ifdef TARGET_WARN_ADDR_SPACE_SYNTAX_P
+      if (!diagnosed_addr_space_syntax && !first)
+	{
+	  addr_space_t as = specs->address_space;
+	  location_t there = c_parser_peek_token (parser)->location;
+	  diagnosed_addr_space_syntax = true;
+	  if (!ADDR_SPACE_GENERIC_P (as)
+	      && TARGET_WARN_ADDR_SPACE_SYNTAX_P (specs->address_space)
+	      && specs->address_space_is_last_p)
+	    {
+	      const char *as_name = c_addr_space_name (as);
+	      if (warning_at (there, OPT_Waddress,
+			      "following declarators will also go in "
+			      "%qs space", as_name))
+		{
+		  inform (there, "suggest to either split declaration,");
+		  inform (there, "or place %qs before %qT", as_name,
+			  specs->type);
+		}
+	    }
+	}
+#endif
       /* Declaring either one or more declarators (in which case we
 	 should diagnose if there were no declaration specifiers) or a
 	 function definition (in which case the diagnostic for

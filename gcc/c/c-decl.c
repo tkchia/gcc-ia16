@@ -9524,6 +9524,9 @@ declspecs_add_addrspace (source_location location,
       specs->address_space = as;
       specs->locations[cdw_address_space] = location;
     }
+#ifdef TARGET_WARN_ADDR_SPACE_SYNTAX_P
+  specs->address_space_is_last_p = true;
+#endif
   return specs;
 }
 
@@ -9540,6 +9543,9 @@ declspecs_add_qual (source_location loc,
   specs->declspecs_seen_p = true;
   gcc_assert (TREE_CODE (qual) == IDENTIFIER_NODE
 	      && C_IS_RESERVED_WORD (qual));
+#ifdef TARGET_WARN_ADDR_SPACE_SYNTAX_P
+  specs->address_space_is_last_p = false;
+#endif
   i = C_RID_CODE (qual);
   switch (i)
     {
@@ -9583,6 +9589,9 @@ declspecs_add_type (location_t loc, struct c_declspecs *specs,
   specs->typespec_kind = spec.kind;
   if (TREE_DEPRECATED (type))
     specs->deprecated_p = true;
+#ifdef TARGET_WARN_ADDR_SPACE_SYNTAX_P
+  specs->address_space_is_last_p = false;
+#endif
 
   /* Handle type specifier keywords.  */
   if (TREE_CODE (type) == IDENTIFIER_NODE
@@ -10332,6 +10341,9 @@ declspecs_add_scspec (source_location loc,
   specs->declspecs_seen_p = true;
   gcc_assert (TREE_CODE (scspec) == IDENTIFIER_NODE
 	      && C_IS_RESERVED_WORD (scspec));
+#ifdef TARGET_WARN_ADDR_SPACE_SYNTAX_P
+  specs->address_space_is_last_p = false;
+#endif
   i = C_RID_CODE (scspec);
   if (specs->non_sc_seen_p)
     warning (OPT_Wold_style_declaration,
@@ -10443,6 +10455,9 @@ declspecs_add_scspec (source_location loc,
 struct c_declspecs *
 declspecs_add_attrs (source_location loc, struct c_declspecs *specs, tree attrs)
 {
+#ifdef TARGET_WARN_ADDR_SPACE_SYNTAX_P
+  specs->address_space_is_last_p = false;
+#endif
   specs->attrs = chainon (attrs, specs->attrs);
   specs->locations[cdw_attributes] = loc;
   specs->declspecs_seen_p = true;
@@ -10457,6 +10472,9 @@ declspecs_add_alignas (source_location loc,
 		       struct c_declspecs *specs, tree align)
 {
   int align_log;
+#ifdef TARGET_WARN_ADDR_SPACE_SYNTAX_P
+  specs->address_space_is_last_p = false;
+#endif
   specs->alignas_p = true;
   specs->locations[cdw_alignas] = loc;
   if (align == error_mark_node)

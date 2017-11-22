@@ -357,6 +357,11 @@ struct c_declspecs {
   /* Whether any alignment specifier (even with zero alignment) was
      specified.  */
   BOOL_BITFIELD alignas_p : 1;
+#ifdef TARGET_WARN_ADDR_SPACE_SYNTAX_P
+  /* Whether the address space specifier (below) comes last in the
+     declaration specifiers.  */
+  BOOL_BITFIELD address_space_is_last_p : 1;
+#endif
   /* The address space that the declaration belongs to.  */
   addr_space_t address_space;
 };
