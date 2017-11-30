@@ -376,8 +376,6 @@ segment_subterm (rtx *segment_term)
   if (MODE_SEGMENT_REG_CLASS (GET_MODE (e), GET_MODE (XVECEXP (e, 0, 0)),
 			      XINT (e, 1)) == NO_REGS)
     return NULL;
-  if (XVECLEN (e, 0) == 0)
-    return NULL;
   return &XVECEXP (e, 0, 0);
 }
 #endif
@@ -3001,35 +2999,6 @@ process_address_1 (int nop, bool check_only_p,
   else
     return false;
 
-#ifdef MODE_SEGMENT_REG_CLASS
-  if (ad.segment != NULL)
-    {
-      rtx *term = ad.segment_term;
-# if 0
-      fprintf (stderr, "ad.segment: 1\n");
-      debug_rtx (*term);
-# endif
-      rtx *subterm = segment_subterm (term);
-      if (subterm)
-	{
-# if 0
-	  fprintf (stderr, "ad.segment: 2\n");
-	  debug_rtx (*subterm);
-# endif
-	  enum reg_class cl = MODE_SEGMENT_REG_CLASS (GET_MODE (*term),
-				GET_MODE (*subterm), XINT (*term, 1));
-	  if (cl != NO_REGS)
-	    {
-	      if (process_addr_reg (subterm, check_only_p, before, NULL, cl))
-		change_p = true;
-	    }
-# if 0
-	  fprintf (stderr, "ad.segment: 3\n");
-	  debug_rtx (*subterm);
-# endif
-	}
-    }
-#endif
 
   /* If INDEX_REG_CLASS is assigned to base_term already and isn't to
      index_term, swap them so to avoid assigning INDEX_REG_CLASS to both
@@ -3047,6 +3016,23 @@ process_address_1 (int nop, bool check_only_p,
     }
   if (! check_only_p)
     change_p = equiv_address_substitution (&ad);
+#ifdef MODE_SEGMENT_REG_CLASS
+  if (ad.segment_term != NULL)
+    {
+      rtx *term = ad.segment_term;
+      rtx *subterm = segment_subterm (term);
+      if (subterm)
+	{
+	  enum reg_class cl = MODE_SEGMENT_REG_CLASS (GET_MODE (*term),
+				GET_MODE (*subterm), XINT (*term, 1));
+	  if (cl != NO_REGS)
+	    {
+	      if (process_addr_reg (subterm, check_only_p, before, NULL, cl))
+		change_p = true;
+	    }
+	}
+    }
+#endif
   if (ad.base_term != NULL
       && (process_addr_reg
 	  (ad.base_term, check_only_p, before,
