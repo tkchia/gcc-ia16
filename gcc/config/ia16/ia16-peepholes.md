@@ -655,12 +655,13 @@
 ;	movw	mem,	%bx
 ; into
 ;	movw	mem,	%bx
-; This happens during reload, when far pointers are used in a loop.
+; This happens during reload, when far pointers are used in a loop.  Make
+; sure that %bx does not overlap with any registers used in mem.
 (define_peephole2
   [(set (match_operand:HI 0 "register_operand")
 	(match_operand:HI 1 "segment_register_operand"))
    (set (match_dup 0) (match_operand:HI 2 "memory_operand"))]
-  ""
+  "peep2_reg_dead_p (1, operands[0])"
   [(set (match_dup 0) (match_dup 2))]
   ""
 )
