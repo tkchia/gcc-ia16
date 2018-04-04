@@ -51,6 +51,8 @@
 #include "tree-vectorizer.h"
 #include "builtins.h"
 #include "cfgrtl.h"
+#include "libiberty.h"
+#include "hashtab.h"
 
 /* This file should be included last.  */
 #include "target-def.h"
@@ -2346,6 +2348,120 @@ ia16_rtx_costs (rtx x, machine_mode mode, int outer_code_i,
       debug_rtx (x);
       return false;
     }
+}
+
+/* Dividing the Output into Sections */
+#undef	TARGET_ASM_SELECT_SECTION
+#define	TARGET_ASM_SELECT_SECTION ia16_asm_select_section
+
+/* Convenience function --- fabricate a section name for a given __far
+   variable declaration, or return NULL if something is wrong.
+
+   The caller should free the section name's memory with free (.) once it is
+   done with it.
+
+   To fabricate the section name, I first decide the prefix for the section
+   type, then add the name of the variable; and finally I compute a hash
+   value of everything and append the hash.
+
+   (Note: apparently CFUN tends to be NULL at this point, even if the
+   variable is defined inside a function.)  */
+static char *
+ia16_fabricate_section_name_for_decl (tree decl, int reloc)
+{
+  const char *prefix;
+  const char *dname;
+  char *name1, *name2;
+  unsigned short hash;
+  bool one_only;
+
+  if (! DECL_P (decl))
+    return NULL;
+
+  one_only = DECL_COMDAT_GROUP (decl) && ! HAVE_COMDAT_GROUP;
+
+  switch (categorize_decl_for_section (decl, reloc))
+    {
+    case SECCAT_DATA:
+    case SECCAT_DATA_REL:
+    case SECCAT_DATA_REL_LOCAL:
+    case SECCAT_BSS:
+      prefix = one_only ? ".gnu.linkonce.fd." : ".fardata.";
+      break;
+
+    case SECCAT_DATA_REL_RO:
+    case SECCAT_DATA_REL_RO_LOCAL:
+    case SECCAT_RODATA:
+    case SECCAT_RODATA_MERGE_STR:
+    case SECCAT_RODATA_MERGE_STR_INIT:
+    case SECCAT_RODATA_MERGE_CONST:
+      prefix = one_only ? ".gnu.linkonce.fr." : ".farrodata.";
+      break;
+
+    default:
+      return NULL;
+    }
+
+  dname = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
+  dname = targetm.strip_name_encoding (dname);
+
+  name1 = ACONCAT ((prefix, dname, NULL));
+  hash = (unsigned short) htab_hash_string (name1);
+  hash *=  036627u;
+  hash &= 0177777u;
+  hash = hash << 4 | hash >> 12;
+  hash &=  077777u;
+
+  if (asprintf (&name2, "%s.%05ho", name1, hash) <= 0)
+    {
+      error ("not enough memory for far variable section name");
+      return NULL;
+    }
+
+  return name2;
+}
+
+static section *
+ia16_asm_select_section (tree exp, int reloc, unsigned HOST_WIDE_INT align)
+{
+  char *sname;
+
+  switch (TYPE_ADDR_SPACE (TREE_TYPE (exp)))
+    {
+    default:
+      gcc_unreachable ();
+
+    case ADDR_SPACE_FAR:
+      sname = ia16_fabricate_section_name_for_decl (exp, reloc);
+
+      if (sname)
+	{
+	  section *sect = get_named_section (exp, sname, reloc);
+	  free (sname);
+	  return sect;
+	}
+
+      /* fall through */
+    case ADDR_SPACE_GENERIC:
+      return default_elf_select_section (exp, reloc, align);
+    }
+}
+
+#undef	TARGET_ASM_UNIQUE_SECTION
+#define	TARGET_ASM_UNIQUE_SECTION ia16_asm_unique_section
+
+static void
+ia16_asm_unique_section (tree decl, int reloc)
+{
+  char *sname = ia16_fabricate_section_name_for_decl (decl, reloc);
+
+  if (sname)
+    {
+      set_decl_section_name (decl, sname);
+      free (sname);
+    }
+  else
+    default_unique_section (decl, reloc);
 }
 
 /* Continued: Run-time Target Specification */
