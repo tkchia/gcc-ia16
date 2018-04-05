@@ -2378,6 +2378,13 @@ ia16_fabricate_section_name_for_decl (tree decl, int reloc)
   if (! DECL_P (decl))
     return NULL;
 
+  if (! TARGET_CMODEL_IS_SMALL)
+    {
+      error ("tiny code model does not support %<__far%> static storage "
+	     "variables");
+      return NULL;
+    }
+
   one_only = DECL_COMDAT_GROUP (decl) && ! HAVE_COMDAT_GROUP;
 
   switch (categorize_decl_for_section (decl, reloc))
@@ -2414,7 +2421,7 @@ ia16_fabricate_section_name_for_decl (tree decl, int reloc)
 
   if (asprintf (&name2, "%s.%05ho", name1, hash) <= 0)
     {
-      error ("not enough memory for far variable section name");
+      error ("not enough memory for %<__far%> variable section name");
       return NULL;
     }
 
