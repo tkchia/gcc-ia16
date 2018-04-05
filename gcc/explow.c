@@ -432,7 +432,11 @@ memory_address_addr_space (machine_mode mode, rtx x, addr_space_t as)
 
   /* By passing constant addresses through registers
      we get a chance to cse them.  */
-  if (! cse_not_expected && CONSTANT_P (x) && CONSTANT_ADDRESS_P (x))
+  if (! cse_not_expected && CONSTANT_P (x) && CONSTANT_ADDRESS_P (x)
+#ifdef TARGET_ADDR_SPACE_WEIRD_P
+      && ! TARGET_ADDR_SPACE_WEIRD_P (as)
+#endif
+      )
     x = force_reg (address_mode, x);
 
   /* We get better cse by rejecting indirect addressing at this stage.

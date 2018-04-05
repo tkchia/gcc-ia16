@@ -762,17 +762,25 @@ ia16_as_convert_weird_memory_address (machine_mode to_mode, rtx x,
     if (! ia16_parse_address (x, &r1, &r2, &c, &r9))
       return x;
 
-    if (! r9)
-      return x;
-
     if (no_emit)
       return NULL_RTX;
+
+    if (! r9)
+      {
+	/* x is probably the address of a far static variable.  */
+	gcc_assert (TARGET_CMODEL_IS_SMALL);
+	gcc_assert (SYMBOL_REF_P (x));
+	r9 = gen_seg16_reloc (x);
+      }
 
     off = NULL_RTX;
     if (r1)
       off = r2 ? gen_rtx_PLUS (HImode, r1, r2) : r1;
     if (c)
       off = off ? gen_rtx_PLUS (HImode, x, c) : c;
+
+    if (!off)
+      off = const0_rtx;
 
     x = gen_reg_rtx (SImode);
     emit_move_insn (gen_rtx_SUBREG (HImode, x, 0), off);
@@ -882,7 +890,7 @@ ia16_split_seg_override_and_offset (rtx x, rtx *ovr, rtx *off)
 #define	TARGET_ADDR_SPACE_LEGITIMIZE_ADDRESS ia16_as_legitimize_address
 
 static rtx
-ia16_as_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
+ia16_as_legitimize_address (rtx x, rtx oldx,
 			    machine_mode mode ATTRIBUTE_UNUSED,
 			    addr_space_t as ATTRIBUTE_UNUSED)
 {
@@ -917,15 +925,21 @@ ia16_as_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
 
   ia16_split_seg_override_and_offset (x, &ovr, &off);
 
-  /* This (lack of a segment override) sometimes occurs due to GCC's
-      probing.  Specifically, tree-ssa-loop-ivopts.c creates
-     nonsense addresses in order to gauge the costs of using different
-     addressing modes.  We just fabricate something semi-sane here.  */
-  if (! ovr)
-    ovr = gen_seg_override (force_reg (HImode, const0_rtx));
-
   if (! off)
     off = const0_rtx;
+
+  /* This lack of a segment override may mean one of two things.
+
+     One possibility is that we want to take the address of a far static
+     variable.
+
+     Alternatively, it may be due to GCC's internal probing ---
+     specifically, tree-ssa-loop-ivopts.c creates nonsense addresses in
+     order to gauge the costs of using different addressing modes.
+
+     This code needs to work in both cases.  */
+  if (! ovr)
+    ovr = gen_seg_override (force_reg (HImode, gen_seg16_reloc (oldx)));
 
   newx = gen_rtx_PLUS (HImode, off, ovr);
   if (ia16_as_legitimate_address_p (mode, newx, false, as))

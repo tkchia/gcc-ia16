@@ -3,8 +3,8 @@
 /* { dg-excess-errors "" } */
 /* { dg-options "-O3 -fno-inline --save-temps" } */
 
-/* FAIL: Can we create far address space variables and take their addresses? 
-   At the moment, this is not supported.  */
+/* XFAIL: Do not allow far address space variables to be created, if we are
+   using the default tiny memory model.  */
 
 int printf (const char *, ...);
 
