@@ -768,8 +768,21 @@ ia16_as_convert_weird_memory_address (machine_mode to_mode, rtx x,
     if (! r9)
       {
 	/* x is probably the address of a far static variable.  */
-	gcc_assert (TARGET_CMODEL_IS_SMALL);
+	if (! TARGET_CMODEL_IS_SMALL)
+	  {
+	    error ("tiny code model does not support MZ relocations");
+	    return NULL_RTX;
+	  }
+
 	gcc_assert (SYMBOL_REF_P (x));
+
+	/* If CFUN is NULL, we are building a static initializer containing
+	   the address of a far static variable.  */
+	if (! cfun)
+	  return gen_static_far_ptr (x);
+
+	/* Otherwise, create a pseudo-register the normal way, for the
+	   segment term.  */
 	r9 = gen_seg16_reloc (x);
       }
 
@@ -812,6 +825,16 @@ ia16_expand_weird_pointer_plus_expr (rtx op0, rtx op1, rtx target,
 
   gcc_assert (GET_MODE (op0) == SImode || GET_MODE (op0) == VOIDmode);
   gcc_assert (GET_MODE (op1) == HImode || GET_MODE (op1) == VOIDmode);
+
+  if (GET_CODE (op0) == CONST
+      && GET_CODE (XEXP (op0, 0)) == UNSPEC
+      && XINT (XEXP (op0, 0), 1) == UNSPEC_STATIC_FAR_PTR)
+    {
+      /* This pointer arithmetic operation occurs within a static
+	 initializer.  */
+      op0 = XVECEXP (XEXP (op0, 0), 0, 0);
+      return gen_static_far_ptr (gen_rtx_PLUS (GET_MODE (op0), op0, op1));
+    }
 
   op0 = force_reg (SImode, op0);
 
@@ -2474,15 +2497,26 @@ ia16_asm_select_section (tree exp, int reloc, unsigned HOST_WIDE_INT align)
 static void
 ia16_asm_unique_section (tree decl, int reloc)
 {
-  char *sname = ia16_fabricate_section_name_for_decl (decl, reloc);
+  char *sname;
 
-  if (sname)
+  switch (TYPE_ADDR_SPACE (TREE_TYPE (decl)))
     {
-      set_decl_section_name (decl, sname);
-      free (sname);
+    default:
+      gcc_unreachable ();
+
+    case ADDR_SPACE_FAR:
+      sname = ia16_fabricate_section_name_for_decl (decl, reloc);
+      if (sname)
+	{
+	  set_decl_section_name (decl, sname);
+	  free (sname);
+	  return;
+	}
+
+      /* fall through */
+    case ADDR_SPACE_GENERIC:
+      default_unique_section (decl, reloc);
     }
-  else
-    default_unique_section (decl, reloc);
 }
 
 /* Continued: Run-time Target Specification */
@@ -2553,6 +2587,71 @@ ia16_asm_file_start (void)
 #define TARGET_ASM_UNALIGNED_SI_OP	"\t.long\t"
 #define TARGET_ASM_UNALIGNED_DI_OP	"\t.quad\t"
 #define TARGET_ASM_UNALIGNED_TI_OP	"\t.octa\t"
+
+#undef	TARGET_ASM_INTEGER
+#define	TARGET_ASM_INTEGER	ia16_asm_integer
+
+static rtx
+ia16_find_base_symbol_ref (rtx x)
+{
+  rtx b0;
+
+  switch (GET_CODE (x))
+    {
+    case SYMBOL_REF:
+      return x;
+
+    case PLUS:
+      b0 = ia16_find_base_symbol_ref (XEXP (x, 0));
+      if (b0)
+	return b0;
+      return ia16_find_base_symbol_ref (XEXP (x, 1));
+
+    case MINUS:
+      return ia16_find_base_symbol_ref (XEXP (x, 0));
+
+    default:
+      return NULL_RTX;
+    }
+}
+
+static bool
+ia16_asm_integer (rtx x, unsigned size, int aligned_p)
+{
+  rtx base;
+
+  if (default_assemble_integer (x, size, aligned_p))
+    return true;
+
+  while (GET_CODE (x) == CONST)
+    x = XEXP (x, 0);
+
+  if (GET_CODE (x) != UNSPEC
+      || XINT (x, 1) != UNSPEC_STATIC_FAR_PTR
+      || GET_MODE (x) != SImode)
+    return false;
+
+  x = XVECEXP (x, 0, 0);
+  base = ia16_find_base_symbol_ref (x);
+
+  if (! base)
+    return false;
+
+  fputs (TARGET_ASM_ALIGNED_HI_OP, asm_out_file);
+  output_addr_const (asm_out_file, x);
+
+  /* GNU as does not yet accept the syntax
+	.hword	foo@SEGMENT16
+     so we have to say
+	.reloc	., R_386_SEGMENT16, foo
+	.hword	0
+     instead.  */
+  fputs ("\n"
+	 "\t.reloc\t., R_386_SEGMENT16, ", asm_out_file);
+  output_addr_const (asm_out_file, base);
+  fputs ("\n" TARGET_ASM_ALIGNED_HI_OP "0\n", asm_out_file);
+  return true;
+}
 
 static const char *reg_QInames[FIRST_NOQI_REG] = {
 	"cl", "ch", "al", "ah", "dl", "dh", "bl", "bh"
