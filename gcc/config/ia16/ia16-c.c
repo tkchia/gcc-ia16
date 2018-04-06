@@ -63,9 +63,12 @@ ia16_cpu_cpp_builtins (void)
 		      TARGET_ALLOCABLE_DS_REG);
 
   /* Define macros for various compiler features:
+       * far static variables
        * far functions of the form `int foo (void) __far;'
        * function calling conventions available through __attribute__ ((.)). 
    */
+  def_or_undef_macro ("__IA16_FEATURE_FAR_STATIC_STORAGE",
+		      TARGET_CMODEL_IS_SMALL);
   cpp_define (parse_in, "__IA16_FEATURE_FAR_FUNCTION_SYNTAX");
   cpp_define (parse_in, "__IA16_FEATURE_ATTRIBUTE_CDECL");
   cpp_define (parse_in, "__IA16_FEATURE_ATTRIBUTE_STDCALL");

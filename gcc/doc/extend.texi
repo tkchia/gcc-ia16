@@ -1461,6 +1461,25 @@ void set_diskette_params (const unsigned char params[])
 @}
 @end smallexample
 
+@noindent
+@b{Far static storage variables}
+
+Under the small memory model (@option{-mcmodel=small}), you can also define
+far variables with static storage duration, and take their addresses, like
+so:
+
+@smallexample
+int __far x;
+int __far *f (int b)
+@{
+    static int __far y = 1;
+    return b ? &x : &y;
+@}
+@end smallexample
+
+@noindent
+@b{Far functions}
+
 There is some preliminary support for defining and invoking far functions,
 as well as defining far function pointers.  To mark a function as far, write
 the word @code{__far} immediately after its parameter list.  For example:
@@ -1492,7 +1511,9 @@ int bar (void) __far
 
 The preprocessor symbol @code{__FAR} is defined when far pointers are
 supported.  In addition, @code{__IA16_FEATURE_FAR_FUNCTION_SYNTAX} is
-defined if the above syntax for declaring far functions is supported.
+defined if the above syntax for declaring far functions is supported, and
+@code{__IA16_FEATURE_FAR_STATIC_STORAGE} is defined if far static storage
+variables are supported.
 
 @noindent
 @b{Limitations and caveats}
@@ -1518,8 +1539,24 @@ To avoid ambiguity in parsing, the postfix @code{__far} notation above for
 declaring far functions is not allowed with K&R-style function definitions.
 
 @item
-Placing a static storage @emph{variable} in the @code{__far} space is
-currently not supported.
+For a declaration like
+
+@smallexample
+static int __far x, y, z;
+@end smallexample
+
+there is @emph{no} guarantee that the variables @code{x}, @code{y}, and
+@code{z} will be placed in the same far segment.  GCC only guarantees that
+each of @code{x}, @code{y}, and @code{z} will be placed outside the generic
+(near) data address space.
+
+To place a set of variables in a single far segment, you can either wrap
+them in a struct, or use the @code{section} attribute (@pxref{Variable
+Attributes}).
+
+@item
+Placing a static storage variable in the @code{__far} space is currently not
+supported when using the (default) tiny memory model.
 
 @item
 For far pointer declarations, the GCC named address space syntax---which

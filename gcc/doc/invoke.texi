@@ -16681,6 +16681,10 @@ callee-saved, not fixed.
 This macro is defined only if the postfix @code{__far} syntax for declaring
 far functions is supported (see @ref{IA-16 Named Address Spaces}).
 
+@item __IA16_FEATURE_FAR_STATIC_STORAGE
+This macro is defined only if static storage variables can be placed in
+@code{__far} space (see @ref{IA-16 Named Address Spaces}).
+
 @c I am not sure yet if I should document and codify the remaining macros,
 @c viz. __IA16_FEATURE_ATTRIBUTE_{CDECL, STDCALL}, __IA16_CALLCVT_{CDECL,
 @c STDCALL}, and __IA16_CALLCVT_FAR_FUNCTION_IF_FAR_RETURN_TYPE...

@@ -771,7 +771,7 @@ ia16_as_convert_weird_memory_address (machine_mode to_mode, rtx x,
 	if (! TARGET_CMODEL_IS_SMALL)
 	  {
 	    error ("tiny code model does not support MZ relocations");
-	    return NULL_RTX;
+	    /* continue after that... */
 	  }
 
 	gcc_assert (SYMBOL_REF_P (x));
