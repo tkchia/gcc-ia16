@@ -208,8 +208,8 @@
 (define_peephole2
   [(set (match_operand:HI 0 "nonsegment_register_operand")
 	(match_operand:HI 1 "memory_operand"))
-   (set (match_operand:HI 2 "segment_register_operand")
-	(match_operand:HI 3 "memory_operand"))]
+   (set (match_operand:SEG 2 "segment_register_operand")
+	(match_operand:SEG 3 "memory_operand"))]
   "TEST_HARD_REG_BIT (reg_class_contents[GENERAL_REGS], REGNO (operands[0]))
    && ia16_move_multiple_mem_p (HImode, operands[1], operands[3])"
   [(parallel
@@ -220,8 +220,8 @@
 
 ; Optimize "movw mem+2, %es; movw mem, reg16" into "lesw mem, reg16".
 (define_peephole2
-  [(set (match_operand:HI 2 "segment_register_operand")
-	(match_operand:HI 3 "memory_operand"))
+  [(set (match_operand:SEG 2 "segment_register_operand")
+	(match_operand:SEG 3 "memory_operand"))
    (set (match_operand:HI 0 "nonsegment_register_operand")
 	(match_operand:HI 1 "memory_operand"))]
   "TEST_HARD_REG_BIT (reg_class_contents[GENERAL_REGS], REGNO (operands[0]))
@@ -241,8 +241,8 @@
 	(match_operand:HI 1 "memory_operand"))
    (set (match_operand:MO 2 "memory_operand")
 	(match_operand:MO 3 "nonmemory_operand"))
-   (set (match_operand:HI 4 "segment_register_operand")
-	(match_operand:HI 5 "memory_operand"))]
+   (set (match_operand:SEG 4 "segment_register_operand")
+	(match_operand:SEG 5 "memory_operand"))]
   "TEST_HARD_REG_BIT (reg_class_contents[GENERAL_REGS], REGNO (operands[0]))
    && ia16_move_multiple_mem_p (HImode, operands[1], operands[5])
    && !reg_overlap_mentioned_p (operands[4], operands[3])
@@ -289,8 +289,8 @@
 (define_insn "*load_multiplehi"
   [(set (match_operand:HI 0 "register_operand" "=r")
 	(match_operand:HI 1 "memory_operand" "m"))
-   (set (match_operand:HI 2 "segment_register_operand" "=Q")
-	(match_operand:HI 3 "memory_operand" "m"))]
+   (set (match_operand:SEG 2 "segment_register_operand" "=Q")
+	(match_operand:SEG 3 "memory_operand" "m"))]
   "reload_completed
    && ia16_move_multiple_mem_p (HImode, operands[1], operands[3])"
   "l%R2w\t%1,\t%0"
@@ -752,9 +752,9 @@
 ; This happens during reload, when far pointers are used in a loop.  Make
 ; sure that %bx does not overlap with any registers used in mem.
 (define_peephole2
-  [(set (match_operand:HI 0 "register_operand")
-	(match_operand:HI 1 "segment_register_operand"))
-   (set (match_dup 0) (match_operand:HI 2 "memory_operand"))]
+  [(set (match_operand:SEG 0 "register_operand")
+	(match_operand:SEG 1 "segment_register_operand"))
+   (set (match_dup 0) (match_operand:SEG 2 "memory_operand"))]
   "peep2_reg_dead_p (1, operands[0])"
   [(set (match_dup 0) (match_dup 2))]
   ""
@@ -767,9 +767,9 @@
 (define_peephole2
   [(set (match_operand:HI 0 "nonsegment_register_operand")
 	(match_operand:HI 1 "memory_operand"))
-   (set (match_operand:HI 2 "nonsegment_register_operand")
-	(match_operand:HI 3 "memory_operand"))
-   (set (match_operand:HI 4 "segment_register_operand") (match_dup 2))]
+   (set (match_operand:SEG 2 "nonsegment_register_operand")
+	(match_operand:SEG 3 "memory_operand"))
+   (set (match_operand:SEG 4 "segment_register_operand") (match_dup 2))]
   "reload_completed
    && peep2_reg_dead_p (0, operands[0])
    && peep2_reg_dead_p (0, operands[2])
@@ -789,9 +789,9 @@
 (define_peephole2
   [(set (match_operand:HI 0 "nonsegment_register_operand")
 	(match_operand:HI 1 "memory_operand"))
-   (set (match_operand:HI 2 "nonsegment_register_operand")
-	(match_operand:HI 3 "memory_operand"))
-   (set (match_operand:HI 4 "segment_register_operand") (match_dup 2))]
+   (set (match_operand:SEG 2 "nonsegment_register_operand")
+	(match_operand:SEG 3 "memory_operand"))
+   (set (match_operand:SEG 4 "segment_register_operand") (match_dup 2))]
   "reload_completed
    && peep2_reg_dead_p (0, operands[0])
    && peep2_reg_dead_p (0, operands[2])
@@ -814,8 +814,8 @@
 ; a simpler RTL representation.
 ;
 ; TODO: allow rewriting this insn as `movw %ss, %tmp; movw %tmp, %ds'.
-(define_insn "_reset_ds_slow"
-  [(set (reg:HI DS_REG) (reg:HI SS_REG))]
+(define_insn "_reset_ds_slow<pmrm>"
+  [(set (reg:SEG DS_REG) (reg:SEG SS_REG))]
   ""
   "pushw\t%%ss\;popw\t%%ds"
 )

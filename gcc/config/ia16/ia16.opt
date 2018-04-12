@@ -111,3 +111,7 @@ Target RejectNegative InverseMask(NO_ASSUME_DS_DATA, ASSUME_DS_DATA) Undocumente
 mfar-function-if-far-return-type
 Target Report Mask(FAR_FUNCTION_IF_FAR_RETURN_TYPE)
 Treat a function as __far if it has a __far return type.
+
+mprotected-mode
+Target Report Mask(PROTECTED_MODE)
+Try to produce code suitable for running in protected mode.

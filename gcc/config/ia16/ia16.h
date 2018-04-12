@@ -140,7 +140,9 @@
    GET_MODE_SIZE(MODE) > 16 ? 0 :					\
    COMPLEX_MODE_P(MODE) &&						\
      HARD_REGNO_NREGS_HAS_PADDING((REGNO), (MODE)) ? 0 :		\
-   ia16_hard_regno_nregs[GET_MODE_SIZE(MODE)][REGNO])
+   ia16_hard_regno_nregs[GET_MODE_SIZE(MODE)][REGNO] &&			\
+     (! TARGET_PROTECTED_MODE || (MODE) == PHImode			\
+      || ((REGNO) != DS_REG && (REGNO) != ES_REG)))
 
 /* For some reason, allowing registers other than %ds to be renamed to %ds
    during the rnreg pass (with e.g. -funroll-loops) leads to incorrect code
@@ -647,7 +649,6 @@ enum processor_type
 };
 
 extern int ia16_features;
-
 
 /* The linker will take care of this.  */
 #define CTOR_LISTS_DEFINED_EXTERNALLY 1

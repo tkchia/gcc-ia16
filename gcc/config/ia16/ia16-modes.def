@@ -22,6 +22,10 @@
 
 VECTOR_MODE (INT, QI, 2);
 
+/* PHImode has the same range as HImode, but under -mprotected-mode it is
+   used to "mark" RTXs which can be loaded into segment registers.  */
+PARTIAL_INT_MODE (HI, 16, PHI);
+
 /* Comparison modes.  The basic CCmode contains all of the Sign,
    Carry, Overflow and Zero flags.  The rest of the modes only contain
    the flags implied by the mode name letters after the initial CC.  */

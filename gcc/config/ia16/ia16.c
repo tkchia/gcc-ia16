@@ -53,6 +53,8 @@
 #include "cfgrtl.h"
 #include "libiberty.h"
 #include "hashtab.h"
+#include "print-tree.h"
+#include "langhooks.h"
 
 /* This file should be included last.  */
 #include "target-def.h"
@@ -142,7 +144,7 @@ ia16_preferred_reload_class (rtx x ATTRIBUTE_UNUSED, reg_class_t rclass)
       return ES_REGS;
 
     case SEG_GENERAL_REGS:
-      return ES_GENERAL_REGS;
+      return TARGET_PROTECTED_MODE ? GENERAL_REGS : ES_GENERAL_REGS;
 
     default:
       return rclass;
@@ -710,6 +712,22 @@ ia16_as_zero_address_valid (addr_space_t addrspace)
     }
 }
 
+static rtx
+ia16_bless_selector (rtx seg)
+{
+  if (TARGET_PROTECTED_MODE && GET_MODE (seg) != PHImode)
+    seg = force_reg (PHImode, gen_rtx_TRUNCATE (PHImode, seg));
+  return seg;
+}
+
+static rtx
+ia16_seg_override_term (rtx seg)
+{
+  return gen_seg_override_prot_mode (ia16_bless_selector (seg));
+}
+
+#define SEGmode		(TARGET_PROTECTED_MODE ? PHImode : HImode)
+
 rtx
 ia16_as_convert_weird_memory_address (machine_mode to_mode, rtx x,
 				      addr_space_t as,
@@ -735,7 +753,7 @@ ia16_as_convert_weird_memory_address (machine_mode to_mode, rtx x,
 
 	(set (reg:HI <o>) (subreg:HI (reg/f:SI <i>) 0))
 	(set (reg:HI <s>) (subreg:HI (reg/f:SI <i>) 2))
-	(... (plus:HI (unspec:HI [(reg:HI <s>)] UNSPEC_SEG_OVERRIDE)
+	(... (plus:HI (unspec:HI [(reg:SEG <s>)] UNSPEC_SEG_OVERRIDE)
 		      (reg:HI <o>)) ...)
 
        This is (partially) in accord with gcc/rtl.h (see a comment at struct
@@ -752,9 +770,9 @@ ia16_as_convert_weird_memory_address (machine_mode to_mode, rtx x,
 
     x = force_reg (SImode, x);
     r1 = force_reg (HImode, gen_rtx_SUBREG (HImode, x, 0));
-    r9 = force_reg (HImode, gen_rtx_SUBREG (HImode, x, 2));
+    r9 = force_reg (SEGmode, gen_rtx_SUBREG (SEGmode, x, 2));
 
-    x = gen_rtx_PLUS (HImode, r1, gen_seg_override (r9));
+    x = gen_rtx_PLUS (HImode, r1, ia16_seg_override_term (r9));
     return x;
 
   case SImode:
@@ -810,7 +828,7 @@ ia16_as_convert_weird_memory_address (machine_mode to_mode, rtx x,
 
     x = gen_reg_rtx (SImode);
     emit_move_insn (gen_rtx_SUBREG (HImode, x, 0), off);
-    emit_move_insn (gen_rtx_SUBREG (HImode, x, 2), r9);
+    emit_move_insn (gen_rtx_SUBREG (GET_MODE (r9), x, 2), r9);
     return x;
 
   default:
@@ -851,7 +869,7 @@ ia16_expand_weird_pointer_plus_expr (rtx op0, rtx op1, rtx target,
 
   op0 = force_reg (SImode, op0);
 
-  seg = gen_rtx_SUBREG (HImode, op0, 2);
+  seg = gen_rtx_SUBREG (SEGmode, op0, 2);
   op0_off = gen_rtx_SUBREG (HImode, op0, 0);
 
   off = force_reg (HImode, gen_rtx_PLUS (HImode, op0_off, op1));
@@ -862,7 +880,7 @@ ia16_expand_weird_pointer_plus_expr (rtx op0, rtx op1, rtx target,
     sum = gen_reg_rtx (SImode);
 
   emit_move_insn (gen_rtx_SUBREG (HImode, sum, 0), off);
-  emit_move_insn (gen_rtx_SUBREG (HImode, sum, 2), seg);
+  emit_move_insn (gen_rtx_SUBREG (SEGmode, sum, 2), seg);
   return sum;
 }
 
@@ -975,7 +993,7 @@ ia16_as_legitimize_address (rtx x, rtx oldx,
 
      This code needs to work in both cases.  */
   if (! ovr)
-    ovr = gen_seg_override (force_reg (HImode, gen_seg16_reloc (oldx)));
+    ovr = ia16_seg_override_term (force_reg (HImode, gen_seg16_reloc (oldx)));
 
   newx = gen_rtx_PLUS (HImode, off, ovr);
   if (ia16_as_legitimate_address_p (mode, newx, false, as))
@@ -2480,28 +2498,28 @@ ia16_fabricate_section_name_for_decl (tree decl, int reloc)
 }
 
 static section *
-ia16_asm_select_section (tree exp, int reloc, unsigned HOST_WIDE_INT align)
+ia16_asm_select_section (tree expr, int reloc, unsigned HOST_WIDE_INT align)
 {
   char *sname;
 
-  switch (TYPE_ADDR_SPACE (TREE_TYPE (exp)))
+  switch (TYPE_ADDR_SPACE (TREE_TYPE (expr)))
     {
     default:
       gcc_unreachable ();
 
     case ADDR_SPACE_FAR:
-      sname = ia16_fabricate_section_name_for_decl (exp, reloc);
+      sname = ia16_fabricate_section_name_for_decl (expr, reloc);
 
       if (sname)
 	{
-	  section *sect = get_named_section (exp, sname, reloc);
+	  section *sect = get_named_section (expr, sname, reloc);
 	  free (sname);
 	  return sect;
 	}
 
       /* fall through */
     case ADDR_SPACE_GENERIC:
-      return default_elf_select_section (exp, reloc, align);
+      return default_elf_select_section (expr, reloc, align);
     }
 }
 
@@ -2913,6 +2931,9 @@ ia16_print_operand_address (FILE *file, rtx e)
 rtx
 ia16_push_reg (unsigned int regno)
 {
+  if (TARGET_PROTECTED_MODE && REGNO_OK_FOR_SEGMENT_P (regno))
+    return gen__pushphi1_prologue (gen_rtx_REG (PHImode, regno));
+
   return gen__pushhi1_prologue (gen_rtx_REG (HImode, regno));
 }
 
@@ -2921,8 +2942,11 @@ ia16_push_reg (unsigned int regno)
 rtx
 ia16_pop_reg (unsigned int regno)
 {
-  return gen_rtx_SET (gen_rtx_REG (HImode, regno),
-		      gen_frame_mem (HImode,
+  machine_mode mode = HImode;
+  if (TARGET_PROTECTED_MODE && REGNO_OK_FOR_SEGMENT_P (regno))
+    mode = PHImode;
+  return gen_rtx_SET (gen_rtx_REG (mode, regno),
+		      gen_frame_mem (mode,
 				     gen_rtx_POST_INC (Pmode,
 						       stack_pointer_rtx)));
 }
@@ -3114,7 +3138,7 @@ ia16_shift_truncation_mask (enum machine_mode mode)
   return (TARGET_SHIFT_MASKED && (mode == HImode || mode == QImode) ? 31 : 0);
 }
 
-/* Return true iff INSN is a (set (reg:HI DS_REG) (reg:HI SS_REG)).  */
+/* Return true iff INSN is a (set (reg:SEG DS_REG) (reg:SEG SS_REG)).  */
 static bool
 ia16_insn_is_set_ds_ss_p (rtx_insn *insn)
 {
@@ -3128,17 +3152,17 @@ ia16_insn_is_set_ds_ss_p (rtx_insn *insn)
     return false;
 
   op = SET_DEST (pat);
-  if (! REG_P (op) || REGNO (op) != DS_REG || GET_MODE (op) != HImode)
+  if (! REG_P (op) || REGNO (op) != DS_REG || GET_MODE (op) != SEGmode)
     return false;
 
   op = SET_SRC (pat);
-  if (! REG_P (op) || REGNO (op) != SS_REG || GET_MODE (op) != HImode)
+  if (! REG_P (op) || REGNO (op) != SS_REG || GET_MODE (op) != SEGmode)
     return false;
 
   return true;
 }
 
-/* Return true iff INSN is a (use (reg:HI DS_REG)).  */
+/* Return true iff INSN is a (use (reg:SEG DS_REG)).  */
 static bool
 ia16_insn_is_use_ds_p (rtx_insn *insn)
 {
@@ -3152,13 +3176,13 @@ ia16_insn_is_use_ds_p (rtx_insn *insn)
     return false;
 
   op = XEXP (pat, 0);
-  if (! REG_P (op) || REGNO (op) != DS_REG || GET_MODE (op) != HImode)
+  if (! REG_P (op) || REGNO (op) != DS_REG || GET_MODE (op) != SEGmode)
     return false;
 
   return true;
 }
 
-/* Elide unneeded instances of (set (reg:HI DS_REG) (reg:HI SS_REG)) in
+/* Elide unneeded instances of (set (reg:SEG DS_REG) (reg:SEG SS_REG)) in
    the current function.  Also elide any unneeded `%ss:' segment overrides
    from simple moves to/from memory (`ldsw', `cmpw', etc. are not yet
    handled).  */
@@ -3170,12 +3194,13 @@ ia16_elide_unneeded_ss_stuff (void)
   bool *keep_insn_p = XCNEWVEC (bool, max_insn_uid);
   rtx_insn *insn, **stack = XCNEWVEC (rtx_insn *, max_insn_uid);
   int sp = 0;
-  rtx ds = gen_rtx_REG (HImode, DS_REG), override = gen_seg_override (ds);
+  rtx ds = gen_rtx_REG (SEGmode, DS_REG),
+      override = ia16_seg_override_term (ds);
   bool keep_any_resets_p = false;
 
   /* Starting from insns which set (or clobber) %ds to not-%ss, "flood"
      insns along the control flow until we hit
-	(set (reg:HI DS_REG) (reg:HI SS_REG)).
+	(set (reg:SEG DS_REG) (reg:SEG SS_REG)).
 
      Mark all the insns along the path --- excluding the first set to
      non-%ss, but including the final %ds <- %ss --- as insns we want to
@@ -3243,7 +3268,7 @@ ia16_elide_unneeded_ss_stuff (void)
     }
 
   /* Rescan the whole insn list for
-	(set (reg:HI DS_REG) (reg:HI SS_REG))
+	(set (reg:SEG DS_REG) (reg:SEG SS_REG))
      and simple moves to/from the generic address space, and rewrite those
      which we have not marked as "keep".  */
   for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
@@ -3256,12 +3281,12 @@ ia16_elide_unneeded_ss_stuff (void)
       if (ia16_insn_is_set_ds_ss_p (insn))
 	{
 	  /* Rewrite
-		(set (reg:HI DS_REG) (reg:HI SS_REG))
+		(set (reg:SEG DS_REG) (reg:SEG SS_REG))
 	     as
-		(use (reg:HI SS_REG)).
+		(use (reg:SEG SS_REG)).
 
 	     If this insn is followed by
-		(use (reg:HI DS_REG))
+		(use (reg:SEG DS_REG))
 	     then rewrite that too.  */
 	  rtx ss = XEXP (PATTERN (insn), 1);
 	  PATTERN (insn) = gen_rtx_USE (VOIDmode, ss);
@@ -3539,8 +3564,11 @@ ia16_non_overlapping_mem_p (rtx m1, rtx m2)
 static void
 ia16_expand_reset_ds_internal (void)
 {
-  emit_insn (gen__reset_ds_slow ());
-  emit_use (gen_rtx_REG (HImode, DS_REG));
+  if (TARGET_PROTECTED_MODE)
+    emit_insn (gen__reset_ds_slow_prot_mode ());
+  else
+    emit_insn (gen__reset_ds_slow ());
+  emit_use (gen_rtx_REG (SEGmode, DS_REG));
 }
 
 void

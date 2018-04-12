@@ -36,17 +36,28 @@ dg-init
 
     set IA16_TORTURE_OPTIONS [list \
 	{ -O0 } \
+	{ -O0 -mprotected-mode } \
 	{ -O0 -mrtd } \
 	{ -O1 } \
 	{ -O1 -funroll-loops } \
 	{ -O1 -frename-registers } \
 	{ -O1 -funroll-loops -fno-rename-registers } \
 	{ -O1 -mrtd } \
+	{ -O1 -mprotected-mode } \
+	{ -O1 -mprotected-mode -funroll-loops } \
+	{ -O1 -mprotected-mode -frename-registers } \
+	{ -O1 -mprotected-mode -funroll-loops -fno-rename-registers } \
+	{ -O1 -mprotected-mode -mrtd } \
 	{ -O2 } \
 	{ -O2 -funroll-loops } \
 	{ -O2 -frename-registers } \
 	{ -O2 -funroll-loops -fno-rename-registers } \
 	{ -O2 -mrtd } \
+	{ -O2 -mprotected-mode } \
+	{ -O2 -mprotected-mode -funroll-loops } \
+	{ -O2 -mprotected-mode -frename-registers } \
+	{ -O2 -mprotected-mode -funroll-loops -fno-rename-registers } \
+	{ -O2 -mprotected-mode -mrtd } \
 	{ -Os } \
 	{ -Os -funroll-loops } \
 	{ -Os -frename-registers } \
@@ -54,11 +65,23 @@ dg-init
 	{ -Os -mrtd } \
 	{ -Os -flto } \
 	{ -Os -finline-functions } \
+	{ -Os -mprotected-mode } \
+	{ -Os -mprotected-mode -funroll-loops } \
+	{ -Os -mprotected-mode -frename-registers } \
+	{ -Os -mprotected-mode -funroll-loops -fno-rename-registers } \
+	{ -Os -mprotected-mode -mrtd } \
+	{ -Os -mprotected-mode -flto } \
+	{ -Os -mprotected-mode -finline-functions } \
 	{ -O3 } \
 	{ -O3 -funroll-loops } \
 	{ -O3 -frename-registers } \
 	{ -O3 -funroll-loops -fno-rename-registers } \
-	{ -O3 -mrtd } ]
+	{ -O3 -mrtd } \
+	{ -O3 -mprotected-mode } \
+	{ -O3 -mprotected-mode -funroll-loops } \
+	{ -O3 -mprotected-mode -frename-registers } \
+	{ -O3 -mprotected-mode -funroll-loops -fno-rename-registers } \
+	{ -O3 -mprotected-mode -mrtd } ]
 
 #Initialize use of torture lists. 
 torture-init
