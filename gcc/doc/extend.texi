@@ -11604,6 +11604,7 @@ instructions, but allow the compiler to schedule those calls.
 * AVR Built-in Functions::
 * Blackfin Built-in Functions::
 * FR-V Built-in Functions::
+* IA-16 Built-in Functions::
 * MIPS DSP Built-in Functions::
 * MIPS Paired-Single Support::
 * MIPS Loongson Built-in Functions::
@@ -12982,6 +12983,19 @@ into the data cache.
 @item void __data_prefetch (const void *@var{x})
 Use the @code{nldub} instruction to load the contents of address @var{x}
 into the data cache.  The instruction is issued in slot I1@.
+@end table
+
+@node IA-16 Built-in Functions
+@subsection IA-16 Built-in Functions
+
+The following built-in function is always available.
+
+@table @code
+@item __builtin_ia16_segment_t __builtin_ia16_selector (unsigned @var{sel})
+With @option{-mprotected-mode} (@xref{IA-16 Options}), internally flag
+@var{sel} as a segment selector value which can be loaded into a segment
+register, and return the flagged value.  Without @option{-mprotected-mode},
+simply return @var{sel}.
 @end table
 
 @node MIPS DSP Built-in Functions

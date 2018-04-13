@@ -757,7 +757,7 @@ Objective-C and Objective-C++ Dialects}.
 @emph{IA-16 Options}
 @gccoptlist{-mtune=@var{cpu-type}  -march=@var{cpu-type} -mshort-jumps @gol
 -mseparate-code-segment -mcmodel=tiny -mcmodel=small -mrtd @gol
--mno-callee-assume-ds-data-segment}
+-mno-callee-assume-ds-data-segment -mprotected-mode}
 
 @emph{IA-64 Options}
 @gccoptlist{-mbig-endian  -mlittle-endian  -mgnu-as  -mgnu-ld  -mno-pic @gol
@@ -16619,6 +16619,27 @@ function which returns to a 32-bit return address---that is, with the
 
 (Callers must arrange to point @code{ds} and @code{ss} to the generic data
 address space before calling such a function.)
+
+@item -mprotected-mode
+@opindex mprotected-mode
+Enable partial (and experimental) support for generating code to run in
+Intel 80286 protected mode.
+
+With this option, the output code will avoid using segment registers
+(@code{ds}, @code{es}) to hold arbitrary 16-bit values---in protected mode,
+doing so may make the CPU crash the program.  Instead, the output code will
+only load segment registers when dereferencing near or far pointers.
+
+Currently, @option{-mprotected-mode} also causes GCC to avoid placing
+@code{asm} operands in segment registers.  You can tell GCC to let an
+operand go into a segment register, by passing the operand through a
+built-in function @samp{__builtin_ia16_selector}:
+@smallexample
+void foo (unsigned selector)
+@{
+  __asm volatile ("nop" : : "e" (__builtin_ia16_selector (selector)));
+@}
+@end smallexample
 @end table
 
 @subsubsection IA-16 Built-in Macros
@@ -16671,6 +16692,9 @@ Each of these macros is defined only if the CPU selected by
 This macro is defined only if the selected CPU's bitwise shift and rotation
 instructions---@code{rcl}, @code{shr}, and so on---implicitly mask each
 shift count to their lower 5 bits.
+
+@item __IA16_FEATURE_PROTECTED_MODE
+This macro is defined only if @option{-mprotected-mode} is in effect.
 
 @item __IA16_FEATURE_ALLOCABLE_DS_REG
 This macro is defined only if the @code{ds} register is configured to be
