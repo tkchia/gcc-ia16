@@ -3374,6 +3374,81 @@ ia16_machine_dependent_reorg (void)
     }
 }
 
+enum ia16_builtin
+{
+  IA16_BUILTIN_SELECTOR,
+  IA16_BUILTIN_MAX
+};
+
+static GTY (()) tree ia16_builtin_decls[IA16_BUILTIN_MAX];
+
+#undef	TARGET_INIT_BUILTINS
+#define	TARGET_INIT_BUILTINS	ia16_init_builtins
+
+static void
+ia16_init_builtins (void)
+{
+  tree intSEG_type_node = unsigned_intHI_type_node, intSEG_ftype_intHI, func;
+
+  /* With -mprotected-mode, we need a type node for PHImode for use with
+     __builtin_ia16_selector (), but there is no such existing node.  So
+     fashion one.  */
+  if (TARGET_PROTECTED_MODE)
+    {
+      intSEG_type_node = build_distinct_type_copy (unsigned_intHI_type_node);
+      SET_TYPE_MODE (intSEG_type_node, PHImode);
+    }
+  (*lang_hooks.types.register_builtin_type) (intSEG_type_node,
+					     "__builtin_ia16_segment_t");
+
+  intSEG_ftype_intHI = build_function_type_list (intSEG_type_node,
+						 unsigned_intHI_type_node,
+						 NULL_TREE);
+
+  func = add_builtin_function ("__builtin_ia16_selector", intSEG_ftype_intHI,
+			       IA16_BUILTIN_SELECTOR, BUILT_IN_MD, NULL,
+			       NULL_TREE);
+  TREE_READONLY (func) = 1;
+  ia16_builtin_decls[IA16_BUILTIN_SELECTOR] = func;
+}
+
+#undef	TARGET_BUILTIN_DECL
+#define	TARGET_BUILTIN_DECL	ia16_builtin_decl
+
+static tree
+ia16_builtin_decl (unsigned code, bool initialize_p ATTRIBUTE_UNUSED)
+{
+  if (code < IA16_BUILTIN_MAX)
+    return ia16_builtin_decls[code];
+  else
+    return error_mark_node;
+}
+
+#undef	TARGET_EXPAND_BUILTIN
+#define	TARGET_EXPAND_BUILTIN	ia16_expand_builtin
+
+static rtx
+ia16_expand_builtin (tree expr, rtx target ATTRIBUTE_UNUSED,
+		     rtx subtarget ATTRIBUTE_UNUSED,
+		     machine_mode mode ATTRIBUTE_UNUSED,
+		     int ignore ATTRIBUTE_UNUSED)
+{
+  tree fndecl = TREE_OPERAND (CALL_EXPR_FN (expr), 0), arg0;
+  rtx op0;
+  unsigned fcode = DECL_FUNCTION_CODE (fndecl);
+
+  switch (fcode)
+    {
+    case IA16_BUILTIN_SELECTOR:
+      arg0 = CALL_EXPR_ARG (expr, 0);
+      op0 = expand_normal (arg0);
+      return ia16_bless_selector (op0);
+
+    default:
+      gcc_unreachable ();
+    }
+}
+
 /* The Global targetm Variable */
 
 /* #include "target.h" */
@@ -3761,3 +3836,5 @@ ia16_asm_output_addr_vec_elt (FILE *stream, int value)
 {
   asm_fprintf (stream, "\t.hword\t%U%LL%d\n", value);
 }
+
+#include "gt-ia16.h"

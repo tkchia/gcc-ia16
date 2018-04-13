@@ -62,6 +62,10 @@ ia16_cpu_cpp_builtins (void)
   def_or_undef_macro ("__IA16_FEATURE_ALLOCABLE_DS_REG",
 		      TARGET_ALLOCABLE_DS_REG);
 
+  /* Define a macro saying whether we are generating code for protected mode
+     operation.  */
+  def_or_undef_macro ("__IA16_FEATURE_PROTECTED_MODE", TARGET_PROTECTED_MODE);
+
   /* Define macros for various compiler features:
        * far static variables
        * far functions of the form `int foo (void) __far;'
