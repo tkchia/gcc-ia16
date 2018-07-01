@@ -363,14 +363,20 @@ ia16_default_ds_abi_function_rtx_p (rtx addr)
 static int
 ia16_near_section_function_type_p (const_tree funtype)
 {
-  tree attrs = TYPE_ATTRIBUTES (funtype);
+  tree attrs;
+  if (TARGET_CMODEL_HAS_FAR_TEXT)
+    return 0;
+  attrs = TYPE_ATTRIBUTES (funtype);
   return attrs && lookup_attribute ("near_section", attrs);
 }
 
 static int
 ia16_far_section_function_type_p (const_tree funtype)
 {
-  tree attrs = TYPE_ATTRIBUTES (funtype);
+  tree attrs;
+  if (TARGET_CMODEL_HAS_FAR_TEXT)
+    return 1;
+  attrs = TYPE_ATTRIBUTES (funtype);
   return attrs && lookup_attribute ("far_section", attrs);
 }
 
@@ -658,7 +664,14 @@ ia16_handle_cconv_attribute (tree *node, tree name, tree args ATTRIBUTE_UNUSED,
     }
   else if (is_attribute_p ("near_section", name))
     {
-      tree attrs = TYPE_ATTRIBUTES (*node);
+      tree attrs;
+      if (TARGET_CMODEL_HAS_FAR_TEXT)
+	{
+	  sorry ("near_section functions are not supported for "
+		 "medium memory model");
+	  *no_add_attrs = true;
+	}
+      attrs = TYPE_ATTRIBUTES (*node);
       if (attrs && lookup_attribute ("far_section", attrs))
 	{
 	  error ("near_section and far_section attributes are not compatible");
@@ -2808,9 +2821,10 @@ ia16_asm_function_section (tree decl, enum node_frequency freq, bool startup,
   char *sname;
   const int reloc = 0;
 
-  if (! decl
-      || TYPE_ADDR_SPACE (TREE_TYPE (decl)) != ADDR_SPACE_FAR
-      || ! ia16_far_section_function_type_p (TREE_TYPE (decl)))
+  if (! TARGET_CMODEL_HAS_FAR_TEXT
+      && (! decl
+	  || TYPE_ADDR_SPACE (TREE_TYPE (decl)) != ADDR_SPACE_FAR
+	  || ! ia16_far_section_function_type_p (TREE_TYPE (decl))))
     return default_function_section (decl, freq, startup, stop);
 
   sname = ia16_fabricate_section_name_for_decl (decl, reloc);
@@ -4058,6 +4072,23 @@ ia16_expand_epilogue (bool sibcall)
     emit_jump_insn (gen_simple_return ());
 }
 
+#define P(part)	(call_value_p ? part "1" : part "0")
+#define P2(part_a, part_b) \
+			(call_value_p ? part_a "1" part_b "1" : \
+					part_a "0" part_b "0")
+static const char *
+ia16_get_far_direct_call_expansion (bool call_value_p)
+{
+  if (! TARGET_SEG_RELOC_STUFF)
+    ia16_error_seg_reloc (input_location, "cannot create relocatable call "
+					  "to far function");
+  /* GNU as does not like
+	lcall	$foo@SEGMENT16,	$foo
+     and says "Error: can't handle non absolute segment in `lcall'".  */
+  return P2 (  ".reloc\t.+3, R_386_SEGMENT16, %c", "\n"
+	     "\tlcall\t$0,\t%");
+}
+
 /* Return the insn template for a normal call to a subroutine at address
    ADDR and with machine mode MODE.  ADDR should correspond to operand 0
    (%0) in the (define_insn ...) if CALL_VALUE_P is false, or operand 1
@@ -4072,21 +4103,19 @@ ia16_expand_epilogue (bool sibcall)
        away with a `pushw %cs' plus a near call
      * none of the above --- use `lcall' and do not assume that the function
        resides in the default text section.  */
-#define P(part)	(call_value_p ? part "1" : part "0")
-#define P2(part_a, part_b) \
-			(call_value_p ? part_a "1" part_b "1" : \
-					part_a "0" part_b "0")
 const char *
 ia16_get_call_expansion (rtx addr, machine_mode mode, bool call_value_p)
 {
   tree fndecl, fntype = NULL_TREE;
 
-  if (mode == SImode)
+  if (mode == SImode || TARGET_CMODEL_HAS_FAR_TEXT)
     {
       if (CONST_INT_P (addr))
 	return P2 ("lcall\t%S", ",\t%O");
-      else
+      else if (MEM_P (addr))
 	return P ("lcall\t*%");
+      else
+	return ia16_get_far_direct_call_expansion (call_value_p);
     }
 
   fndecl = ia16_get_function_decl_for_addr (addr);
@@ -4114,16 +4143,17 @@ ia16_get_call_expansion (rtx addr, machine_mode mode, bool call_value_p)
 	return P ("pushw\t%%cs\n\tcall\t%c");
     }
   else
-    {
-      if (! TARGET_SEG_RELOC_STUFF)
-	ia16_error_seg_reloc (input_location, "cannot create relocatable call "
-					      "to far function");
-      /* GNU as does not like
-		lcall	$foo@SEGMENT16,	$foo
-	 and says "Error: can't handle non absolute segment in `lcall'".  */
-      return P2 (  ".reloc\t.+3, R_386_SEGMENT16, %c", "\n"
-		 "\tlcall\t$0,\t%");
-    }
+    return ia16_get_far_direct_call_expansion (call_value_p);
+}
+
+static const char *
+ia16_get_far_direct_sibcall_expansion (bool call_value_p)
+{
+  if (! TARGET_SEG_RELOC_STUFF)
+    ia16_error_seg_reloc (input_location, "cannot create relocatable "
+					  "sibcall to far function");
+  return P2 (  ".reloc\t.+3, R_386_SEGMENT16, %c", "\n"
+	     "\tljmp\t$0,\t%");
 }
 
 /* Return the insn template for a sibling call to a subroutine at address
@@ -4135,12 +4165,14 @@ ia16_get_sibcall_expansion (rtx addr, machine_mode mode, bool call_value_p)
 {
   tree fndecl, fntype = NULL_TREE;
 
-  if (mode == SImode)
+  if (mode == SImode || TARGET_CMODEL_HAS_FAR_TEXT)
     {
       if (CONST_INT_P (addr))
 	return P2 ("ljmp\t%S", ",\t%O");
-      else
+      else if (MEM_P (addr))
 	return P ("ljmp\t*%");
+      else
+	return ia16_get_far_direct_sibcall_expansion (call_value_p);
     }
 
   fndecl = ia16_get_function_decl_for_addr (addr);
@@ -4167,18 +4199,11 @@ ia16_get_sibcall_expansion (rtx addr, machine_mode mode, bool call_value_p)
 	return P ("jmp\t%c");
     }
   else
-    {
-      if (! TARGET_SEG_RELOC_STUFF)
-	ia16_error_seg_reloc (input_location, "cannot create relocatable "
-					      "sibcall to far function");
-      return P2 (  ".reloc\t.+3, R_386_SEGMENT16, %c", "\n"
-		 "\tljmp\t$0,\t%");
-    }
+    return ia16_get_far_direct_sibcall_expansion (call_value_p);
 }
 
 #undef P
 #undef P2
-#undef P3
 
 void
 ia16_asm_output_addr_diff_elt (FILE *stream, rtx body ATTRIBUTE_UNUSED,

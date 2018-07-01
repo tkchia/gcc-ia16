@@ -8419,6 +8419,16 @@ build_function_type (tree value_type, tree arg_types)
   t = make_node (FUNCTION_TYPE);
   TREE_TYPE (t) = value_type;
   TYPE_ARG_TYPES (t) = arg_types;
+#ifdef TARGET_ADDR_SPACE_MAY_HAVE_FUNCTIONS_P
+# ifdef TARGET_FUNCTION_DEFAULT_ADDR_SPACE
+  {
+    addr_space_t as = TARGET_FUNCTION_DEFAULT_ADDR_SPACE;
+    gcc_assert (ADDR_SPACE_GENERIC_P (as)
+		|| TARGET_ADDR_SPACE_MAY_HAVE_FUNCTIONS_P (as));
+    TYPE_ADDR_SPACE (t) = as;
+  }
+# endif
+#endif
 
   /* If we already have such a type, use the old one.  */
   hstate.add_object (TYPE_HASH (value_type));

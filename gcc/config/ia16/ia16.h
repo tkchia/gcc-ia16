@@ -33,6 +33,10 @@
 
 #define TARGET_ALLOCABLE_DS_REG	(! fixed_regs[DS_REG])
 #define TARGET_CMODEL_IS_TINY	(target_cmodel == CMODEL_TINY)
+#define TARGET_CMODEL_HAS_FAR_TEXT \
+				(target_cmodel == CMODEL_MEDIUM || \
+				 target_cmodel == CMODEL_LARGE || \
+				 target_cmodel == CMODEL_HUGE)
 
 /* Run-time Target Specification */
 #define TARGET_CPU_CPP_BUILTINS() ia16_cpu_cpp_builtins ()
@@ -624,6 +628,10 @@ enum reg_class {	/*	 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
    gcc/c/c-tree.h are also updated to account for the changes in the C
    parser's internal structures.  */
 #define TARGET_ADDR_SPACE_MAY_HAVE_FUNCTIONS_P(as) ((as) == ADDR_SPACE_FAR)
+/* This is to support placing functions into ADDR_SPACE_FAR _on_ _default_
+   in the medium code model (and large and huge, if these are implemented). */
+#define TARGET_FUNCTION_DEFAULT_ADDR_SPACE \
+	(TARGET_CMODEL_HAS_FAR_TEXT ? ADDR_SPACE_FAR : ADDR_SPACE_GENERIC)
 /* Also, gcc/c/c-decl.c is updated to recognize a new macro which says
    whether a function may get its address space from its return type.  */
 #define TARGET_FUNCTION_ADDR_SPACE_FROM_RETURN_TYPE_P(as) \

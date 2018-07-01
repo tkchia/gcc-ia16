@@ -83,6 +83,9 @@ mcmodel=small
 Target RejectNegative Var(target_cmodel,CMODEL_SMALL)
 Generate code for the small code model, with one data and one text segment.
 
+mcmodel=medium
+Target RejectNegative Var(target_cmodel,CMODEL_MEDIUM) Undocumented
+
 msegment-relocation-stuff
 Target RejectNegative Mask(SEG_RELOC_STUFF) Undocumented
 
