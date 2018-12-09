@@ -1801,7 +1801,7 @@ extern struct processor_costs ia16_size_costs;
 static int
 ia16_constant_cost (rtx x, enum machine_mode mode, int outer_code)
 {
-  int n;
+  HOST_WIDE_INT n;
 
   if (!CONST_INT_P (x))
     return (C (ia16_costs->byte_fetch * GET_MODE_SIZE (Pmode)));
@@ -3747,6 +3747,324 @@ ia16_verify_calls_from_far_section (void)
     }
 }
 
+/* Say whether an RTX operand is the %bp register.  */
+static bool
+ia16_operand_is_bp_reg_p (rtx op)
+{
+  return REG_P (op) && REGNO (op) == BP_REG;
+}
+
+/* Say whether an insn is a `pushw %bp'.  */
+static bool
+ia16_insn_is_pushw_bp_p (rtx_insn *insn)
+{
+  rtx pat, pat0;
+
+  if (INSN_CODE (insn) != CODE_FOR__pushhi1_nonimm)
+    return false;
+
+  pat = PATTERN (insn);
+  gcc_assert (GET_CODE (pat) == PARALLEL);
+
+  pat0 = XVECEXP (pat, 0, 0);
+  gcc_assert (GET_CODE (pat0) == SET);
+
+  return ia16_operand_is_bp_reg_p (SET_SRC (pat0));
+}
+
+/* Say whether an insn is a `movw %sp, %bp'.  */
+static bool
+ia16_insn_is_movw_sp_bp_p (rtx_insn *insn)
+{
+  rtx pat = PATTERN (insn);
+
+  return GET_CODE (pat) == SET
+	 && ia16_operand_is_bp_reg_p (SET_DEST (pat))
+	 && REG_P (SET_SRC (pat)) && REGNO (SET_SRC (pat)) == SP_REG;
+}
+
+/* Say whether an insn is a `popw %bp'.  */
+static bool
+ia16_insn_is_popw_bp_p (rtx_insn *insn)
+{
+  rtx pat;
+
+  if (INSN_CODE (insn) != CODE_FOR__pophi1)
+    return false;
+  pat = PATTERN (insn);
+  gcc_assert (GET_CODE (pat) == SET);
+  return ia16_operand_is_bp_reg_p (SET_DEST (pat));
+}
+
+/* Try to rewrite the current function so that instead of using the frame
+   pointer register, %bp, it uses %bx.  This can potentially allow the
+   function to save one register less, since %bx is call-used.  */
+static void
+ia16_rewrite_bp_as_bx (void)
+{
+  edge e;
+  edge_iterator ei;
+  rtx_insn *insn, *pushw_bp_insn = NULL, *mov_bp_sp_insn = NULL, **stack;
+  rtx sp_reg, bx_reg, use_sp, *rewrite_insn_pat;
+  int *rewrite_insn_code, max_insn_uid, uid, sp = 0;
+  typedef enum
+    {
+      RBPS_UNKNOWN,
+      RBPS_BP_GOOD,
+      RBPS_BX_CLOBBERED,
+      RBPS_BP_POPPED
+    } rewrite_bp_state_t;
+  rewrite_bp_state_t *insn_state, state;
+  basic_block bb;
+
+  /* Bail out early if we are not supposed to eliminate the frame pointer,
+     or if the function does not use %bp anyway, or in the unlikely future
+     case that we actually pass function arguments via %bx.  */
+  if (! global_options.x_flag_omit_frame_pointer
+      || ! ia16_save_reg_p (BP_REG)
+      || FUNCTION_ARG_REGNO_P (B_REG)
+      || FUNCTION_ARG_REGNO_P (BH_REG))
+    return;
+
+  /* Look for the `pushw %bp; movw %sp, %bp' stack frame setup sequence in
+     the very first basic block.
+
+     Bail out if this sequence is missing, or if the function frobs %bp or %bx
+     in a different way.
+
+     Also, to simplify the logic here, and save some time --- at the expense
+     of missing some optimization opportunities --- do not try to look for
+     this sequence beyond the first basic block.  */
+  if (EDGE_COUNT (ENTRY_BLOCK_PTR_FOR_FN (cfun)->succs) != 1)
+    return;
+
+  FOR_EACH_EDGE (e, ei, ENTRY_BLOCK_PTR_FOR_FN (cfun)->succs)
+    {
+      bb = e->dest;
+
+      for (insn = BB_HEAD (bb); insn != BB_END (bb); insn = NEXT_INSN (insn))
+	{
+	  if (dead_or_set_regno_p (insn, B_REG)
+	      || dead_or_set_regno_p (insn, BH_REG)
+	      || dead_or_set_regno_p (insn, BP_REG))
+	    return;
+
+	  if (ia16_insn_is_pushw_bp_p (insn)
+	      && ia16_insn_is_movw_sp_bp_p (NEXT_INSN (insn)))
+	    {
+	      pushw_bp_insn = insn;
+	      mov_bp_sp_insn = NEXT_INSN (insn);
+	      break;
+	    }
+	}
+    }
+
+  if (! pushw_bp_insn)
+    return;
+
+  /* Do a depth-first search to decide if we want to rewrite this function's
+     insns, and how.  */
+  max_insn_uid = get_max_uid ();
+  insn_state = XCNEWVEC (rewrite_bp_state_t, max_insn_uid);
+  stack = XCNEWVEC (rtx_insn *, max_insn_uid);
+  rewrite_insn_pat = XCNEWVEC (rtx, max_insn_uid);
+  rewrite_insn_code = XCNEWVEC (int, max_insn_uid);
+
+  sp_reg = gen_rtx_REG (HImode, SP_REG);
+  bx_reg = gen_rtx_REG (HImode, B_REG);
+  use_sp = gen_rtx_USE (HImode, sp_reg);
+
+  for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
+    {
+      uid = INSN_UID (insn);
+      insn_state[uid] = RBPS_UNKNOWN;
+      rewrite_insn_pat[uid] = NULL_RTX;
+    }
+
+  uid = INSN_UID (pushw_bp_insn);
+  rewrite_insn_pat[uid] = use_sp;
+  rewrite_insn_code[uid] = -1;
+
+  stack[sp++] = mov_bp_sp_insn;
+  uid = INSN_UID (mov_bp_sp_insn);
+  insn_state[uid] = RBPS_BP_GOOD;
+  rewrite_insn_pat[uid] = gen_rtx_SET (bx_reg, sp_reg);
+  rewrite_insn_code[uid] = INSN_CODE (mov_bp_sp_insn);
+
+  while (sp != 0)
+    {
+      rtx pat;
+
+      insn = stack[--sp];
+      pat = PATTERN (insn);
+      uid = INSN_UID (insn);
+      state = insn_state[uid];
+
+      switch (state)
+	{
+	case RBPS_BP_GOOD:
+	  if (insn == mov_bp_sp_insn)
+	    break;
+
+	  if (refers_to_regno_p (BP_REG, BP_REG + 1, pat, NULL))
+	    {
+	      rtx dest, src, addr;
+
+	      /* Deal with some special cases, namely `popw %bp' and
+		 `leave'.  */
+	      if (ia16_insn_is_popw_bp_p (insn))
+		{
+		  rewrite_insn_pat[uid] = use_sp;
+		  rewrite_insn_code[uid] = -1;
+		  state = RBPS_BP_POPPED;
+		}
+	      else if (INSN_CODE (insn) == CODE_FOR__leave)
+		{
+		  rewrite_insn_pat[uid] = gen_rtx_SET (sp_reg, bx_reg);
+		  rewrite_insn_code[uid] = -1;
+		  state = RBPS_BP_POPPED;
+		}
+	      else if (GET_CODE (pat) != SET)
+		goto bail;
+
+	      /* Deal with the common case of a (set ...) insn involving
+		 stack arguments or stack local variables.  */
+	      dest = SET_DEST (pat);
+	      src = SET_SRC (pat);
+
+	      if (REG_P (dest) && REGNO (dest) != BP_REG
+		  && MEM_P (src))
+		{
+		  addr = XEXP (src, 0);
+		  if (GET_CODE (addr) == PLUS
+		      && ia16_operand_is_bp_reg_p (XEXP (addr, 0))
+		      && CONST_INT_P (XEXP (addr, 1)))
+		    {
+		      HOST_WIDE_INT off = INTVAL (XEXP (addr, 1));
+		      if (off >= 2)
+			off -= 2;
+		      else if (off >= 0)
+			goto bail;
+
+		      addr = gen_rtx_PLUS (GET_MODE (addr), bx_reg,
+					   GEN_INT (off));
+		      src = gen_rtx_MEM (GET_MODE (src), addr);
+		      rewrite_insn_pat[uid] = gen_rtx_SET (dest, src);
+		      rewrite_insn_code[uid] = INSN_CODE (insn);
+		    }
+		  else
+		    goto bail;
+
+		  if (REGNO (dest) == B_REG || REGNO (dest) == BH_REG)
+		    state = RBPS_BX_CLOBBERED;
+		}
+	      else if (MEM_P (dest)
+		       && REG_P (src) && REGNO (src) != BP_REG
+		       && REGNO (src) != B_REG && REGNO (src) != BH_REG)
+		{
+		  addr = XEXP (dest, 0);
+		  if (GET_CODE (addr) == PLUS
+		      && ia16_operand_is_bp_reg_p (XEXP (addr, 0))
+		      && CONST_INT_P (XEXP (addr, 1)))
+		    {
+		      HOST_WIDE_INT off = INTVAL (XEXP (addr, 1));
+		      if (off >= 2)
+			off -= 2;
+		      else if (off >= 0)
+			goto bail;
+
+		      addr = gen_rtx_PLUS (GET_MODE (addr), bx_reg,
+					   GEN_INT (off));
+		      dest = gen_rtx_MEM (GET_MODE (dest), addr);
+		      rewrite_insn_pat[uid] = gen_rtx_SET (dest, src);
+		      rewrite_insn_code[uid] = INSN_CODE (insn);
+		    }
+		  else
+		    goto bail;
+		}
+	      else
+		goto bail;
+	    }
+	  else if (refers_to_regno_p (B_REG, BH_REG + 1, pat, NULL))
+	    goto bail;
+
+	  break;
+
+	case RBPS_BX_CLOBBERED:
+	  if (ia16_insn_is_popw_bp_p (insn))
+	    {
+	      state = RBPS_BP_POPPED;
+	      rewrite_insn_pat[uid] = gen_rtx_USE (HImode, sp_reg);
+	      rewrite_insn_code[uid] = -1;
+	      break;
+	    }
+
+	  /* fall through */
+	case RBPS_BP_POPPED:
+	  if (refers_to_regno_p (BP_REG, BP_REG + 1, pat, NULL))
+	    goto bail;
+
+	  break;
+
+	default:
+	  gcc_unreachable ();
+	}
+
+      bb = BLOCK_FOR_INSN (insn);
+      if (insn != BB_END (bb))
+	{
+	  insn = NEXT_INSN (insn);
+	  uid = INSN_UID (insn);
+
+	  if (insn_state[uid] == RBPS_UNKNOWN)
+	    {
+	      insn_state[uid] = state;
+	      stack[sp++] = insn;
+	    }
+	  else if (insn_state[uid] != state)
+	    goto bail;
+	}
+      else
+	{
+	  FOR_EACH_EDGE (e, ei, bb->succs)
+	    {
+	      if (e->dest == EXIT_BLOCK_PTR_FOR_FN (cfun))
+		continue;
+
+	      insn = BB_HEAD (e->dest);
+	      uid = INSN_UID (insn);
+
+	      if (insn_state[uid] == RBPS_UNKNOWN)
+		{
+		  insn_state[uid] = state;
+		  stack[sp++] = insn;
+		}
+	      else if (insn_state[uid] != state)
+		goto bail;
+	    }
+	}
+    }
+
+  /* It looks like we can rewrite this function, so do it.  */
+  for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
+    {
+      rtx pat;
+      uid = INSN_UID (insn);
+      pat = rewrite_insn_pat[uid];
+      if (pat)
+	{
+	  PATTERN (insn) = pat;
+	  INSN_CODE (insn) = rewrite_insn_code[uid];
+	}
+    }
+
+bail:
+  free (insn_state);
+  free (stack);
+  free (rewrite_insn_pat);
+  free (rewrite_insn_code);
+}
+
 /* Return true iff INSN is a (set (reg:SEG DS_REG) (reg:SEG SS_REG)).  */
 static bool
 ia16_insn_is_reset_ds_p (rtx_insn *insn)
@@ -4003,6 +4321,7 @@ ia16_machine_dependent_reorg (void)
   if (optimize && TARGET_ALLOCABLE_DS_REG && call_used_regs[DS_REG])
     {
       compute_bb_for_insn ();
+      ia16_rewrite_bp_as_bx ();
       ia16_elide_unneeded_ss_stuff ();
       free_bb_for_insn ();
     }
