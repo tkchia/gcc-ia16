@@ -3806,9 +3806,10 @@ ia16_rewrite_bp_as_bx (void)
 {
   edge e;
   edge_iterator ei;
-  rtx_insn *insn, *pushw_bp_insn = NULL, *mov_bp_sp_insn = NULL, **stack;
-  rtx sp_reg, bx_reg, bp_reg, use_sp, *rewrite_insn_pat;
+  rtx_insn *insn, *pushw_bp_insn = NULL, *movw_sp_bp_insn = NULL, **stack;
+  rtx sp_reg, bx_reg, bp_reg, use_sp, movw_sp_bx, *rewrite_insn_pat;
   int *rewrite_insn_code, max_insn_uid, uid, sp = 0;
+  bool bp_used = false;
   typedef enum
     {
       RBPS_UNKNOWN,
@@ -3827,6 +3828,14 @@ ia16_rewrite_bp_as_bx (void)
       || FUNCTION_ARG_REGNO_P (B_REG)
       || FUNCTION_ARG_REGNO_P (BH_REG))
     return;
+
+  /* For now, also do not try to rewrite functions which may throw exceptions
+     --- until we can figure out how to do the rewriting correctly. 
+
+     TODO: allow rewriting functions marked __attribute__ ((nothrow)) etc.  */
+  for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
+    if (INSN_P (insn) && insn_could_throw_p (insn))
+      return;
 
   /* Look for the `pushw %bp; movw %sp, %bp' stack frame setup sequence in
      the very first basic block.
@@ -3858,7 +3867,7 @@ ia16_rewrite_bp_as_bx (void)
 	      && ia16_insn_is_movw_sp_bp_p (NEXT_INSN (insn)))
 	    {
 	      pushw_bp_insn = insn;
-	      mov_bp_sp_insn = NEXT_INSN (insn);
+	      movw_sp_bp_insn = NEXT_INSN (insn);
 	      break;
 	    }
 	}
@@ -3891,11 +3900,13 @@ ia16_rewrite_bp_as_bx (void)
   rewrite_insn_pat[uid] = use_sp;
   rewrite_insn_code[uid] = -1;
 
-  stack[sp++] = mov_bp_sp_insn;
-  uid = INSN_UID (mov_bp_sp_insn);
+  stack[sp++] = movw_sp_bp_insn;
+  uid = INSN_UID (movw_sp_bp_insn);
   insn_state[uid] = RBPS_BP_GOOD;
-  rewrite_insn_pat[uid] = gen_rtx_SET (bx_reg, sp_reg);
-  rewrite_insn_code[uid] = INSN_CODE (mov_bp_sp_insn);
+  movw_sp_bx = gen_rtx_SET (bx_reg, sp_reg);
+  RTX_FRAME_RELATED_P (movw_sp_bx) = 1;
+  rewrite_insn_pat[uid] = movw_sp_bx;
+  rewrite_insn_code[uid] = INSN_CODE (movw_sp_bp_insn);
 
   while (sp != 0)
     {
@@ -3909,14 +3920,11 @@ ia16_rewrite_bp_as_bx (void)
       switch (state)
 	{
 	case RBPS_BP_GOOD:
-	  if (insn == mov_bp_sp_insn || ! INSN_P (insn))
+	  if (insn == movw_sp_bp_insn || ! INSN_P (insn))
 	    break;
 
-	  if (refers_to_regno_p (BP_REG, BP_REG + 1, pat, NULL)
-	      || reg_set_p (bp_reg, insn))
+	  if (reg_set_p (bp_reg, insn))
 	    {
-	      rtx dest, src, addr;
-
 	      if (ia16_insn_is_popw_bp_p (insn))
 		{
 		  /* `popw %bp'.  */
@@ -3931,7 +3939,15 @@ ia16_rewrite_bp_as_bx (void)
 		  rewrite_insn_code[uid] = -1;
 		  state = RBPS_BP_POPPED;
 		}
-	      else if (GET_CODE (pat) == SET)
+	      else
+		goto bail;
+	    }
+	  else if (refers_to_regno_p (BP_REG, BP_REG + 1, pat, NULL))
+	    {
+	      rtx dest, src, addr;
+
+	      bp_used = true;
+	      if (GET_CODE (pat) == SET)
 		{
 		  /* Deal with the common case of a (set ...) insn involving
 		     stack arguments or stack local variables.  */
@@ -4073,6 +4089,13 @@ ia16_rewrite_bp_as_bx (void)
 	  PATTERN (insn) = pat;
 	  INSN_CODE (insn) = rewrite_insn_code[uid];
 	}
+    }
+
+  /* If %bp is never used, we can also eliminate the `movw %sp, %bx'...  */
+  if (! bp_used)
+    {
+      PATTERN (movw_sp_bp_insn) = use_sp;
+      INSN_CODE (movw_sp_bp_insn) = -1;
     }
 
 bail:
