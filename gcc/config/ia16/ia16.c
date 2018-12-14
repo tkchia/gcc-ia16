@@ -3754,13 +3754,15 @@ ia16_operand_is_bp_reg_p (rtx op)
   return REG_P (op) && REGNO (op) == BP_REG;
 }
 
-/* Say whether an insn is a `pushw %bp'.  */
+/* Say whether an insn is a `pushw %bp' in a prologue.  */
 static bool
-ia16_insn_is_pushw_bp_p (rtx_insn *insn)
+ia16_insn_is_prologue_pushw_bp_p (rtx_insn *insn)
 {
   rtx pat, pat0;
 
-  if (! INSN_P (insn) || INSN_CODE (insn) != CODE_FOR__pushhi1_nonimm)
+  if (! INSN_P (insn)
+      || ! RTX_FRAME_RELATED_P (insn)
+      || INSN_CODE (insn) != CODE_FOR__pushhi1_nonimm)
     return false;
 
   pat = PATTERN (insn);
@@ -3772,13 +3774,14 @@ ia16_insn_is_pushw_bp_p (rtx_insn *insn)
   return ia16_operand_is_bp_reg_p (SET_SRC (pat0));
 }
 
-/* Say whether an insn is a `movw %sp, %bp'.  */
+/* Say whether an insn is a `movw %sp, %bp' in a prologue.  */
 static bool
-ia16_insn_is_movw_sp_bp_p (rtx_insn *insn)
+ia16_insn_is_prologue_movw_sp_bp_p (rtx_insn *insn)
 {
   rtx pat = PATTERN (insn);
 
   return INSN_P (insn)
+	 && RTX_FRAME_RELATED_P (insn)
 	 && GET_CODE (pat) == SET
 	 && ia16_operand_is_bp_reg_p (SET_DEST (pat))
 	 && REG_P (SET_SRC (pat)) && REGNO (SET_SRC (pat)) == SP_REG;
@@ -3807,7 +3810,7 @@ ia16_rewrite_bp_as_bx (void)
   edge e;
   edge_iterator ei;
   rtx_insn *insn, *pushw_bp_insn = NULL, *movw_sp_bp_insn = NULL, **stack;
-  rtx sp_reg, bx_reg, bp_reg, use_sp, movw_sp_bx, *rewrite_insn_pat;
+  rtx sp_reg, bx_reg, use_sp, movw_sp_bx, *rewrite_insn_pat;
   int *rewrite_insn_code, max_insn_uid, uid, sp = 0;
   bool bp_used = false;
   typedef enum
@@ -3863,8 +3866,8 @@ ia16_rewrite_bp_as_bx (void)
 	      || dead_or_set_regno_p (insn, BP_REG))
 	    return;
 
-	  if (ia16_insn_is_pushw_bp_p (insn)
-	      && ia16_insn_is_movw_sp_bp_p (NEXT_INSN (insn)))
+	  if (ia16_insn_is_prologue_pushw_bp_p (insn)
+	      && ia16_insn_is_prologue_movw_sp_bp_p (NEXT_INSN (insn)))
 	    {
 	      pushw_bp_insn = insn;
 	      movw_sp_bp_insn = NEXT_INSN (insn);
@@ -3886,7 +3889,6 @@ ia16_rewrite_bp_as_bx (void)
 
   sp_reg = gen_rtx_REG (HImode, SP_REG);
   bx_reg = gen_rtx_REG (HImode, B_REG);
-  bp_reg = gen_rtx_REG (HImode, BP_REG);
   use_sp = gen_rtx_USE (HImode, sp_reg);
 
   for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
@@ -3923,26 +3925,10 @@ ia16_rewrite_bp_as_bx (void)
 	  if (insn == movw_sp_bp_insn || ! INSN_P (insn))
 	    break;
 
-	  if (reg_set_p (bp_reg, insn))
-	    {
-	      if (ia16_insn_is_popw_bp_p (insn))
-		{
-		  /* `popw %bp'.  */
-		  rewrite_insn_pat[uid] = use_sp;
-		  rewrite_insn_code[uid] = -1;
-		  state = RBPS_BP_POPPED;
-		}
-	      else if (INSN_CODE (insn) == CODE_FOR__leave)
-		{
-		  /* `leave'.  */
-		  rewrite_insn_pat[uid] = gen_rtx_SET (sp_reg, bx_reg);
-		  rewrite_insn_code[uid] = -1;
-		  state = RBPS_BP_POPPED;
-		}
-	      else
-		goto bail;
-	    }
-	  else if (refers_to_regno_p (BP_REG, BP_REG + 1, pat, NULL))
+	  if (RTX_FRAME_RELATED_P (insn))
+	    goto bail;
+
+	  if (refers_to_regno_p (BP_REG, BP_REG + 1, pat, NULL))
 	    {
 	      rtx dest, src, addr;
 
@@ -4010,9 +3996,29 @@ ia16_rewrite_bp_as_bx (void)
 	      else
 		goto bail;
 	    }
+	  else if (dead_or_set_regno_p (insn, BP_REG))
+	    {
+	      if (ia16_insn_is_popw_bp_p (insn))
+		{
+		  /* `popw %bp'.  */
+		  rewrite_insn_pat[uid] = use_sp;
+		  rewrite_insn_code[uid] = -1;
+		  state = RBPS_BP_POPPED;
+		}
+	      else if (INSN_CODE (insn) == CODE_FOR__leave)
+		{
+		  /* `leave'.  */
+		  rewrite_insn_pat[uid] = gen_rtx_SET (sp_reg, bx_reg);
+		  rewrite_insn_code[uid] = -1;
+		  state = RBPS_BP_POPPED;
+		}
+	      else
+		goto bail;
+	    }
 	  else if (refers_to_regno_p (B_REG, BH_REG + 1, pat, NULL))
 	    goto bail;
-	  else if (reg_set_p (bx_reg, insn))
+	  else if (dead_or_set_regno_p (insn, B_REG)
+		   || dead_or_set_regno_p (insn, BH_REG))
 	    state = RBPS_BX_CLOBBERED;
 
 	  break;
@@ -4030,7 +4036,7 @@ ia16_rewrite_bp_as_bx (void)
 	case RBPS_BP_POPPED:
 	  if (INSN_P (insn)
 	      && (refers_to_regno_p (BP_REG, BP_REG + 1, pat, NULL)
-		  || reg_set_p (bp_reg, insn)))
+		  || dead_or_set_regno_p (insn, BP_REG)))
 	    goto bail;
 
 	  break;
@@ -4088,6 +4094,7 @@ ia16_rewrite_bp_as_bx (void)
 	{
 	  PATTERN (insn) = pat;
 	  INSN_CODE (insn) = rewrite_insn_code[uid];
+	  RTX_FRAME_RELATED_P (insn) = RTX_FRAME_RELATED_P (pat);
 	}
     }
 
@@ -4096,6 +4103,7 @@ ia16_rewrite_bp_as_bx (void)
     {
       PATTERN (movw_sp_bp_insn) = use_sp;
       INSN_CODE (movw_sp_bp_insn) = -1;
+      RTX_FRAME_RELATED_P (movw_sp_bp_insn) = 0;
     }
 
 bail:
