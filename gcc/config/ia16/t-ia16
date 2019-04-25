@@ -7,14 +7,20 @@
 #	-- tkchia
 #
 ia16-c.o: $(srcdir)/config/ia16/ia16-c.c $(RTL_H) $(TREE_H) $(CONFIG_H) $(TM_H)
-	@if test -e "$(prefix)"/ia16-elf/lib/i80286 -o \
-		 -e "$(prefix)"/lib/gcc/ia16-elf/$(BASEVER_c)/i80286 -o \
-		 -e "$(prefix)"/ia16-elf/lib/wide-types -o \
-		 -e "$(prefix)"/lib/gcc/ia16-elf/$(BASEVER_c)/wide-types -o \
-		 -e "$(prefix)"/ia16-elf/lib/frame-pointer -o \
-		 -e "$(prefix)"/lib/gcc/ia16-elf/$(BASEVER_c)/frame-pointer -o\
-		 -e "$(prefix)"/ia16-elf/lib/rtd/elkslibc -o \
-		 -e "$(prefix)"/ia16-elf/lib/regparmcall/elkslibc; \
+	@if test \
+	     -e "$(prefix)"/ia16-elf/lib/i80286 \
+	  -o -e "$(prefix)"/lib/gcc/ia16-elf/$(BASEVER_c)/i80286 \
+	  -o -e "$(prefix)"/ia16-elf/include/c++/$(BASEVER_c)/ia16-elf/i80286 \
+	  -o -e "$(prefix)"/ia16-elf/lib/wide-types \
+	  -o -e "$(prefix)"/lib/gcc/ia16-elf/$(BASEVER_c)/wide-types \
+	  -o -e \
+	     "$(prefix)"/ia16-elf/include/c++/$(BASEVER_c)/ia16-elf/wide-types\
+	  -o -e "$(prefix)"/ia16-elf/lib/frame-pointer \
+	  -o -e "$(prefix)"/lib/gcc/ia16-elf/$(BASEVER_c)/frame-pointer \
+	  -o -e \
+	  "$(prefix)"/ia16-elf/include/c++/$(BASEVER_c)/ia16-elf/frame-pointer\
+	  -o -e "$(prefix)"/ia16-elf/lib/rtd/elkslibc \
+	  -o -e "$(prefix)"/ia16-elf/lib/regparmcall/elkslibc; \
 	then \
 	  exec >&2; \
 	  echo; \
@@ -28,10 +34,13 @@ ia16-c.o: $(srcdir)/config/ia16/ia16-c.c $(RTL_H) $(TREE_H) $(CONFIG_H) $(TM_H)
 	  echo 'Alternatively, manually remove the following directories:'; \
 	  find "$(prefix)"/ia16-elf/lib -name i80286 -ls; \
 	  find "$(prefix)"/lib/gcc/ia16-elf -name i80286 -ls; \
+	  find "$(prefix)"/ia16-elf/include -name i80286 -ls; \
 	  find "$(prefix)"/ia16-elf/lib -name wide-types -ls; \
 	  find "$(prefix)"/lib/gcc/ia16-elf -name wide-types -ls; \
+	  find "$(prefix)"/ia16-elf/include -name wide-types -ls; \
 	  find "$(prefix)"/ia16-elf/lib -name frame-pointer -ls; \
 	  find "$(prefix)"/lib/gcc/ia16-elf -name frame-pointer -ls; \
+	  find "$(prefix)"/ia16-elf/include -name frame-pointer -ls; \
 	  find "$(prefix)"/ia16-elf/lib -name elkslibc -ls; \
 	  echo 'and arrange to rebuild GCC.'; \
 	  echo; \
