@@ -8,8 +8,14 @@
 #
 ia16-c.o: $(srcdir)/config/ia16/ia16-c.c $(RTL_H) $(TREE_H) $(CONFIG_H) $(TM_H)
 	@if test -e "$(prefix)"/ia16-elf/lib/i80286 -o \
+		 -e "$(prefix)"/lib/gcc/ia16-elf/$(BASEVER_c)/i80286 -o \
 		 -e "$(prefix)"/ia16-elf/lib/wide-types -o \
-		 -e "$(prefix)"/ia16-elf/lib/frame-pointer; then \
+		 -e "$(prefix)"/lib/gcc/ia16-elf/$(BASEVER_c)/wide-types -o \
+		 -e "$(prefix)"/ia16-elf/lib/frame-pointer -o \
+		 -e "$(prefix)"/lib/gcc/ia16-elf/$(BASEVER_c)/frame-pointer -o\
+		 -e "$(prefix)"/ia16-elf/lib/rtd/elkslibc -o \
+		 -e "$(prefix)"/ia16-elf/lib/regparmcall/elkslibc; \
+	then \
 	  exec >&2; \
 	  echo; \
 	  echo '*** multilib settings have changed, please rebuild! ***'; \
@@ -21,8 +27,12 @@ ia16-c.o: $(srcdir)/config/ia16/ia16-c.c $(RTL_H) $(TREE_H) $(CONFIG_H) $(TM_H)
 	  echo '  $$ ./build.sh gcc1 newlib gcc2'; \
 	  echo 'Alternatively, manually remove the following directories:'; \
 	  find "$(prefix)"/ia16-elf/lib -name i80286 -ls; \
+	  find "$(prefix)"/lib/gcc/ia16-elf -name i80286 -ls; \
 	  find "$(prefix)"/ia16-elf/lib -name wide-types -ls; \
+	  find "$(prefix)"/lib/gcc/ia16-elf -name wide-types -ls; \
 	  find "$(prefix)"/ia16-elf/lib -name frame-pointer -ls; \
+	  find "$(prefix)"/lib/gcc/ia16-elf -name frame-pointer -ls; \
+	  find "$(prefix)"/ia16-elf/lib -name elkslibc -ls; \
 	  echo 'and arrange to rebuild GCC.'; \
 	  echo; \
 	  exit 1; \
@@ -48,20 +58,27 @@ ia16_all_multilibs=$(strip \
 # (1) `-mprotected-mode -melks-libc' is the same as just `-melks-libc'.
 # (2) Build 80186+ multilibs only for the `regparmcall' convention.
 # (3) For now, do not build 186+-specific multilibs at all for elks-libc.
+# (4) Assume elks-libc is always optimized for size anyway.
 #	-- tkchia
 #
 ia16_multilib_map=$(strip \
-  $(patsubst march=any_186/%,%,\
-    $(subst mrtd/march=any_186,mrtd,\
-      $(patsubst mprotected-mode/march=any_186%,mprotected-mode%,\
-	$(patsubst melks-libc/march=any_186%,melks-libc%,\
-	  $(patsubst melks-libc/mregparmcall/march=any_186%,\
-		     melks-libc/mregparmcall%,\
-	    $(patsubst mprotected-mode/melks-libc%,melks-libc%,$1)))))))
+  $(filter-out march=any_186,\
+    $(patsubst march=any_186/%,%,\
+      $(subst mrtd/march=any_186,mrtd,\
+	$(subst mprotected-mode/march=any_186,mprotected-mode,\
+	  $(subst melks-libc/march=any_186,melks-libc,\
+	    $(subst melks-libc/mregparmcall/march=any_186,\
+		    melks-libc/mregparmcall,\
+	      $(patsubst melks-libc%/Os,melks-libc%,\
+		$(subst mprotected-mode/melks-libc,melks-libc,$1)))))))))
 MULTILIB_REQUIRED=$(strip \
 	$(foreach ml,$(ia16_all_multilibs),\
 	  $(filter $(call ia16_multilib_map,$(ml)),$(ml))))
+#
+# Some multilibs variants simply map to the default multilib, hence the $(if).
+#
 MULTILIB_REUSE=$(strip \
-	$(foreach ml,\
-	  $(filter-out $(MULTILIB_REQUIRED),$(ia16_all_multilibs)),\
-	    $(subst =,.,$(call ia16_multilib_map,$(ml)))=$(subst =,.,$(ml))))
+  $(foreach ml,\
+    $(filter-out $(MULTILIB_REQUIRED),$(ia16_all_multilibs)),\
+      $(if $(call_ia16_multilib_map,$(ml)),\
+	$(subst =,.,$(call ia16_multilib_map,$(ml)))=$(subst =,.,$(ml)))))
