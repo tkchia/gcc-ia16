@@ -1,9 +1,7 @@
 # 16.1 Target Makefile Fragments
 
 # Build ia16-c.o.  Also take the opportunity to check for any previously
-# installed `i80286' multilibs (which I included from 8 Oct to 9 Dec 2017)
-# or `wide-types' multilibs (which I included up to 11 Apr 2018), or `frame-
-# pointer' multilibs (up to 24 Apr 2019), which should really be cleaned away.
+# installed obsolete multilibs, which should really be cleaned away.
 #	-- tkchia
 #
 ia16-c.o: $(srcdir)/config/ia16/ia16-c.c $(RTL_H) $(TREE_H) $(CONFIG_H) $(TM_H)
@@ -11,6 +9,9 @@ ia16-c.o: $(srcdir)/config/ia16/ia16-c.c $(RTL_H) $(TREE_H) $(CONFIG_H) $(TM_H)
 	     -e "$(prefix)"/ia16-elf/lib/i80286 \
 	  -o -e "$(prefix)"/lib/gcc/ia16-elf/$(BASEVER_c)/i80286 \
 	  -o -e "$(prefix)"/ia16-elf/include/c++/$(BASEVER_c)/ia16-elf/i80286 \
+	  -o -e "$(prefix)"/ia16-elf/lib/any_186 \
+	  -o -e "$(prefix)"/lib/gcc/ia16-elf/$(BASEVER_c)/any_186 \
+	  -o -e "$(prefix)"/ia16-elf/include/c++/$(BASEVER_c)/ia16-elf/any_186\
 	  -o -e "$(prefix)"/ia16-elf/lib/wide-types \
 	  -o -e "$(prefix)"/lib/gcc/ia16-elf/$(BASEVER_c)/wide-types \
 	  -o -e \
@@ -22,7 +23,7 @@ ia16-c.o: $(srcdir)/config/ia16/ia16-c.c $(RTL_H) $(TREE_H) $(CONFIG_H) $(TM_H)
 	  -o -e "$(prefix)"/ia16-elf/lib/rtd/elkslibc \
 	  -o -e "$(prefix)"/ia16-elf/lib/regparmcall/elkslibc; \
 	then \
-	  exec >&2; \
+	  exec >&2 2>/dev/null; \
 	  echo; \
 	  echo '*** multilib settings have changed, please rebuild! ***'; \
 	  echo 'Please clean up the installation directory, and rebuild'; \
@@ -35,6 +36,9 @@ ia16-c.o: $(srcdir)/config/ia16/ia16-c.c $(RTL_H) $(TREE_H) $(CONFIG_H) $(TM_H)
 	  find "$(prefix)"/ia16-elf/lib -name i80286 -ls; \
 	  find "$(prefix)"/lib/gcc/ia16-elf -name i80286 -ls; \
 	  find "$(prefix)"/ia16-elf/include -name i80286 -ls; \
+	  find "$(prefix)"/ia16-elf/lib -name any_186 -ls; \
+	  find "$(prefix)"/lib/gcc/ia16-elf -name any_186 -ls; \
+	  find "$(prefix)"/ia16-elf/include -name any_186 -ls; \
 	  find "$(prefix)"/ia16-elf/lib -name wide-types -ls; \
 	  find "$(prefix)"/lib/gcc/ia16-elf -name wide-types -ls; \
 	  find "$(prefix)"/ia16-elf/include -name wide-types -ls; \
