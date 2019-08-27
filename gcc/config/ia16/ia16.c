@@ -281,14 +281,19 @@ ia16_get_function_type_for_addr (rtx addr)
 }
 
 /* Return true iff TYPE is a type for a far function (which returns with
-   `lret').  Currently a function is considered to be "far" if the function
-   type itself is in __far space.  The `-mfar-function-if-far-return-type'
-   switch will also cause a __far on the return type to magically become a
-   __far on the function itself.  */
-static int
+   `lret').  TYPE may be NULL, which indicates a compiler support routine.
+
+   Currently a function is considered to be "far" if the function type
+   itself is in __far space.  Unless the user specifies `-mno-far-
+   function-if-far-return-type', a __far on the return type will also
+   magically become a __far on the function itself.  */
+static bool
 ia16_far_function_type_p (const_tree funtype)
 {
-  return TYPE_ADDR_SPACE (funtype) == ADDR_SPACE_FAR;
+  if (! funtype)
+    return TARGET_CMODEL_IS_FAR_TEXT;
+  else
+    return TYPE_ADDR_SPACE (funtype) == ADDR_SPACE_FAR;
 }
 
 /* Return true iff we are currently compiling a far function.  */
@@ -871,6 +876,9 @@ ia16_get_callcvt (const_tree type)
       gcc_unreachable ();
     }
 
+  if (ia16_far_function_type_p (type))
+    callcvt |= IA16_CALLCVT_FAR;
+
   if (! type)
     return callcvt;
 
@@ -884,9 +892,6 @@ ia16_get_callcvt (const_tree type)
 
   if (ia16_ds_data_function_type_p (type))
     callcvt |= IA16_CALLCVT_DS_DATA;
-
-  if (ia16_far_function_type_p (type))
-    callcvt |= IA16_CALLCVT_FAR;
 
   return callcvt;
 }
@@ -938,8 +943,6 @@ ia16_handle_cconv_attribute (tree *node, tree name, tree args ATTRIBUTE_UNUSED,
     {
     case FUNCTION_TYPE:
     case METHOD_TYPE:
-    case FIELD_DECL:
-    case TYPE_DECL:
       break;
 
     default:
@@ -986,7 +989,7 @@ ia16_handle_cconv_attribute (tree *node, tree name, tree args ATTRIBUTE_UNUSED,
       return NULL_TREE;
     }
 
-  if (! ia16_far_function_type_p (DECL_P (*node) ? TREE_TYPE (*node) : *node)
+  if (! ia16_far_function_type_p (*node)
       && (is_attribute_p ("near_section", name)
 	  || is_attribute_p ("far_section", name)))
     {
@@ -1053,6 +1056,33 @@ ia16_handle_cconv_attribute (tree *node, tree name, tree args ATTRIBUTE_UNUSED,
   return NULL_TREE;
 }
 
+static tree
+ia16_handle_magic_far_attribute (tree *node, tree name ATTRIBUTE_UNUSED,
+				 tree args ATTRIBUTE_UNUSED,
+				 int flags ATTRIBUTE_UNUSED,
+				 bool *no_add_attrs)
+{
+  switch (TREE_CODE (*node))
+    {
+    case FUNCTION_TYPE:
+    case METHOD_TYPE:
+      break;
+
+    default:
+      gcc_unreachable ();
+    }
+
+  if (TYPE_ADDR_SPACE (*node) == ADDR_SPACE_GENERIC)
+    {
+      int quals = TYPE_QUALS_NO_ADDR_SPACE (*node);
+      quals |= ENCODE_QUAL_ADDR_SPACE (ADDR_SPACE_FAR);
+      *node = build_qualified_type (*node, quals);
+    }
+
+  *no_add_attrs = true;
+  return NULL_TREE;
+}
+
 static const struct attribute_spec ia16_attribute_table[] =
 {
   { "stdcall", 0, 0, false, true, true, ia16_handle_cconv_attribute, true },
@@ -1067,6 +1097,10 @@ static const struct attribute_spec ia16_attribute_table[] =
 	       0, 0, false, true, true, ia16_handle_cconv_attribute, true },
   { "far_section",
 	       0, 0, false, true, true, ia16_handle_cconv_attribute, true },
+  /* Magic marker placed on all functions unrder the medium model, to make
+     all functions far.  */
+  { "*far",    0, 0, false, true, false, ia16_handle_magic_far_attribute,
+								     true },
   { NULL,      0, 0, false, false, false, NULL,			     false }
 };
 
@@ -1081,6 +1115,34 @@ ia16_comp_type_attributes (const_tree type1, const_tree type2)
     return 1;
 
   return ia16_get_callcvt (type1) == ia16_get_callcvt (type2);
+}
+
+#undef	TARGET_INSERT_ATTRIBUTES
+#define	TARGET_INSERT_ATTRIBUTES ia16_insert_attributes
+
+static void
+ia16_insert_attributes (tree node, tree *attr_ptr)
+{
+  if (! TARGET_CMODEL_IS_FAR_TEXT)
+    return;
+
+  if (DECL_P (node))
+    node = TREE_TYPE (node);
+
+  switch (TREE_CODE (node))
+    {
+    case FUNCTION_TYPE:
+    case METHOD_TYPE:
+      if (! lookup_attribute ("far_section", *attr_ptr)
+	  && ! lookup_attribute ("near_section", *attr_ptr))
+	*attr_ptr = tree_cons (get_identifier ("far_section"), NULL,
+			       *attr_ptr);
+      *attr_ptr = tree_cons (get_identifier ("*far"), NULL, *attr_ptr);
+      break;
+
+    default:
+      break;
+    }
 }
 
 /* Addressing Modes */
@@ -3386,7 +3448,7 @@ ia16_asm_function_section (tree decl, enum node_frequency freq, bool startup,
   const int reloc = 0;
 
   if (! decl
-      || TYPE_ADDR_SPACE (TREE_TYPE (decl)) != ADDR_SPACE_FAR
+      || ! ia16_far_function_type_p (TREE_TYPE (decl))
       || ! ia16_far_section_function_type_p (TREE_TYPE (decl)))
     return default_function_section (decl, freq, startup, stop);
 
@@ -5275,7 +5337,7 @@ ia16_get_call_expansion (rtx addr, machine_mode mode, unsigned which_is_addr)
   fndecl = ia16_get_function_decl_for_addr (addr);
   fntype = ia16_get_function_type_for_decl (fndecl);
 
-  if (! fntype || TYPE_ADDR_SPACE (fntype) != ADDR_SPACE_FAR)
+  if (! ia16_far_function_type_p (fntype))
     {
       gcc_assert (! ia16_in_far_section_function_p ());
 
@@ -5315,7 +5377,7 @@ ia16_use_far_thunked_call_p (rtx addr, machine_mode mode)
     return false;
 
   fntype = ia16_get_function_type_for_addr (addr);
-  return ! fntype || ADDR_SPACE_GENERIC_P (TYPE_ADDR_SPACE (fntype));
+  return ! ia16_far_function_type_p (fntype);
 }
 
 /* Return the insn template for a call from a far_section function to a near
@@ -5366,7 +5428,7 @@ ia16_get_sibcall_expansion (rtx addr, machine_mode mode,
   fndecl = ia16_get_function_decl_for_addr (addr);
   fntype = ia16_get_function_type_for_decl (fndecl);
 
-  if (! fntype || TYPE_ADDR_SPACE (fntype) != ADDR_SPACE_FAR)
+  if (! ia16_far_function_type_p (fntype))
     {
       if (MEM_P (addr) || ! CONSTANT_P (addr))
 	return P ("jmp\t*%");

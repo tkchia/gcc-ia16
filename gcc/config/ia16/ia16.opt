@@ -107,6 +107,11 @@ mcmodel=small
 Target RejectNegative Var(target_cmodel,CMODEL_SMALL)
 Generate code for the small code model, with one data and one text segment.
 
+; With the help of elf.h, this option also enables -msegment-relocation-stuff.
+mcmodel=medium
+Target RejectNegative Var(target_cmodel,CMODEL_MEDIUM)
+Generate code for the medium code model, with one data segment and multiple text segments.
+
 msegment-relocation-stuff
 Target RejectNegative Mask(SEG_RELOC_STUFF) Undocumented
 

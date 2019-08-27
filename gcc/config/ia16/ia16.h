@@ -33,6 +33,9 @@
 
 #define TARGET_ALLOCABLE_DS_REG	(! fixed_regs[DS_REG])
 #define TARGET_CMODEL_IS_TINY	(target_cmodel == CMODEL_TINY)
+#define TARGET_CMODEL_IS_FAR_TEXT (target_cmodel == CMODEL_MEDIUM || \
+				   target_cmodel == CMODEL_LARGE || \
+				   target_cmodel == CMODEL_HUGE)
 
 /* Run-time Target Specification */
 #define TARGET_CPU_CPP_BUILTINS() ia16_cpu_cpp_builtins ()
