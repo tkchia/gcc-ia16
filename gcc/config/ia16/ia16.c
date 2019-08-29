@@ -1097,9 +1097,9 @@ static const struct attribute_spec ia16_attribute_table[] =
 	       0, 0, false, true, true, ia16_handle_cconv_attribute, true },
   { "far_section",
 	       0, 0, false, true, true, ia16_handle_cconv_attribute, true },
-  /* Magic marker placed on all functions unrder the medium model, to make
+  /* Magic marker placed on all functions under the medium model, to make
      all functions far.  */
-  { "*far",    0, 0, false, true, false, ia16_handle_magic_far_attribute,
+  { "*far fn", 0, 0, false, true, true, ia16_handle_magic_far_attribute,
 								     true },
   { NULL,      0, 0, false, false, false, NULL,			     false }
 };
@@ -1129,15 +1129,14 @@ ia16_insert_attributes (tree node, tree *attr_ptr)
   if (DECL_P (node))
     node = TREE_TYPE (node);
 
+  if (POINTER_TYPE_P (node))
+    node = TREE_TYPE (node);
+
   switch (TREE_CODE (node))
     {
     case FUNCTION_TYPE:
     case METHOD_TYPE:
-      if (! lookup_attribute ("far_section", *attr_ptr)
-	  && ! lookup_attribute ("near_section", *attr_ptr))
-	*attr_ptr = tree_cons (get_identifier ("far_section"), NULL,
-			       *attr_ptr);
-      *attr_ptr = tree_cons (get_identifier ("*far"), NULL, *attr_ptr);
+      *attr_ptr = tree_cons (get_identifier ("*far fn"), NULL, *attr_ptr);
       break;
 
     default:
@@ -3447,9 +3446,10 @@ ia16_asm_function_section (tree decl, enum node_frequency freq, bool startup,
   char *sname;
   const int reloc = 0;
 
-  if (! decl
-      || ! ia16_far_function_type_p (TREE_TYPE (decl))
-      || ! ia16_far_section_function_type_p (TREE_TYPE (decl)))
+  if (! TARGET_CMODEL_IS_FAR_TEXT
+      && (! decl
+	  || ! ia16_far_function_type_p (TREE_TYPE (decl))
+	  || ! ia16_far_section_function_type_p (TREE_TYPE (decl))))
     return default_function_section (decl, freq, startup, stop);
 
   sname = ia16_fabricate_section_name_for_decl (decl, reloc, false);
@@ -5346,7 +5346,8 @@ ia16_get_call_expansion (rtx addr, machine_mode mode, unsigned which_is_addr)
       else
 	return P ("call\t%c");
     }
-  else if (! ia16_in_far_section_function_p ()
+  else if (fntype
+	   && ! ia16_in_far_section_function_p ()
 	   && ((DECL_INITIAL (fndecl)
 		&& ! ia16_far_section_function_type_p (fntype))
 	       || ia16_near_section_function_type_p (fntype)))

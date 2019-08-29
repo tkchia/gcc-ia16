@@ -52,8 +52,9 @@ ia16-c.o: $(srcdir)/config/ia16/ia16-c.c $(RTL_H) $(TREE_H) $(CONFIG_H) $(TM_H)
 	fi
 	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<
 
-MULTILIB_OPTIONS=mprotected-mode melks-libc mrtd/mregparmcall march=any_186 Os
-MULTILIB_DIRNAMES=pmode elkslibc rtd regparmcall any_186 size
+MULTILIB_OPTIONS=mprotected-mode melks-libc \
+	mcmodel=medium mrtd/mregparmcall march=any_186 Os
+MULTILIB_DIRNAMES=pmode elkslibc medium rtd regparmcall any_186 size
 MULTILIB_MATCHES=mprotected-mode=melks \
 	march?any_186=march?i80186 march?any_186=march?i80188 \
 	march?any_186=march?v20 march?any_186=march?v30 \
@@ -64,9 +65,11 @@ ia16_all_multilibs=$(strip \
       $(subst /-,,\
 	$(foreach pm,- mprotected-mode,\
 	  $(foreach el,- melks-libc,\
-	    $(foreach cc,- mrtd mregparmcall,\
-	      $(foreach ar,- march=any_186,$(pm)/$(el)/$(cc)/$(ar) \
-					   $(pm)/$(el)/$(cc)/$(ar)/Os))))))))
+	    $(foreach mm,- mcmodel=medium,\
+	      $(foreach cc,- mrtd mregparmcall,\
+		$(foreach ar,- march=any_186, \
+		  $(foreach op,- Os, \
+		    $(pm)/$(el)/$(mm)/$(cc)/$(ar)/$(op)))))))))))
 #
 # (1) `-mprotected-mode -melks-libc' is the same as just `-melks-libc'.
 # (2) Build 80186+ multilibs only for the `regparmcall' convention.
@@ -74,6 +77,7 @@ ia16_all_multilibs=$(strip \
 #     or -mprotected-mode.
 # (4) Assume that -melks-libc and -mprotected-mode multilibs are always size-
 #     -optimized.
+# (5) elks-libc does not support the medium memory model yet.
 #	-- tkchia
 #
 ia16_multilib_map=$(strip \
@@ -85,7 +89,8 @@ ia16_multilib_map=$(strip \
 	    $(subst /mregparmcall/march=any_186,/mregparmcall,\
 	      $(patsubst mprotected-mode%/Os,mprotected-mode%,\
 		$(patsubst melks-libc%/Os,melks-libc%,\
-		  $(subst mprotected-mode/melks-libc,melks-libc,$1))))))))))
+		  $(subst melks-libc/mcmodel=medium,melks-libc,\
+		    $(subst mprotected-mode/melks-libc,melks-libc,$1)))))))))))
 MULTILIB_REQUIRED=$(strip \
 	$(foreach ml,$(ia16_all_multilibs),\
 	  $(filter $(call ia16_multilib_map,$(ml)),$(ml))))
