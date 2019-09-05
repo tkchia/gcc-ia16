@@ -148,6 +148,9 @@ ia16_cpu_cpp_builtins (void)
   def_or_undef_macro ("__IA16_CMODEL_HUGE__", def_p);
   def_or_undef_macro ("__HUGE__", def_p);
 
+  /* Convenience macro.  */
+  def_or_undef_macro ("__IA16_CMODEL_IS_FAR_TEXT", TARGET_CMODEL_IS_FAR_TEXT);
+
   /* Define a macro for the chosen -march=.  A source file can use this to
      decide whether to employ a capability not covered by the
      __IA16_FEATURE_* macros, e.g. the `arpl' or the `bound' instruction.
