@@ -1,8 +1,4 @@
-	.arch i8086,jumps
-	.code16
-	.att_syntax prefix
-
-	.text
+#include "ia16-preamble.h"
 
 	/*
 	 * 32-bit division routine (https://github.com/FDOS/kernel/blob/
@@ -64,8 +60,4 @@ __ia16_ldivmodu:
 	xorw	%dx,	%dx
 	popw	%di
 	popw	%si
-#ifdef __IA16_CMODEL_IS_FAR_TEXT
-	lret
-#else
 	ret
-#endif
