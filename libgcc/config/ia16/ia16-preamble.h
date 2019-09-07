@@ -37,11 +37,20 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 	/*
 	 * FT_ (INSN) conditionally assembles an instruction INSN iff we are
 	 * building for a far-text memory model.  NT_ (INSN) does the opposite.
+	 *
+	 * SR_ (PLACE, SYM) installs an IA-16 segment relocation for SYM's
+	 * segment, at the place PLACE.
 	 */
-# define FT_(insn...)	insn
+# define FT_(insn...)		insn
 # define NT_(insn...)
 #else
 	.text
 # define FT_(insn...)
-# define NT_(insn...)
+# define NT_(insn...)		insn
+#endif
+#ifdef __IA16_ABI_SEGELF
+# define SR__(place, aux)	.reloc (place), R_386_SEG16, #aux
+# define SR_(place, sym)	SR__(place, sym##!)
+#else
+# define SR_(place, sym)	.reloc (place), R_386_OZSEG16, sym
 #endif
