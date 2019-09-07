@@ -52,20 +52,23 @@ $(lib2-divmodsi-o): %$(objext): $(srcdir)/libgcc2.c
 libgcc-objects += $(lib2-divmodsi-o)
 
 # Assembly language implementations of some routines.
-# 
-# TODO: move everything out to $(LIB2ADD).  -- tkchia 20190905
-LIB1ASMFUNCS = _lshrsi3 \
-	       _ia16_far_call_thunk_bx_xx _ia16_far_call_pop_thunk_bx_xx_xx \
-	       _ne_sf _gt_sf _le_sf _lt_sf _ne_df _gt_df _le_df _lt_df
-LIB1ASMSRC = ia16/lib1funcs.S
-LIB2FUNCS_EXCLUDE += _udivsi3 _umodsi3 _divsi3 _modsi3 _ashlsi3 $(LIB1ASMFUNCS)
+LIB2FUNCS_EXCLUDE += _udivsi3 _umodsi3 _divsi3 _modsi3 \
+		     _ashlsi3 _lshrsi3 \
+		     _ne_sf _gt_sf _le_sf _lt_sf _ne_df _gt_df _le_df _lt_df
 LIB2ADD += $(srcdir)/config/ia16/udivsi3.S \
 	   $(srcdir)/config/ia16/umodsi3.S \
 	   $(srcdir)/config/ia16/ia16-ldivmodu.S \
 	   $(srcdir)/config/ia16/divsi3.S \
 	   $(srcdir)/config/ia16/modsi3.S \
 	   $(srcdir)/config/ia16/ia16-ldivmods.S \
-	   $(srcdir)/config/ia16/ashlsi3.S
+	   $(srcdir)/config/ia16/ashlsi3.S \
+	   $(srcdir)/config/ia16/lshrsi3.S \
+	   $(srcdir)/config/ia16/nesf2-ltsf2-lesf2.S \
+	   $(srcdir)/config/ia16/gtsf2.S \
+	   $(srcdir)/config/ia16/nedf2-ltdf2-ledf2.S \
+	   $(srcdir)/config/ia16/gtdf2.S \
+	   $(srcdir)/config/ia16/ia16-far-call-thunks.S \
+	   $(srcdir)/config/ia16/ia16-far-call-pop-thunks.S
 
 $(patsubst $(srcdir)/config/ia16/%.S,%$(objext),$(LIB2ADD)) : \
 	%.o: $(srcdir)/config/ia16/%.S \

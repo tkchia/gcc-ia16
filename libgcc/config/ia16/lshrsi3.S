@@ -1,4 +1,4 @@
-/* IA-16 implementation of 32-bit left shifts
+/* IA-16 implementation of 32-bit right logicall shifts
 
    Copyright (C) 2019 Free Software Foundation, Inc.
    Written By TK Chia
@@ -24,9 +24,9 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #include "ia16-preamble.h"
 
-	.global	__ashlsi3
-	.type	__ashlsi3, @function
-__ashlsi3:
+	.global	__lshrsi3
+	.type	__lshrsi3, @function
+__lshrsi3:
 #ifndef __IA16_CMODEL_IS_FAR_TEXT
 # ifdef __IA16_CALLCVT_CDECL
 #   ifdef __OPTIMIZE_SIZE__
@@ -67,32 +67,28 @@ __ashlsi3:
 # endif
 #endif
 	andw	$0x1f,	%cx
-# ifdef __OPTIMIZE_SIZE__
+#ifdef __OPTIMIZE_SIZE__
 	jcxz	1f
 0:
-	shlw	%ax
-	rclw	%dx
+	shrw	%dx
+	rcrw	%ax
 	loop	0b
-# else
+#else
 	testb	$0x10,	%cl
 	jz	0f
-	movw	%ax,	%dx
-	xorw	%ax,	%ax
+	movw	%dx,	%ax
+	xorw	%dx,	%dx
 	subb	$0x10,	%cl
-	shlw	%cl,	%dx
+	shrw	%cl,	%ax
 NT_(	ret	)
 FT_(	lret	)
 0:
-	movw	%ax,	%bx
-	shlw	%cl,	%ax
-	/* Quickly figure out the bits we want to shift from the low
-	   shortword into the high shortword.  We can do this by taking the
-	   "difference" between the `shlw' and `rolw' results.  */
-	rolw	%cl,	%bx
-	xorw	%ax,	%bx
-	/* Then combine them with the bits from the high shortword.  */
-	shlw	%cl,	%dx
-	orw	%bx,	%dx
+	movw	%dx,	%bx
+	shrw	%cl,	%dx
+	rorw	%cl,	%bx
+	xorw	%dx,	%bx
+	shrw	%cl,	%ax
+	orw	%bx,	%ax
 #endif
 1:
 NT_(	ret	)
