@@ -1619,6 +1619,9 @@ match_builtin_function_types (tree newtype, tree oldtype)
   tree newrettype, oldrettype;
   tree newargs, oldargs;
   tree trytype, tryargs;
+#ifdef TARGET_ADDR_SPACE_MAY_HAVE_FUNCTIONS_P
+  addr_space_t as;
+#endif
 
   /* Accept the return type of the new declaration if same modes.  */
   oldrettype = TREE_TYPE (oldtype);
@@ -1646,6 +1649,14 @@ match_builtin_function_types (tree newtype, tree oldtype)
     }
 
   trytype = build_function_type (newrettype, tryargs);
+
+#ifdef TARGET_ADDR_SPACE_MAY_HAVE_FUNCTIONS_P
+  as = TYPE_ADDR_SPACE (oldtype);
+  if (! ADDR_SPACE_GENERIC_P (as)
+      && TARGET_ADDR_SPACE_MAY_HAVE_FUNCTIONS_P (as)
+      && as == TYPE_ADDR_SPACE (newtype))
+    trytype = c_build_qualified_type (trytype, ENCODE_QUAL_ADDR_SPACE (as));
+#endif
 
   /* Allow declaration to change transaction_safe attribute.  */
   tree oldattrs = TYPE_ATTRIBUTES (oldtype);
