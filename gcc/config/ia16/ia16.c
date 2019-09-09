@@ -1056,33 +1056,6 @@ ia16_handle_cconv_attribute (tree *node, tree name, tree args ATTRIBUTE_UNUSED,
   return NULL_TREE;
 }
 
-static tree
-ia16_handle_magic_far_attribute (tree *node, tree name ATTRIBUTE_UNUSED,
-				 tree args ATTRIBUTE_UNUSED,
-				 int flags ATTRIBUTE_UNUSED,
-				 bool *no_add_attrs)
-{
-  switch (TREE_CODE (*node))
-    {
-    case FUNCTION_TYPE:
-    case METHOD_TYPE:
-      break;
-
-    default:
-      gcc_unreachable ();
-    }
-
-  if (TYPE_ADDR_SPACE (*node) == ADDR_SPACE_GENERIC)
-    {
-      int quals = TYPE_QUALS_NO_ADDR_SPACE (*node);
-      quals |= ENCODE_QUAL_ADDR_SPACE (ADDR_SPACE_FAR);
-      *node = build_qualified_type (*node, quals);
-    }
-
-  *no_add_attrs = true;
-  return NULL_TREE;
-}
-
 static const struct attribute_spec ia16_attribute_table[] =
 {
   { "stdcall", 0, 0, false, true, true, ia16_handle_cconv_attribute, true },
@@ -1097,10 +1070,6 @@ static const struct attribute_spec ia16_attribute_table[] =
 	       0, 0, false, true, true, ia16_handle_cconv_attribute, true },
   { "far_section",
 	       0, 0, false, true, true, ia16_handle_cconv_attribute, true },
-  /* Magic marker placed on all functions under the medium model, to make
-     all functions far.  */
-  { "*far fn", 0, 0, false, true, true, ia16_handle_magic_far_attribute,
-								     true },
   { NULL,      0, 0, false, false, false, NULL,			     false }
 };
 
@@ -1117,30 +1086,28 @@ ia16_comp_type_attributes (const_tree type1, const_tree type2)
   return ia16_get_callcvt (type1) == ia16_get_callcvt (type2);
 }
 
-#undef	TARGET_INSERT_ATTRIBUTES
-#define	TARGET_INSERT_ATTRIBUTES ia16_insert_attributes
+#undef	TARGET_SET_DEFAULT_TYPE_ATTRIBUTES
+#define TARGET_SET_DEFAULT_TYPE_ATTRIBUTES ia16_set_default_type_attributes
 
 static void
-ia16_insert_attributes (tree node, tree *attr_ptr)
+ia16_set_default_type_attributes (tree type)
 {
-  if (! TARGET_CMODEL_IS_FAR_TEXT)
-    return;
-
-  if (DECL_P (node))
-    node = TREE_TYPE (node);
-
-  if (POINTER_TYPE_P (node))
-    node = TREE_TYPE (node);
-
-  switch (TREE_CODE (node))
+  if (TARGET_CMODEL_IS_FAR_TEXT)
     {
-    case FUNCTION_TYPE:
-    case METHOD_TYPE:
-      *attr_ptr = tree_cons (get_identifier ("*far fn"), NULL, *attr_ptr);
-      break;
+      /* Messy hack to make all functions far, when compiling code for a
+	 far-text memory model.  Here the "unqualified" version of a function
+	 type is actually implicitly qualified with a __far.  */
+      switch (TREE_CODE (type))
+	{
+	case FUNCTION_TYPE:
+	case METHOD_TYPE:
+	  if (ADDR_SPACE_GENERIC_P (TYPE_ADDR_SPACE (type)))
+	    TYPE_ADDR_SPACE (type) = ADDR_SPACE_FAR;
+	  break;
 
-    default:
-      break;
+	default:
+	  break;
+	}
     }
 }
 
@@ -3512,18 +3479,16 @@ ia16_find_base_symbol_ref (rtx x)
 static bool
 ia16_asm_integer (rtx x, unsigned size, int aligned_p)
 {
-  rtx base;
+  rtx orig_x, base;
 
-  if (default_assemble_integer (x, size, aligned_p))
-    return true;
-
+  orig_x = x;
   while (GET_CODE (x) == CONST)
     x = XEXP (x, 0);
 
   if (GET_CODE (x) != UNSPEC
       || XINT (x, 1) != UNSPEC_STATIC_FAR_PTR
       || GET_MODE (x) != SImode)
-    return false;
+    return default_assemble_integer (orig_x, size, aligned_p);
 
   x = XVECEXP (x, 0, 0);
   base = ia16_find_base_symbol_ref (x);
