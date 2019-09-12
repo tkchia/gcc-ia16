@@ -73,10 +73,10 @@ ia16_all_multilibs=$(strip \
 #
 # (1) `-mprotected-mode -melks-libc' is the same as just `-melks-libc'.
 # (2) Build 80186+ multilibs only for the `regparmcall' convention.
-# (3) For now, do not build 186+-specific multilibs at all for -melks-libc
-#     or -mprotected-mode.
+# (3) For now, do not build 186+-specific multilibs at all for -melks-libc,
+#     -mprotected-mode, or -mcmodel=medium.
 # (4) Assume that -melks-libc and -mprotected-mode multilibs are always size-
-#     -optimized.
+#     -optimized.  Do not build size-optimized multilibs for the medium model.
 # (5) elks-libc does not support the medium memory model yet.
 #	-- tkchia
 #
@@ -86,11 +86,16 @@ ia16_multilib_map=$(strip \
       $(subst mrtd/march=any_186,mrtd,\
 	$(subst mprotected-mode/march=any_186,mprotected-mode,\
 	  $(subst melks-libc/march=any_186,melks-libc,\
-	    $(subst /mregparmcall/march=any_186,/mregparmcall,\
-	      $(patsubst mprotected-mode%/Os,mprotected-mode%,\
-		$(patsubst melks-libc%/Os,melks-libc%,\
-		  $(subst melks-libc/mcmodel=medium,melks-libc,\
-		    $(subst mprotected-mode/melks-libc,melks-libc,$1)))))))))))
+	    $(subst mcmodel=medium/march=any_186,mcmodel=medium,\
+	      $(subst /mregparmcall/march=any_186,/mregparmcall,\
+		$(patsubst mprotected-mode%/Os,mprotected-mode%,\
+		  $(patsubst melks-libc%/Os,melks-libc%,\
+		    $(patsubst mcmodel=medium%/Os,mcmodel=medium%,\
+		      $(patsubst mprotected-mode/mcmodel=medium%/Os,\
+				 mprotected-mode/mcmodel=medium%,\
+			$(subst melks-libc/mcmodel=medium,melks-libc,\
+			  $(subst mprotected-mode/melks-libc,melks-libc,\
+			    $1))))))))))))))
 MULTILIB_REQUIRED=$(strip \
 	$(foreach ml,$(ia16_all_multilibs),\
 	  $(filter $(call ia16_multilib_map,$(ml)),$(ml))))
