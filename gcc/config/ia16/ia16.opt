@@ -90,9 +90,10 @@ mshort-jumps
 Target Mask(SHORT_JUMPS)
 Do (not - this is the default) use jump instructions which can only jump -128/+127 bytes.
 
-; This is now unified with -mcmodel=small (below).
+; This is now equivalent to -mcmodel=small (below) unless a memory model is
+; explicitly specified.
 mseparate-code-segment
-Target RejectNegative Alias(mcmodel=small) Undocumented
+Target RejectNegative Undocumented
 
 mcmodel=tiny
 Target RejectNegative Var(target_cmodel,CMODEL_TINY) Init(CMODEL_TINY)
