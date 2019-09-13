@@ -73,17 +73,17 @@
     "%{mmsdos-handle-v1:--defsym=__msdos_handle_v1=1} " \
     "%{!r:"		\
       "%{melks-libc:"	\
-	  "%Telks-%(cmodel_long).ld;" \
+	  "%Telks-%(cmodel_long_ld);" \
 	"nostdlib|nodefaultlibs:" \
 	"%{melks:" \
-	  "%{nostdlib|nostartfiles:%Telk-m%(cmodel).ld;" \
-	    ":%Telk-m%(cmodel)s.ld};" \
+	  "%{nostdlib|nostartfiles:%Telk-m%(cmodel_ld);" \
+	    ":%Telk-m%(cmodel_s_ld)};" \
 	  "mdpmiable:"	\
-	    "%{nostdlib|nostartfiles:%Tdpm-m%(cmodel).ld;" \
-	      ":%Tdpm-m%(cmodel)s.ld};" \
+	    "%{nostdlib|nostartfiles:%Tdpm-m%(cmodel_ld);" \
+	      ":%Tdpm-m%(cmodel_s_ld)};" \
 	  "nostdlib|nostartfiles:" \
-	    "%Tdos-m%(cmodel).ld;" \
-	  ":%Tdos-m%(cmodel)s.ld" \
+	    "%Tdos-m%(cmodel_ld);" \
+	  ":%Tdos-m%(cmodel_s_ld)" \
 	"}"		\
       "} "		\
       "%{melks*:"	\
@@ -107,12 +107,12 @@
 	    "%{mnewlib-autofloat-stdio:-lanstdio} -lnstdio;" \
 	    "mnewlib-autofloat-stdio:-lastdio} " \
 	  "%{melks:"	\
-	      "%{nostartfiles:%Telk-m%(cmodel)l.ld;:%Telk-m%(cmodel)sl.ld};" \
+	      "%{nostartfiles:%Telk-m%(cmodel_l_ld);:%Telk-m%(cmodel_sl_ld)};"\
 	    "mdpmiable:" \
-	      "%{nostartfiles:%Tdpm-m%(cmodel)l.ld;:%Tdpm-m%(cmodel)sl.ld};" \
+	      "%{nostartfiles:%Tdpm-m%(cmodel_l_ld);:%Tdpm-m%(cmodel_sl_ld)};"\
 	    "nostartfiles:" \
-	      "%Tdos-m%(cmodel)l.ld;" \
-	    ":%Tdos-m%(cmodel)sl.ld" \
+	      "%Tdos-m%(cmodel_l_ld);" \
+	    ":%Tdos-m%(cmodel_sl_ld)" \
 	  "}"		\
 	"}"		\
       "}"		\
@@ -120,5 +120,8 @@
   "}"
 
 #define EXTRA_SPECS	\
-  { "cmodel", "%{mcmodel=medium:m;mcmodel=small:s;:t}" }, \
-  { "cmodel_long", "%{mcmodel=*:%*;:tiny}" }
+  { "cmodel_ld", "%{mcmodel=medium:m.ld;mcmodel=small:s.ld;:t.ld}" }, \
+  { "cmodel_s_ld", "%{mcmodel=medium:ms.ld;mcmodel=small:ss.ld;:ts.ld}" }, \
+  { "cmodel_l_ld", "%{mcmodel=medium:ml.ld;mcmodel=small:sl.ld;:tl.ld}" }, \
+  { "cmodel_sl_ld", "%{mcmodel=medium:msl.ld;mcmodel=small:ssl.ld;:tsl.ld}" },\
+  { "cmodel_long_ld", "%{mcmodel=*:%*.ld;:tiny.ld}" }
