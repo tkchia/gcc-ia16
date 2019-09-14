@@ -467,6 +467,8 @@ enum reg_class {	/*	 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 #define TEXT_SECTION_ASM_OP	"\t.text"
 #define DATA_SECTION_ASM_OP	"\t.data"
 #define BSS_SECTION_ASM_OP	"\t.bss"
+#define CRT_CALL_STATIC_FUNCTION(section_op, function) \
+	__IA16___CRT_CALL_STATIC_FUNCTION (section_op, function) /* ia16-c.c */
 #define JUMP_TABLES_IN_TEXT_SECTION 0
 
 /* Position Independent Code.  */

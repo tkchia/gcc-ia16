@@ -25,6 +25,7 @@
 #include "c-family/c-common.h"
 #include "c-family/c-pragma.h"
 #include "hard-reg-set.h"
+#include "output.h"
 
 static void
 def_macro (const char *name)
@@ -55,6 +56,8 @@ void
 ia16_cpu_cpp_builtins (void)
 {
   bool def_p;
+  char *defn;
+  int rv;
 
   builtin_define_std ("ia16");
   def_macro ("__FAR");
@@ -199,6 +202,38 @@ ia16_cpu_cpp_builtins (void)
      Do not undefine _NANO_FORMATTED_IO if it is explicitly defined.  */
   if (TARGET_NEWLIB_NANO_STDIO)
     def_macro ("_NANO_FORMATTED_IO");
+
+  /* This is used by the ia16.h portion of the machine description to
+     implement CRT_CALL_STATIC_FUNCTION (, ).  */
+  if (! TARGET_CMODEL_IS_FAR_TEXT)
+    rv = asprintf (&defn, "__IA16___CRT_CALL_STATIC_FUNCTION(o,f)"
+			  "=__asm(o \"; call %s\" #f \"; .text\");",
+		   user_label_prefix);
+  else if (! TARGET_ABI_SEGELF)
+    rv = asprintf (&defn, "__IA16___CRT_CALL_STATIC_FUNCTION(o,f)"
+			  "=__asm(\".pushsection .text; "
+				   "\" o \"; "
+				   ".reloc .+3, R_386_OZSEG16, %s\" #f \"; "
+				   "lcall $0, $%s\" #f \"; "
+				   ".text; "
+				   ".popsection\");",
+		   user_label_prefix, user_label_prefix);
+  else
+    rv = asprintf (&defn, "__IA16___CRT_CALL_STATIC_FUNCTION(o,f)"
+			  "=__asm(\".pushsection .text; "
+				   "\" o \"; "
+				   ".reloc .+3, R_386_SEG16, "
+					  "\\\"%s\" #f \"!\\\"; "
+				   "lcall $0, $%s\" #f \"; "
+				   ".text; "
+				   ".popsection\");",
+		   user_label_prefix, user_label_prefix);
+
+  if (rv > 0)
+    {
+      def_macro (defn);
+      free (defn);
+    }
 }
 
 /* Implements REGISTER_TARGET_PRAGMAS.  */
