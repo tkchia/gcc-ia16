@@ -315,6 +315,19 @@ ia16-*)
 	    esac
 	  done
 	fi
+	if [ x"$enable_cmodel_medium" = xno \
+	     -o \( x"$PACKAGE" = xlibstdc++ \
+		   -a x"$enable_cmodel_medium" != xyes \) ]
+	then
+	  old_multidirs=${multidirs}
+	  multidirs=""
+	  for x in ${old_multidirs}; do
+	    case "${x}" in
+	      *medium*) : ;;
+	      *) multidirs="${multidirs} ${x}" ;;
+	    esac
+	  done
+	fi
 	;;
 m68*-*-*)
 	if [ x$enable_softfloat = xno ]
