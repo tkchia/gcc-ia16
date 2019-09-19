@@ -16747,8 +16747,7 @@ At the linking stage---unless @option{-T} is used---this option will also
 make GCC link your code against the appropriate medium model multilib, and
 switch to the appropriate output program format.
 
-This option is currently supported only for C and assembly language, and
-only for the MS-DOS target.
+This option is currently not supported for C++ or for the ELKS target.
 
 @item -mnewlib-nano-stdio
 @opindex mnewlib-nano-stdio
