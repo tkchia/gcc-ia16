@@ -16738,6 +16738,18 @@ code against library routines that are built to work with protected mode.
 @subsubsection Experimental IA-16 Options
 
 @table @gcctabopt
+@item -mcmodel=medium
+@opindex mcmodel=medium
+Generate code for the medium code model, with one data segment and multiple
+text segments, each in a separate @w{64 KiB} space.
+
+At the linking stage---unless @option{-T} is used---this option will also
+make GCC link your code against the appropriate medium model multilib, and
+switch to the appropriate output program format.
+
+This option is currently supported only for C and assembly language, and
+only for the MS-DOS target.
+
 @item -mnewlib-nano-stdio
 @opindex mnewlib-nano-stdio
 If using the Newlib C library, link against a limited version of the
