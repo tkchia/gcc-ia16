@@ -33,7 +33,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 	 * This allows the libgcc API routines to invoke internal routines
 	 * using near calls.
 	 */
-	.section .fartext.libgcc2.a.LIB2ADD$, "ax", @progbits
+	.section .fartext.f.libgcc2.a.LIB2ADD$, "ax", @progbits
 	/*
 	 * FT_ (INSN) conditionally assembles an instruction INSN iff we are
 	 * building for a far-text memory model.  NT_ (INSN) does the opposite.

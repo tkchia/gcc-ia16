@@ -3225,9 +3225,9 @@ ia16_fabricate_section_name_for_decl (tree decl, int reloc, bool unique)
      the declared variable or function, and convert non-symbol characters to
      `_'.  Also add the prefix.  */
   if (! unique)
-    name1 = ACONCAT ((prefix, lbasename (main_input_filename), NULL));
+    name1 = ACONCAT ((prefix, "f.", lbasename (main_input_filename), NULL));
   else
-    name1 = ACONCAT ((prefix,
+    name1 = ACONCAT ((prefix, "s.",
 		      IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)), NULL));
   p = name1 + prefix_len;
   while ((c = *p) != 0)
@@ -3281,7 +3281,8 @@ ia16_asm_select_section (tree expr, int reloc, unsigned HOST_WIDE_INT align)
       gcc_unreachable ();
 
     case ADDR_SPACE_FAR:
-      sname = ia16_fabricate_section_name_for_decl (expr, reloc, false);
+      sname = ia16_fabricate_section_name_for_decl (expr, reloc,
+						    flag_data_sections);
       if (sname)
 	{
 	  section *sect = get_named_section (expr, sname, reloc);
