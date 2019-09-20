@@ -3419,7 +3419,8 @@ ia16_asm_function_section (tree decl, enum node_frequency freq, bool startup,
 	  || ! ia16_far_section_function_type_p (TREE_TYPE (decl))))
     return default_function_section (decl, freq, startup, stop);
 
-  sname = ia16_fabricate_section_name_for_decl (decl, reloc, false);
+  sname = ia16_fabricate_section_name_for_decl (decl, reloc,
+						flag_function_sections);
   if (sname)
     {
       section *sect = get_named_section (decl, sname, reloc);
@@ -5274,14 +5275,23 @@ ia16_expand_epilogue (bool sibcall)
    in the (define_insn ...), depending on whether WHICH_IS_ADDR is 0 or 1.
 
    There are 4 cases we need to handle:
-     * we are calling a near function (with a 16-bit address), and the current
-       function is not marked __attribute__ ((far_section))
-     * we are calling a far function through a 32-bit pointer
-     * we are calling a far function --- which returns with `lret' --- but
-       the function is defined (in the default text section) in the current
-       module, and is not marked __attribute__ ((far_section)), so we can get
-       away with a `pushw %cs' plus a near call
-     * none of the above --- use `lcall' and do not assume that the function
+
+     * We are calling a near function (with a 16-bit address), and the current
+       function is not marked __attribute__ ((far_section)).
+
+     * We are calling a far function through a 32-bit pointer.
+
+     * We are calling a far function --- which returns with `lret' --- but
+       the function is defined in the current module, and neither caller nor
+       callee is marked __attribute__ ((far_section)), so we can probably
+       get away with a `pushw %cs' plus a near call.
+
+       There are two exceptions to this, where the caller or callee is likely
+       to get its own function-specific section, even without far_section:
+	- if the caller or callee is to go in a link-once (COMDAT) section;
+	- if -ffunction-sections is in effect.
+
+     * None of the above --- use `lcall' and do not assume that the function
        resides in the default text section.
 
    The case where a far_section function tries to call a near function is
@@ -5314,7 +5324,10 @@ ia16_get_call_expansion (rtx addr, machine_mode mode, unsigned which_is_addr)
   else if (fntype
 	   && ! ia16_in_far_section_function_p ()
 	   && ((DECL_INITIAL (fndecl)
-		&& ! ia16_far_section_function_type_p (fntype))
+		&& ! flag_function_sections
+		&& ! ia16_far_section_function_type_p (fntype)
+		&& ! DECL_COMDAT_GROUP (fndecl)
+		&& ! DECL_COMDAT_GROUP (cfun->decl))
 	       || ia16_near_section_function_type_p (fntype)))
     {
       if (MEM_P (addr) || ! CONSTANT_P (addr))
