@@ -29,7 +29,6 @@
   "%{mcmodel=small|mcmodel=medium:" \
     "%{!mno-segment-relocation-stuff:-msegment-relocation-stuff}}", \
   "%{mcmodel=medium:"	\
-    "%{,c++|,c++-header|,c++-cpp-output:%emedium model not supported for C++}"\
     "%{melks*:%emedium model not supported for ELKS}}"
 
 /* This is a hack.  When -melks-libc is specified, then, combined with the
@@ -50,7 +49,8 @@
   "%{melks-libc:-isystem include-fixed/../include%s " \
 	       "-isystem include-fixed%s " \
 	       "-isystem include%s " \
-	       "-isystem elkslibc/include%s}"
+	       "-isystem elkslibc/include%s}" \
+  "%{mcmodel=medium:%{,c++|,c++-header:%emedium model not supported for C++}}"
 
 #define ASM_SPEC	\
   "%{msegelf:--32-segelf}"
