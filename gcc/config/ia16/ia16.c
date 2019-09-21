@@ -3479,21 +3479,9 @@ ia16_find_base_symbol_ref (rtx x)
 }
 
 static bool
-ia16_asm_integer (rtx x, unsigned size, int aligned_p)
+ia16_assemble_far_pointer (rtx x)
 {
-  rtx orig_x, base;
-
-  orig_x = x;
-  while (GET_CODE (x) == CONST)
-    x = XEXP (x, 0);
-
-  if (GET_CODE (x) != UNSPEC
-      || XINT (x, 1) != UNSPEC_STATIC_FAR_PTR
-      || GET_MODE (x) != SImode)
-    return default_assemble_integer (orig_x, size, aligned_p);
-
-  x = XVECEXP (x, 0, 0);
-  base = ia16_find_base_symbol_ref (x);
+  rtx base = ia16_find_base_symbol_ref (x);
 
   if (! base)
     return false;
@@ -3525,6 +3513,75 @@ ia16_asm_integer (rtx x, unsigned size, int aligned_p)
   return true;
 }
 
+static bool
+ia16_asm_integer (rtx x, unsigned size, int aligned_p)
+{
+  rtx orig_x;
+
+  orig_x = x;
+  while (GET_CODE (x) == CONST)
+    x = XEXP (x, 0);
+
+  if (GET_CODE (x) != UNSPEC
+      || XINT (x, 1) != UNSPEC_STATIC_FAR_PTR
+      || GET_MODE (x) != SImode)
+    return default_assemble_integer (orig_x, size, aligned_p);
+
+  x = XVECEXP (x, 0, 0);
+  return ia16_assemble_far_pointer (x);
+}
+
+/* Macros Controlling Initialization Routines */
+#undef	TARGET_ASM_CONSTRUCTOR
+#define	TARGET_ASM_CONSTRUCTOR	ia16_asm_constructor
+
+static void
+ia16_assemble_far_pointer_to_section (rtx x, section *sec)
+{
+  switch_to_section (sec);
+  assemble_align (POINTER_SIZE);
+  if (! ia16_assemble_far_pointer (x))
+    gcc_unreachable ();
+}
+
+static void
+ia16_asm_constructor (rtx symbol, int priority)
+{
+  section *sec;
+
+  if (! TARGET_CMODEL_IS_FAR_TEXT)
+    default_named_section_asm_out_constructor (symbol, priority);
+  else
+    {
+      if (priority != DEFAULT_INIT_PRIORITY)
+	sec = get_cdtor_priority_section (priority, true);
+      else
+	sec = get_section (".ctors", SECTION_WRITE, NULL);
+      ia16_assemble_far_pointer_to_section (symbol, sec);
+    }
+}
+
+#undef	TARGET_ASM_DESTRUCTOR
+#define	TARGET_ASM_DESTRUCTOR	ia16_asm_destructor
+
+static void
+ia16_asm_destructor (rtx symbol, int priority)
+{
+  section *sec;
+
+  if (! TARGET_CMODEL_IS_FAR_TEXT)
+    default_named_section_asm_out_destructor (symbol, priority);
+  else
+    {
+      if (priority != DEFAULT_INIT_PRIORITY)
+	sec = get_cdtor_priority_section (priority, false);
+      else
+	sec = get_section (".dtors", SECTION_WRITE, NULL);
+      ia16_assemble_far_pointer_to_section (symbol, sec);
+    }
+}
+
+/* Output of Assembler Instructions */
 static const char *reg_QInames[FIRST_NOQI_REG] = {
 	"cl", "ch", "al", "ah", "dl", "dh", "bl", "bh"
 };
