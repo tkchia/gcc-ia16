@@ -35,6 +35,17 @@ if ![info exists DEFAULT_CFLAGS] then {
 dg-init
 
     set IA16_TORTURE_OPTIONS [list \
+	{ -O0 } \
+	{ -O0 -mprotected-mode } \
+	{ -O0 -mrtd } \
+	{ -O0 -mregparmcall } \
+	{ -O0 -mcmodel=small } \
+	{ -O0 -mcmodel=small -mmsdos-handle-v1 } \
+	{ -O0 -mcmodel=small -mprotected-mode } \
+	{ -O0 -mcmodel=small -mrtd } \
+	{ -O0 -mcmodel=small -mrtd -mmsdos-handle-v1 } \
+	{ -O0 -mcmodel=small -mregparmcall } \
+	{ -O0 -mcmodel=small -mregparmcall -mmsdos-handle-v1 } \
 	{ -O1 } \
 	{ -O1 -funroll-loops } \
 	{ -O1 -frename-registers } \
@@ -67,21 +78,6 @@ dg-init
 	{ -O1 -mcmodel=small -mprotected-mode -mregparmcall } \
 	{ -O1 -mcmodel=small -mprotected-mode -mregparmcall \
 	  -mmsdos-handle-v1 } \
-	{ -O1 -mcmodel=medium } \
-	{ -O1 -mcmodel=medium -mmsdos-handle-v1 } \
-	{ -O1 -mcmodel=medium -ffunction-sections -fdata-sections } \
-	{ -O1 -mcmodel=medium -funroll-loops } \
-	{ -O1 -mcmodel=medium -frename-registers } \
-	{ -O1 -mcmodel=medium -funroll-loops -fno-rename-registers } \
-	{ -O1 -mcmodel=medium -mrtd } \
-	{ -O1 -mcmodel=medium -mregparmcall } \
-	{ -O1 -mcmodel=medium -mprotected-mode } \
-	{ -O1 -mcmodel=medium -mprotected-mode -funroll-loops } \
-	{ -O1 -mcmodel=medium -mprotected-mode -frename-registers } \
-	{ -O1 -mcmodel=medium -mprotected-mode -funroll-loops \
-	  -fno-rename-registers } \
-	{ -O1 -mcmodel=medium -mprotected-mode -mrtd } \
-	{ -O1 -mcmodel=medium -mprotected-mode -mregparmcall } \
 	{ -O2 } \
 	{ -O2 -funroll-loops } \
 	{ -O2 -frename-registers } \
@@ -107,21 +103,6 @@ dg-init
 	  -fno-rename-registers } \
 	{ -O2 -mcmodel=small -mprotected-mode -mrtd } \
 	{ -O2 -mcmodel=small -mprotected-mode -mregparmcall } \
-	{ -O2 -mcmodel=medium } \
-	{ -O2 -mcmodel=medium -mmsdos-handle-v1 } \
-	{ -O2 -mcmodel=medium -ffunction-sections -fdata-sections } \
-	{ -O2 -mcmodel=medium -funroll-loops } \
-	{ -O2 -mcmodel=medium -frename-registers } \
-	{ -O2 -mcmodel=medium -funroll-loops -fno-rename-registers } \
-	{ -O2 -mcmodel=medium -mrtd } \
-	{ -O2 -mcmodel=medium -mregparmcall } \
-	{ -O2 -mcmodel=medium -mprotected-mode } \
-	{ -O2 -mcmodel=medium -mprotected-mode -funroll-loops } \
-	{ -O2 -mcmodel=medium -mprotected-mode -frename-registers } \
-	{ -O2 -mcmodel=medium -mprotected-mode -funroll-loops \
-	  -fno-rename-registers } \
-	{ -O2 -mcmodel=medium -mprotected-mode -mrtd } \
-	{ -O2 -mcmodel=medium -mprotected-mode -mregparmcall } \
 	{ -Os } \
 	{ -Os -funroll-loops } \
 	{ -Os -frename-registers } \
@@ -155,21 +136,6 @@ dg-init
 	{ -Os -mcmodel=small -mprotected-mode -mregparmcall } \
 	{ -Os -mcmodel=small -mprotected-mode -flto } \
 	{ -Os -mcmodel=small -mprotected-mode -finline-functions } \
-	{ -Os -mcmodel=medium } \
-	{ -Os -mcmodel=medium -mmsdos-handle-v1 } \
-	{ -Os -mcmodel=medium -ffunction-sections -fdata-sections } \
-	{ -Os -mcmodel=medium -funroll-loops } \
-	{ -Os -mcmodel=medium -frename-registers } \
-	{ -Os -mcmodel=medium -funroll-loops -fno-rename-registers } \
-	{ -Os -mcmodel=medium -mrtd } \
-	{ -Os -mcmodel=medium -mregparmcall } \
-	{ -Os -mcmodel=medium -mprotected-mode } \
-	{ -Os -mcmodel=medium -mprotected-mode -funroll-loops } \
-	{ -Os -mcmodel=medium -mprotected-mode -frename-registers } \
-	{ -Os -mcmodel=medium -mprotected-mode -funroll-loops \
-	  -fno-rename-registers } \
-	{ -Os -mcmodel=medium -mprotected-mode -mrtd } \
-	{ -Os -mcmodel=medium -mprotected-mode -mregparmcall } \
 	{ -O3 } \
 	{ -O3 -funroll-loops } \
 	{ -O3 -frename-registers } \
@@ -194,22 +160,7 @@ dg-init
 	{ -O3 -mcmodel=small -mprotected-mode -funroll-loops \
 	  -fno-rename-registers } \
 	{ -O3 -mcmodel=small -mprotected-mode -mrtd } \
-	{ -O3 -mcmodel=small -mprotected-mode -mregparmcall } \
-	{ -O3 -mcmodel=medium } \
-	{ -O3 -mcmodel=medium -mmsdos-handle-v1 } \
-	{ -O3 -mcmodel=medium -ffunction-sections -fdata-sections } \
-	{ -O3 -mcmodel=medium -funroll-loops } \
-	{ -O3 -mcmodel=medium -frename-registers } \
-	{ -O3 -mcmodel=medium -funroll-loops -fno-rename-registers } \
-	{ -O3 -mcmodel=medium -mrtd } \
-	{ -O3 -mcmodel=medium -mregparmcall } \
-	{ -O3 -mcmodel=medium -mprotected-mode } \
-	{ -O3 -mcmodel=medium -mprotected-mode -funroll-loops } \
-	{ -O3 -mcmodel=medium -mprotected-mode -frename-registers } \
-	{ -O3 -mcmodel=medium -mprotected-mode -funroll-loops \
-	  -fno-rename-registers } \
-	{ -O3 -mcmodel=medium -mprotected-mode -mrtd } \
-	{ -O3 -mcmodel=medium -mprotected-mode -mregparmcall } ]
+	{ -O3 -mcmodel=small -mprotected-mode -mregparmcall } ]
 
 #Initialize use of torture lists. 
 torture-init
