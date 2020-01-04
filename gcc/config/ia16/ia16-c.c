@@ -126,6 +126,9 @@ ia16_cpu_cpp_builtins (void)
   def_or_undef_macro ("__IA16_CALLCVT_ASSUME_DS_DATA", TARGET_ASSUME_DS_DATA);
   def_or_undef_macro ("__IA16_CALLCVT_NO_ASSUME_DS_DATA",
 		      ! TARGET_ASSUME_DS_DATA);
+  def_or_undef_macro ("__IA16_CALLCVT_ASSUME_SS_DATA", TARGET_ASSUME_SS_DATA);
+  def_or_undef_macro ("__IA16_CALLCVT_NO_ASSUME_SS_DATA",
+		      ! TARGET_ASSUME_SS_DATA);
   def_or_undef_macro ("__IA16_ABI_SEGELF", TARGET_ABI_SEGELF);
 
   /* Since the `regparmcall' convention is still in a state of flux, I am

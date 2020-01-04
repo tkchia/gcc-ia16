@@ -149,6 +149,13 @@ Target Alias(mcallee-assume-ds-data-segment) Undocumented
 mcallee-assume-ds-data-space
 Target Alias(mcallee-assume-ds-data-segment) Undocumented
 
+mno-callee-assume-ss-data-segment
+Target RejectNegative Report Mask(NO_ASSUME_SS_DATA)
+Alternate (experimental) calling convention (callee cannot assume %ss points to program's data segment on entry).
+
+mcallee-assume-ss-data-segment
+Target RejectNegative InverseMask(NO_ASSUME_SS_DATA, ASSUME_SS_DATA) Undocumented
+
 mno-far-function-if-far-return-type
 Target RejectNegative Report Mask(NO_FAR_FUNCTION_IF_FAR_RETURN_TYPE)
 Do not treat a function as __far even if it has a __far return type.

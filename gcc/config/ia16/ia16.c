@@ -1,5 +1,5 @@
 /* Subroutines used during code generation for Intel 16-bit x86.
-   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
    Contributed by Rask Ingemann Lambertsen <rask@sygehus.dk>
    Changes by Andrew Jenner <andrew@codesourcery.com>
    Very preliminary IA-16 far pointer support and other changes by TK Chia
@@ -222,10 +222,8 @@ ia16_save_reg_p (unsigned int r)
 
       return frame_pointer_needed;
     }
-#ifdef TARGET_ASSUME_SS_DATA
   if (r == DS_REG && ! TARGET_ASSUME_SS_DATA)
     return ! ia16_in_ds_data_function_p ();
-#endif
   if (! ia16_regno_in_class_p (r, QI_REGS))
     return (df_regs_ever_live_p (r) && !call_used_regs[r]);
   if (ia16_regno_in_class_p (r, UP_QI_REGS))
@@ -329,6 +327,14 @@ ia16_ds_data_function_type_p (const_tree funtype)
     return attrs && lookup_attribute ("assume_ds_data", attrs);
 }
 
+/* Return true iff TYPE is a type for a function which assumes that %ss
+   points to the program's data segment on function entry.  */
+int
+ia16_ss_data_function_type_p (const_tree funtype ATTRIBUTE_UNUSED)
+{
+  return TARGET_ASSUME_SS_DATA;
+}
+
 /* Return true iff TYPE is a type for a function which follows the default
    ABI for %ds --- which says that %ds
      * is considered (by the GCC middle-end) to be a call-used register,
@@ -338,7 +344,8 @@ static int
 ia16_default_ds_abi_function_type_p (const_tree funtype)
 {
   return TARGET_ALLOCABLE_DS_REG
-	 && ia16_ds_data_function_type_p (funtype);
+	 && ia16_ds_data_function_type_p (funtype)
+	 && ia16_ss_data_function_type_p (funtype);
 }
 
 int
@@ -352,7 +359,8 @@ ia16_in_ds_data_function_p (void)
 
 #define TARGET_DEFAULT_DS_ABI	(TARGET_ALLOCABLE_DS_REG \
 				 && call_used_regs[DS_REG] \
-				 && TARGET_ASSUME_DS_DATA)
+				 && TARGET_ASSUME_DS_DATA \
+				 && TARGET_ASSUME_SS_DATA)
 
 static int
 ia16_in_default_ds_abi_function_p (void)
@@ -850,7 +858,8 @@ ia16_function_ok_for_sibcall (tree decl, tree exp ATTRIBUTE_UNUSED)
 #define IA16_CALLCVT_REGPARMCALL	0x04
 #define IA16_CALLCVT_FAR		0x08
 #define IA16_CALLCVT_DS_DATA		0x10
-#define IA16_CALLCVT_NEAR_SECTION	0x20
+#define IA16_CALLCVT_SS_DATA		0x20
+#define IA16_CALLCVT_NEAR_SECTION	0x40
 
 static unsigned
 ia16_get_callcvt (const_tree type)
@@ -889,6 +898,14 @@ ia16_get_callcvt (const_tree type)
 
   if (ia16_ds_data_function_type_p (type))
     callcvt |= IA16_CALLCVT_DS_DATA;
+
+  if (ia16_ss_data_function_type_p (type))
+    callcvt |= IA16_CALLCVT_SS_DATA;
+
+  if ((callcvt & (IA16_CALLCVT_DS_DATA | IA16_CALLCVT_SS_DATA)) == 0)
+    error_at (type && TYPE_NAME (type)
+		? DECL_SOURCE_LOCATION (TYPE_NAME (type)) : UNKNOWN_LOCATION,
+	      "unsupported: function with both %%ds and %%ss != .data");
 
   return callcvt;
 }
@@ -1107,6 +1124,12 @@ ia16_set_default_type_attributes (tree type)
 	}
     }
 }
+
+#undef	TARGET_INSERT_ATTRIBUTES
+#define	TARGET_INSERT_ATTRIBUTES ia16_insert_attributes
+
+/* In ia16-no-ss-data.c .  */
+extern void ia16_insert_attributes (tree, tree *);
 
 /* Addressing Modes */
 
@@ -1614,7 +1637,7 @@ ia16_as_convert (rtx op, tree from_type, tree to_type)
       return ia16_far_pointer_offset (op);
     }
   else if (to_as == ADDR_SPACE_FAR
-	   && (from_as = ADDR_SPACE_GENERIC || from_as == ADDR_SPACE_SEG_SS))
+	   && (from_as == ADDR_SPACE_GENERIC || from_as == ADDR_SPACE_SEG_SS))
     {
       unsigned seg_reg_no = SS_REG;
 
@@ -1625,10 +1648,8 @@ ia16_as_convert (rtx op, tree from_type, tree to_type)
 	{
 	  if (FUNC_OR_METHOD_TYPE_P (from_type))
 	    seg_reg_no = CS_REG;
-#ifdef TARGET_ASSUME_SS_DATA
 	  else if (! TARGET_ASSUME_SS_DATA)
 	    seg_reg_no = DS_REG;
-#endif
 	}
 
       emit_move_insn (gen_rtx_SUBREG (HImode, op2, 0), op);
@@ -1638,7 +1659,12 @@ ia16_as_convert (rtx op, tree from_type, tree to_type)
       return op2;
     }
   else
-    gcc_unreachable ();
+    {
+      fprintf (stderr, "Trying to convert address-space-%d pointer to "
+		       "address-space-%d:\n", (int) from_as, (int) to_as);
+      debug_rtx (op);
+      gcc_unreachable ();
+    }
 }
 
 /* Condition Code Status */
@@ -2094,10 +2120,12 @@ ia16_seg_override_cost_likely_p (rtx r9, rtx r1, rtx r2)
 
      On the RTL side:
        * A null segment override (R9) means we are accessing an operand in
-	 the generic address space.  We currently assume that %ss points to
-	 this space.  %ds _might_ point to this space --- if the function
-	 assumes that %ds == .data on startup, and if the function we are
-	 compiling does not use %ds for anything.
+	 the generic address space.  If we can assume that %ss points to
+	 this space (the default), then %ds _might_ point to this space ---
+	 if the function assumes that %ds == .data on startup, and if the
+	 function we are compiling does not use %ds for anything.  If we
+	 cannot assume that %ss == .data, then we must have %ds == .data
+	 (for now).
        * If R9 is not null, then we are accessing an operand at an offset
 	 from the specified segment.
 
@@ -2105,11 +2133,7 @@ ia16_seg_override_cost_likely_p (rtx r9, rtx r1, rtx r2)
        * our operand is an offset from %ss, and the offset involves the
 	 register %bp (or the virtual "register" %argp); or
        * our operand is an offset from %ds, and %bp is not involved.  */
-  unsigned seg_reg_no = SS_REG;
-
-#ifdef TARGET_ASSUME_SS_DATA
-  seg_reg_no = DS_REG;
-#endif
+  unsigned seg_reg_no = TARGET_ASSUME_SS_DATA ? SS_REG : DS_REG;
 
   if (r9 && REG_P (r9))
     seg_reg_no = REGNO (r9);
@@ -3848,13 +3872,11 @@ ia16_print_operand_address_internal (FILE *file, rtx e, addr_space_t as)
       if (ia16_to_print_seg_override_p (REGNO (rs), rb))
 	fprintf (file, "%s%s:", REGISTER_PREFIX, reg_HInames[REGNO (rs)]);
     }
-#ifdef TARGET_ASSUME_SS_DATA
   else if (! TARGET_ASSUME_SS_DATA)
     {
       if (ia16_to_print_seg_override_p (DS_REG, rb))
 	fprintf (file, "%s%s:", REGISTER_PREFIX, reg_HInames[DS_REG]);
     }
-#endif
   else if (TARGET_ALLOCABLE_DS_REG ? df_regs_ever_live_p (DS_REG)
 				   : ! ia16_in_ds_data_function_p ())
     {
@@ -4324,6 +4346,12 @@ ia16_fold_builtin (tree fndecl, int n_args, tree *args,
       gcc_unreachable ();
     }
 }
+
+#undef	TARGET_SET_CURRENT_FUNCTION
+#define	TARGET_SET_CURRENT_FUNCTION ia16_set_current_function
+
+/* In ia16-no-ss-data.c .  */
+extern void ia16_set_current_function (tree);
 
 /* The Global targetm Variable */
 

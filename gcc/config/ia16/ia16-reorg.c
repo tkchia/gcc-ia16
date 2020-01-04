@@ -1,5 +1,5 @@
 /* Machine-dependent reorganization pass for Intel 16-bit x86 target.
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
    Contributed by TK Chia <https://github.com/tkchia/>
 
    This file is part of GCC.
@@ -251,10 +251,8 @@ ia16_stack_seg_mem_p (rtx x)
   switch (MEM_ADDR_SPACE (x))
     {
     case ADDR_SPACE_GENERIC:
-#ifdef TARGET_ASSUME_SS_DATA
       if (! TARGET_ASSUME_SS_DATA)
 	return false;
-#endif
       return true;
 
     case ADDR_SPACE_SEG_SS:

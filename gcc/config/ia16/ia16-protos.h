@@ -1,8 +1,8 @@
 /* GNU Compiler Collection prototypes for target machine Intel 16-bit x86.
-   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
    Contributed by Rask Ingemann Lambertsen <rask@sygehus.dk>
    Changes by Andrew Jenner <andrew@codesourcery.com>
-   Very preliminary IA-16 far pointer support by TK Chia
+   Very preliminary IA-16 far pointer support and other changes by TK Chia
 
    This file is part of GCC.
 
@@ -28,6 +28,7 @@ extern int		ia16_save_reg_p (unsigned);
 extern tree		ia16_get_function_type_for_addr (rtx);
 extern int		ia16_in_far_function_p (void);
 extern int		ia16_ds_data_function_type_p (const_tree funtype);
+extern int		ia16_ss_data_function_type_p (const_tree funtype);
 extern int		ia16_in_ds_data_function_p (void);
 extern bool		ia16_have_seg_override_p (rtx x);
 extern rtx		ia16_seg_override_term (rtx seg);

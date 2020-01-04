@@ -407,7 +407,7 @@ ia16-*-*)
 	cpu_type=ia16
 	c_target_objs="ia16-c.o"
 	cxx_target_objs="ia16-c.o"
-	extra_objs="ia16-reorg.o"
+	extra_objs="ia16-reorg.o ia16-no-ss-data.o"
 	target_has_targetm_common=no
 	;;
 ia64-*-*)

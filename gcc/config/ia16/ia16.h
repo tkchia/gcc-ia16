@@ -1,5 +1,5 @@
 /* GNU Compiler Collection definitions of target machine Intel 16-bit x86.
-   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
    Contributed by Rask Ingemann Lambertsen <rask@sygehus.dk>
    Changes by Andrew Jenner <andrew@codesourcery.com>
    Very preliminary IA-16 far pointer support and other changes by TK Chia
@@ -40,6 +40,10 @@
 
 /* Run-time Target Specification */
 #define TARGET_CPU_CPP_BUILTINS() ia16_cpu_cpp_builtins ()
+/* Using SWITCHABLE_TARGET makes it a bit easier for us to mess with
+   this_target_rtl to implement %ss != .data caling conventions.  See
+   ia16-no-ss-data.c .  */
+#define SWITCHABLE_TARGET	1
 
 /* Storage Layout
  *
@@ -143,6 +147,7 @@
    COMPLEX_MODE_P(MODE) &&						\
      HARD_REGNO_NREGS_HAS_PADDING((REGNO), (MODE)) ? 0 :		\
    ia16_hard_regno_nregs[GET_MODE_SIZE(MODE)][REGNO] &&			\
+     (TARGET_ASSUME_SS_DATA || (REGNO) != DS_REG) &&			\
      (! TARGET_PROTECTED_MODE || (MODE) == PHImode			\
       || ((REGNO) != DS_REG && (REGNO) != ES_REG)))
 
