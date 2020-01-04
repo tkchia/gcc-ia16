@@ -55,9 +55,10 @@ extern void	ia16_split_seg_override_and_offset (rtx x, rtx *ovr, rtx *off);
 extern void	ia16_initialize_trampoline (rtx addr, rtx fnaddr,
 					    rtx static_chain);
 extern bool	ia16_parse_address (rtx e, rtx *p_r1, rtx *p_r2, rtx *p_c,
-				    rtx *p_r9);
+				    rtx *p_r9, addr_space_t as);
 extern bool	ia16_parse_address_strict (rtx x, rtx *p_rb, rtx *p_ri,
-					   rtx *p_c, rtx *p_rs);
+					   rtx *p_c, rtx *p_rs,
+					   addr_space_t as);
 #endif
 extern rtx	ia16_push_reg (unsigned int regno);
 extern rtx	ia16_pop_reg (unsigned int regno);

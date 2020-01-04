@@ -61,6 +61,7 @@ ia16_cpu_cpp_builtins (void)
 
   builtin_define_std ("ia16");
   def_macro ("__FAR");
+  def_macro ("__SEG_SS");
 
   /* Define macros corresponding to features supported in the chosen -march=
      architecture.  Here I follow the ARM convention of defining macros with
@@ -245,4 +246,5 @@ void
 ia16_register_pragmas (void)
 {
   c_register_addr_space ("__far", ADDR_SPACE_FAR);
+  c_register_addr_space ("__seg_ss", ADDR_SPACE_SEG_SS);
 }

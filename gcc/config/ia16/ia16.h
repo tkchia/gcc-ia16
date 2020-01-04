@@ -599,6 +599,7 @@ enum reg_class {	/*	 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 #define FUNCTION_MODE			QImode
 
 #define ADDR_SPACE_FAR			1
+#define ADDR_SPACE_SEG_SS		2
 /* We hack gcc/tree-ssa-loop-ivopts.c and gcc/calls.c to recognize a new
    macro TARGET_ADDR_SPACE_WEIRD_P (as), which should return true if the
    given address space breaks certain assumptions made by compiler passes.  */

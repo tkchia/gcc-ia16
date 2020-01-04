@@ -795,10 +795,10 @@
   ""
 )
 
-;; Handling the %ds ?= %ss problem.
+;; Handling the %ds ?= .data problem.
 
-; Insn to reset %ds = %ss before a function call or just before a function
-; return, when (the default) -mcallee-assume-ds-ss is in effect.
+; Insn to reset %ds = .data, via %ss, before a function call or just before
+; a function return, when (the default) -mcallee-assume-ds-ss is in effect.
 ;
 ; Instead of writing out the unwieldy `pushw %ss' and `popw %ds' RTXs, I
 ; define a new insn which does the same thing at the x86 code level, but has
