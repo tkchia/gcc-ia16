@@ -1342,7 +1342,10 @@ ia16_bless_selector (rtx seg)
 rtx
 ia16_seg_override_term (rtx seg)
 {
-  return gen_seg_override_prot_mode (ia16_bless_selector (seg));
+  if (TARGET_PROTECTED_MODE)
+    return gen_seg_override_prot_mode (ia16_bless_selector (seg));
+  else
+    return gen_seg_override (seg);
 }
 
 static void
