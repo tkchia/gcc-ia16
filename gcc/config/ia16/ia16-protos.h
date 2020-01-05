@@ -30,8 +30,10 @@ extern int		ia16_in_far_function_p (void);
 extern int		ia16_ds_data_function_type_p (const_tree funtype);
 extern int		ia16_ss_data_function_type_p (const_tree funtype);
 extern int		ia16_in_ds_data_function_p (void);
+extern int		ia16_in_ss_data_function_p (void);
 extern bool		ia16_have_seg_override_p (rtx x);
 extern rtx		ia16_seg_override_term (rtx seg);
+extern void		ia16_override_abi_format (tree fndecl);
 extern HOST_WIDE_INT	ia16_first_parm_offset (tree fundecl);
 extern HOST_WIDE_INT	ia16_initial_frame_pointer_offset (void);
 extern HOST_WIDE_INT

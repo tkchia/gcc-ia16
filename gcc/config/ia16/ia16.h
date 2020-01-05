@@ -147,7 +147,7 @@
    COMPLEX_MODE_P(MODE) &&						\
      HARD_REGNO_NREGS_HAS_PADDING((REGNO), (MODE)) ? 0 :		\
    ia16_hard_regno_nregs[GET_MODE_SIZE(MODE)][REGNO] &&			\
-     (TARGET_ASSUME_SS_DATA || (REGNO) != DS_REG) &&			\
+     (ia16_in_ss_data_function_p () || (REGNO) != DS_REG) &&		\
      (! TARGET_PROTECTED_MODE || (MODE) == PHImode			\
       || ((REGNO) != DS_REG && (REGNO) != ES_REG)))
 
@@ -392,8 +392,8 @@ enum reg_class {	/*	 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 #define PUSH_ROUNDING(BYTES)	(((BYTES) + 1) & ~1)
 
 /* Passing Arguments in Registers */
-/* TODO: Allow arguments to be passed in registers.  */
-#define CUMULATIVE_ARGS				int
+#define CUMULATIVE_ARGS		int
+#define OVERRIDE_ABI_FORMAT(fndecl) ia16_override_abi_format (fndecl)
 #define INIT_CUMULATIVE_ARGS(CUM, FNTYPE, LIBNAME, FNDECL, N_NAMED_ARGS) \
 	ia16_init_cumulative_args (&(CUM), (FNTYPE), (LIBNAME), (FNDECL), \
 				   (N_NAMED_ARGS))

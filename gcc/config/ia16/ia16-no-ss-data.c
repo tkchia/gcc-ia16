@@ -77,20 +77,43 @@ ia16_stackify_type (tree type)
 }
 
 void
-ia16_insert_attributes (tree node, tree *attr_ptr ATTRIBUTE_UNUSED)
+ia16_override_abi_format (tree fndecl)
 {
-  if (TARGET_ASSUME_SS_DATA)
+  tree parm;
+
+  if (! fndecl)
+    {
+      if (! TARGET_ASSUME_SS_DATA)
+	error ("unsupported: compiler-generated functions with %%ss != .data");
+      return;
+    }
+
+  if (ia16_ss_data_function_type_p (TREE_TYPE (fndecl)))
     return;
 
+  /* Make stack parameter declarations refer to the __seg_ss address space. */
+  for (parm = DECL_ARGUMENTS (fndecl); parm; parm = DECL_CHAIN (parm))
+    {
+      TREE_TYPE (parm) = ia16_stackify_type (TREE_TYPE (parm));
+      DECL_ARG_TYPE (parm) = ia16_stackify_type (DECL_ARG_TYPE (parm));
+    }
+}
+
+void
+ia16_insert_attributes (tree node, tree *attr_ptr ATTRIBUTE_UNUSED)
+{
+  /* For every non-static variable declaration in an __attribute__
+     ((no_assume_ss_data)) function, make it refer to the __seg_ss address
+     space rather than the generic space.
+
+     Stack spill slots etc. are handled by TARGET_SET_CURRENT_FUNCTION.  */
   switch (TREE_CODE (node))
     {
     case PARM_DECL:
-      DECL_ARG_TYPE (node) = ia16_stackify_type (DECL_ARG_TYPE (node));
-      TREE_TYPE (node) = ia16_stackify_type (TREE_TYPE (node));
-      break;
 
     case VAR_DECL:
-      if (! TREE_STATIC (node) && ! TREE_PUBLIC (node)
+      if (! ia16_in_ss_data_function_p ()
+	  && ! TREE_STATIC (node) && ! TREE_PUBLIC (node)
 	  && ! DECL_EXTERNAL (node))
 	TREE_TYPE (node) = ia16_stackify_type (TREE_TYPE (node));
       break;
@@ -118,6 +141,12 @@ ia16_set_current_function (tree decl)
     {
       int i;
 
+      /* For __attribute__ ((no_assume_ss_data)) functions, fashion and use
+	 mode_mem_attrs[] structures which specify __seg_ss.  This causes
+	 gen_rtx_MEM (, ) to return (mem ...) RTXs that refer to the
+	 __seg_ss space on default.
+
+	 Yep, this works, except when it does not.  */
       r = ggc_alloc <target_rtl> ();
       *r = *ss_data_target_rtl;
 

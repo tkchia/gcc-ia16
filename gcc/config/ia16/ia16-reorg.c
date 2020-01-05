@@ -53,15 +53,19 @@ static int
 ia16_ds_data_function_rtx_p (rtx addr)
 {
   tree type = ia16_get_function_type_for_addr (addr);
-  if (type)
-    return ia16_ds_data_function_type_p (type);
-  else
-    return TARGET_ASSUME_DS_DATA;
+  return ia16_ds_data_function_type_p (type);
+}
+
+static int
+ia16_ss_data_function_rtx_p (rtx addr)
+{
+  tree type = ia16_get_function_type_for_addr (addr);
+  return ia16_ss_data_function_type_p (type);
 }
 
 /* If we are in an __attribute__ ((no_assume_ds_data)) function, and %ds is
-   fixed, check whether it calls any __attribute__ ((assume_ds_data)).  Flag
-   warnings if it does.  */
+   fixed, check whether it calls any __attribute__ ((assume_ds_data))
+   functions.  Flag warnings if it does.  */
 static void
 ia16_verify_calls_from_no_assume_ds (void)
 {
@@ -81,7 +85,33 @@ ia16_verify_calls_from_no_assume_ds (void)
 	      warning_at (LOCATION_LOCUS (INSN_LOCATION (insn)),
 			  OPT_Wmaybe_uninitialized,
 			  "%%ds is fixed, not resetting %%ds for call to "
-			  "assume_ds_ss function");
+			  "assume_ds_data function");
+	}
+    }
+}
+
+/* If we are in an __attribute__ ((no_assume_ss_data)) function,
+   check whether it calls any __attribute__ ((assume_ss_data)) functions. 
+   Flag warnings if it does.  */
+static void
+ia16_verify_calls_from_no_assume_ss (void)
+{
+  rtx_insn *insn;
+
+  if (ia16_in_ss_data_function_p ())
+    return;
+
+  for (insn = get_insns(); insn; insn = NEXT_INSN (insn))
+    {
+      if (CALL_P (insn))
+	{
+	  rtx call = get_call_rtx_from (insn);
+	  rtx callee = XEXP (XEXP (call, 0), 0);
+	  if (ia16_ss_data_function_rtx_p (callee))
+	      warning_at (LOCATION_LOCUS (INSN_LOCATION (insn)),
+			  OPT_Wmaybe_uninitialized,
+			  "calling assume_ss_data function when "
+			  "%%ss may not point to data segment");
 	}
     }
 }
@@ -251,9 +281,7 @@ ia16_stack_seg_mem_p (rtx x)
   switch (MEM_ADDR_SPACE (x))
     {
     case ADDR_SPACE_GENERIC:
-      if (! TARGET_ASSUME_SS_DATA)
-	return false;
-      return true;
+      return ia16_in_ss_data_function_p () ? true : false;
 
     case ADDR_SPACE_SEG_SS:
       return true;
@@ -1160,6 +1188,7 @@ void
 ia16_machine_dependent_reorg (void)
 {
   ia16_verify_calls_from_no_assume_ds ();
+  ia16_verify_calls_from_no_assume_ss ();
 
   if (optimize)
     {

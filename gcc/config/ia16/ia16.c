@@ -222,7 +222,7 @@ ia16_save_reg_p (unsigned int r)
 
       return frame_pointer_needed;
     }
-  if (r == DS_REG && ! TARGET_ASSUME_SS_DATA)
+  if (r == DS_REG && ! ia16_in_ss_data_function_p ())
     return ! ia16_in_ds_data_function_p ();
   if (! ia16_regno_in_class_p (r, QI_REGS))
     return (df_regs_ever_live_p (r) && !call_used_regs[r]);
@@ -319,20 +319,12 @@ ia16_ds_data_function_type_p (const_tree funtype)
   if (! call_used_regs[DS_REG])
     return 0;
 
-  attrs = TYPE_ATTRIBUTES (funtype);
+  attrs = funtype ? TYPE_ATTRIBUTES (funtype) : NULL_TREE;
 
   if (TARGET_ASSUME_DS_DATA)
     return ! attrs || ! lookup_attribute ("no_assume_ds_data", attrs);
   else
     return attrs && lookup_attribute ("assume_ds_data", attrs);
-}
-
-/* Return true iff TYPE is a type for a function which assumes that %ss
-   points to the program's data segment on function entry.  */
-int
-ia16_ss_data_function_type_p (const_tree funtype ATTRIBUTE_UNUSED)
-{
-  return TARGET_ASSUME_SS_DATA;
 }
 
 /* Return true iff TYPE is a type for a function which follows the default
@@ -355,6 +347,28 @@ ia16_in_ds_data_function_p (void)
     return ia16_ds_data_function_type_p (TREE_TYPE (cfun->decl));
   else
     return TARGET_ASSUME_DS_DATA;
+}
+
+/* Return true iff TYPE is a type for a function which assumes that %ss
+   points to the program's data segment on function entry.  */
+int
+ia16_ss_data_function_type_p (const_tree funtype)
+{
+  tree attrs = funtype ? TYPE_ATTRIBUTES (funtype) : NULL_TREE;
+
+  if (TARGET_ASSUME_SS_DATA)
+    return ! attrs || ! lookup_attribute ("no_assume_ss_data", attrs);
+  else
+    return attrs && lookup_attribute ("assume_ss_data", attrs);
+}
+
+int
+ia16_in_ss_data_function_p (void)
+{
+  if (cfun && cfun->decl)
+    return ia16_ss_data_function_type_p (TREE_TYPE (cfun->decl));
+  else
+    return TARGET_ASSUME_SS_DATA;
 }
 
 #define TARGET_DEFAULT_DS_ABI	(TARGET_ALLOCABLE_DS_REG \
@@ -1034,6 +1048,29 @@ ia16_handle_cconv_attribute (tree *node, tree name, tree args ATTRIBUTE_UNUSED,
       return NULL_TREE;
     }
 
+  if (is_attribute_p ("assume_ss_data", name))
+    {
+      tree attrs = TYPE_ATTRIBUTES (*node);
+      if (attrs && lookup_attribute ("no_assume_ss_data", attrs))
+	{
+	  error ("assume_ss_data and no_assume_ss_data attributes are not "
+		 "compatible");
+	  *no_add_attrs = true;
+	}
+      return NULL_TREE;
+    }
+  else if (is_attribute_p ("no_assume_ss_data", name))
+    {
+      tree attrs = TYPE_ATTRIBUTES (*node);
+      if (lookup_attribute ("assume_ss_data", attrs))
+	{
+	  error ("assume_ss_data and no_assume_ss_data attributes are not "
+		 "compatible");
+	  *no_add_attrs = true;
+	}
+      return NULL_TREE;
+    }
+
   if (! call_used_regs[DS_REG]
       && (is_attribute_p ("assume_ds_data", name)
 	  || is_attribute_p ("no_assume_ds_data", name)))
@@ -1080,6 +1117,10 @@ static const struct attribute_spec ia16_attribute_table[] =
 	       0, 0, false, true, true, ia16_handle_cconv_attribute, true },
   { "no_assume_ds_data",
 	       0, 0, false, true, true, ia16_handle_cconv_attribute, true },
+  { "assume_ss_data",
+	       0, 0, false, true, true, ia16_handle_cconv_attribute, true },
+  { "no_assume_ss_data",
+	       0, 0, false, true, true, ia16_handle_cconv_attribute, true },
   { "near_section",
 	       0, 0, false, true, true, ia16_handle_cconv_attribute, true },
   { "far_section",
@@ -1118,7 +1159,6 @@ ia16_set_default_type_attributes (tree type)
 	  if (ADDR_SPACE_GENERIC_P (TYPE_ADDR_SPACE (type)))
 	    TYPE_ADDR_SPACE (type) = ADDR_SPACE_FAR;
 	  break;
-
 	default:
 	  break;
 	}
@@ -1648,7 +1688,7 @@ ia16_as_convert (rtx op, tree from_type, tree to_type)
 	{
 	  if (FUNC_OR_METHOD_TYPE_P (from_type))
 	    seg_reg_no = CS_REG;
-	  else if (! TARGET_ASSUME_SS_DATA)
+	  else if (! ia16_in_ss_data_function_p ())
 	    seg_reg_no = DS_REG;
 	}
 
@@ -2133,7 +2173,7 @@ ia16_seg_override_cost_likely_p (rtx r9, rtx r1, rtx r2)
        * our operand is an offset from %ss, and the offset involves the
 	 register %bp (or the virtual "register" %argp); or
        * our operand is an offset from %ds, and %bp is not involved.  */
-  unsigned seg_reg_no = TARGET_ASSUME_SS_DATA ? SS_REG : DS_REG;
+  unsigned seg_reg_no = ia16_in_ss_data_function_p () ? SS_REG : DS_REG;
 
   if (r9 && REG_P (r9))
     seg_reg_no = REGNO (r9);
@@ -3872,7 +3912,7 @@ ia16_print_operand_address_internal (FILE *file, rtx e, addr_space_t as)
       if (ia16_to_print_seg_override_p (REGNO (rs), rb))
 	fprintf (file, "%s%s:", REGISTER_PREFIX, reg_HInames[REGNO (rs)]);
     }
-  else if (! TARGET_ASSUME_SS_DATA)
+  else if (! ia16_in_ss_data_function_p ())
     {
       if (ia16_to_print_seg_override_p (DS_REG, rb))
 	fprintf (file, "%s%s:", REGISTER_PREFIX, reg_HInames[DS_REG]);
