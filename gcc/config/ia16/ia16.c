@@ -3417,6 +3417,7 @@ ia16_asm_unique_section (tree decl, int reloc)
       /* fall through */
     case ADDR_SPACE_GENERIC:
       default_unique_section (decl, reloc);
+      break;
 
     case ADDR_SPACE_SEG_SS:
       error_at (DECL_SOURCE_LOCATION (decl), "cannot allocate static storage "
