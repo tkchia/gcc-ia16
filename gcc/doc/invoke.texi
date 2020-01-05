@@ -760,8 +760,9 @@ Objective-C and Objective-C++ Dialects}.
 -mmsdos -mmsdos-handle-v1 -mdpmiable -melks -melks-libc @gol
 -maout-total=@var{total} -mcmodel=tiny -mcmodel=small @gol
 -mseparate-code-segment -mno-segment-relocation-stuff -mrtd -mstdcall @gol
--mregparmcall -mno-callee-assume-ds-data-segment -mprotected-mode @gol
--mnewlib-nano-stdio -mnewlib-autofloat-stdio}
+-mregparmcall -mno-callee-assume-ds-data-segment @gol
+-mno-callee-assume-ss-data-segment -mno-far-function-if-far-return-type @gol
+-mprotected-mode -mnewlib-nano-stdio -mnewlib-autofloat-stdio}
 
 @emph{IA-64 Options}
 @gccoptlist{-mbig-endian  -mlittle-endian  -mgnu-as  -mgnu-ld  -mno-pic @gol
@@ -16649,7 +16650,7 @@ the appropriate @option{-mrtd} multilib.
 You can specify that an individual function is called with this calling
 sequence with the function attribute @code{stdcall}.  You can also
 override the @option{-mrtd} option by using the function attribute
-@code{cdecl} or @code{regparmcall}.  @xref{Function Attributes}.
+@code{cdecl} or @code{regparmcall}.  @xref{IA-16 Function Attributes}.
 
 @strong{Warning:} you must provide function prototypes for all functions that
 take variable numbers of arguments (including @code{printf});
@@ -16673,7 +16674,7 @@ the appropriate @option{-mregparmcall} multilib.
 You can specify that an individual function is called with this calling
 sequence with the function attribute @code{regparmcall}.  You can also
 override the @option{-mregparmcall} option by using the function attribute
-@code{cdecl} or @code{stdcall}.  @xref{Function Attributes}.
+@code{cdecl} or @code{stdcall}.  @xref{IA-16 Function Attributes}.
 
 @strong{Warning:} you must provide function prototypes for all functions that
 take variable numbers of arguments (including @code{printf});
@@ -16701,13 +16702,13 @@ This option is ignored if @code{ds} is set to be a call-saved register
 (@option{-fcall-saved-ds}).
 
 In the default configuration (@option{-mcallee-assume-ds-data-segment
--fcall-used-ds}), functions can assume that @code{ds} points to the
-program's data segment at function entry, and will arrange to reset
-@code{ds} to @code{ss}---if needed---just before returning.
+-mcallee-assume-ss-data-segment -fcall-used-ds}), functions can assume that
+@code{ds} points to the program's data segment at function entry, and will
+arrange to reset @code{ds} to @code{ss}---if needed---just before returning.
 
 You can override this option for individual functions, by using the
 @code{assume_ds_data} and @code{no_assume_ds_data} function attributes.
-@xref{Function Attributes}.
+@xref{IA-16 Function Attributes}.
 
 @item -mno-far-function-if-far-return-type
 @opindex mno-far-function-if-far-return-type
@@ -16731,7 +16732,8 @@ built-in function @samp{__builtin_ia16_selector}:
 @smallexample
 void foo (unsigned selector)
 @{
-  __asm volatile ("nop" : : "e" (__builtin_ia16_selector (selector)));
+  __asm volatile ("nop"
+                  : : "e" (__builtin_ia16_selector (selector)));
 @}
 @end smallexample
 
@@ -16785,6 +16787,12 @@ segmented code ABI,
 to generate code that is not binary compatible with code generated
 without that switch.  Using this switch may require recompiling all
 other modules in a program, including system libraries.
+
+@item -mno-callee-assume-ss-data-segment
+@opindex mno-callee-assume-ss-data-segment
+Use a different function-calling convention, in which the @code{ss} register
+is not assumed to point to the program's data segment at function entry. 
+This option exists only for testing.
 @end table
 
 @anchor{IA-16 Built-in Macros}
@@ -16792,23 +16800,18 @@ other modules in a program, including system libraries.
 
 @table @code
 @item __FAR
-This macro is defined only if the compiler supports the @code{__far} address
-space specifier (see @ref{IA-16 Named Address Spaces}).
+@itemx __SEG_SS
+Each of these macros is defined only if the compiler supports the named
+address space specifier (@pxref{IA-16 Named Address Spaces}).
 
 @item __IA16_CMODEL_TINY__
 @itemx __TINY__
-These macros are defined if the tiny code model is selected
-(@option{-mcmodel=tiny}).
-
-@item __IA16_CMODEL_SMALL__
+@itemx __IA16_CMODEL_SMALL__
 @itemx __SMALL__
-These macros are defined if the small code model is selected
-(@option{-mcmodel=small}).
-
-@item __IA16_CMODEL_MEDIUM__
+@itemx __IA16_CMODEL_MEDIUM__
 @itemx __MEDIUM__
-These macros are defined if the medium code model is selected
-(@option{-mcmodel=medium}).
+Each of these macros is defined only if the named code model (tiny, small,
+or medium) is selected.
 
 @item __IA16_ARCH_ANY
 @itemx __IA16_ARCH_ANY_186
@@ -16819,15 +16822,18 @@ These macros are defined if the medium code model is selected
 @itemx __IA16_ARCH_I80186
 @itemx __IA16_ARCH_I80188
 @itemx __IA16_ARCH_I80286
-@itemx __IA16_TUNE_I8086
+These macros are defined according to the @option{-march=@var{cpu-type}}
+option settings.
+
+@item __IA16_TUNE_I8086
 @itemx __IA16_TUNE_I8088
 @itemx __IA16_TUNE_NEC_V30
 @itemx __IA16_TUNE_NEC_V20
 @itemx __IA16_TUNE_I80186
 @itemx __IA16_TUNE_I80188
 @itemx __IA16_TUNE_I80286
-These macros are defined according to the @option{-march=@var{cpu-type}} and
-@option{-mtune=@var{cpu-type}} option settings.
+These macros are defined according to the @option{-mtune=@var{cpu-type}} and
+option settings.
 
 @item __IA16_FEATURE_SHIFT_IMM
 @itemx __IA16_FEATURE_PUSH_IMM
@@ -16857,26 +16863,35 @@ call-saved, not fixed.
 
 @item __IA16_FEATURE_FAR_FUNCTION_SYNTAX
 This macro is defined only if the postfix @code{__far} syntax for declaring
-far functions is supported (see @ref{IA-16 Named Address Spaces}).
+far functions is supported (@pxref{IA-16 Named Address Spaces}).
 
 @item __IA16_CALLCVT_FAR_FUNCTION_IF_FAR_RETURN_TYPE
 This macro is defined only if the classical syntax for declaring far
-functions is supported (see @ref{IA-16 Named Address Spaces}).
+functions is supported (@pxref{IA-16 Named Address Spaces}).
 
 @item __IA16_FEATURE_FAR_STATIC_STORAGE
 This macro is defined only if static storage variables can be placed in
-@code{__far} space (see @ref{IA-16 Named Address Spaces}).
+@code{__far} space (@pxref{IA-16 Named Address Spaces}).
+
+@item __IA16_FEATURE_ATTRIBUTE_CDECL
+@itemx __IA16_FEATURE_ATTRIBUTE_STDCALL
+@itemx __IA16_FEATURE_ATTRIBUTE_REGPARMCALL
+@itemx __IA16_FEATURE_ATTRIBUTE_ASSUME_DS_DATA
+@itemx __IA16_FEATURE_ATTRIBUTE_NO_ASSUME_DS_DATA
+@itemx __IA16_FEATURE_ATTRIBUTE_NO_ASSUME_SS_DATA
+@itemx __IA16_FEATURE_ATTRIBUTE_NEAR_SECTION
+@itemx __IA16_FEATURE_ATTRIBUTE_FAR_SECTION
+Each of these macros is defined only if the corresponding function attribute
+is supported (@pxref{IA-16 Function Attributes}).
 
 @item __BUILTIN_IA16_SELECTOR
 @itemx __BUILTIN_IA16_FP_OFF
 Each of these macros is defined only if the corresponding
-@code{__builtin_ia16_}@dots{} macro is defined (see @ref{IA-16 Built-in
+@code{__builtin_ia16_}@dots{} macro is defined (@pxref{IA-16 Built-in
 Functions}).
 
 @c I am not sure yet if I should document and codify the remaining macros,
-@c viz. __IA16_FEATURE_ATTRIBUTE_{CDECL, STDCALL}, and __IA16_CALLCVT_{CDECL,
-@c STDCALL}...
-@c -- tkchia
+@c viz. __IA16_CALLCVT_{CDECL, STDCALL}, etc.  -- tkchia
 @c
 @end table
 

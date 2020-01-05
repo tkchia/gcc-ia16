@@ -1428,6 +1428,8 @@ Such code requires at least binutils 2.23, see
 @subsection IA-16 Named Address Spaces
 @cindex @code{__far} IA-16 Named Address Spaces
 
+@subsubsection @code{__far}
+
 On the IA-16 target, a pointer qualified with the word @code{__far} is a
 32-bit ``far pointer'' which can be used to access memory outside of the
 64@tie{}KiB generic address space.
@@ -1447,10 +1449,11 @@ unsigned long irq0_clock_ticks (void)
 @}
 @end smallexample
 
-Another way is to cast a generic data pointer or function pointer to a far
-pointer type.  For a data pointer, the resulting pointer will have the
-data segment value---taken from the @code{ss} register---as its segment
-component; for a function pointer, this will be from @code{cs}.
+Another way is to cast a generic data pointer, @code{__seg_ss} data pointer
+(see below), or function pointer, to a far pointer type.  For a data
+pointer, the resulting pointer will have the data segment value---taken from
+the @code{ds} or @code{ss} register---as its segment component; for a
+function pointer, this will be from @code{cs}.
 
 @smallexample
 void set_diskette_params (const unsigned char params[])
@@ -1462,8 +1465,7 @@ void set_diskette_params (const unsigned char params[])
 @}
 @end smallexample
 
-@noindent
-@b{Far static storage variables}
+@subsubheading Far Static Storage Variables
 
 Under the small memory model (@option{-mcmodel=small})---and unless you
 specify @option{-mno-segment-relocation-stuff}---you can also define far
@@ -1478,12 +1480,12 @@ int __far *f (int b)
 @}
 @end smallexample
 
-@noindent
-@b{Far functions}
+@subsubheading Far Functions
 
 There is some preliminary support for defining and invoking far functions,
-as well as defining far function pointers.  To mark a function as far, write
-the word @code{__far} immediately after its parameter list.  For example:
+as well as defining far function pointers.  To mark a function as far, one
+way is to write the word @code{__far} immediately after its parameter list.
+For example:
 
 @smallexample
 int (*foo) (long) __far;
@@ -1546,14 +1548,14 @@ the program's text segment, you can get GCC to use @code{call} or @code{jmp}
 for this function, with an attribute:
 
 @smallexample
-int baz (long) __far __attribute__ ((near_section));
+int baz (long) __far __attribute__ ((__near_section__));
 @end smallexample
 
 Conversely, if you would like to place a locally defined far function
 @emph{outside} the normal text segment, you can use a different attribute:
 
 @smallexample
-__attribute__ ((far_section))
+__attribute__ ((__far_section__))
 __far int qux (long x)
 @{ ... @}
 @end smallexample
@@ -1563,13 +1565,7 @@ non-far functions in the normal text segment---including standard C library
 functions and compiler support routines.  However, the internal
 implementation for such calls is still rather inefficient.
 
-@noindent
-@b{Preprocessor symbols}
-
-@xref{IA-16 Built-in Macros}.
-
-@noindent
-@b{Limitations and caveats}
+@subsubheading Limitations and Caveats
 
 @itemize
 
@@ -1650,6 +1646,17 @@ far address operations---such as copying a struct between two far addresses.
 This, too, may change in the future.
 
 @end itemize
+
+@subsubsection @code{__seg_ss}
+
+Within a function marked @code{__attribute__ ((__no_assume_ss_data__))}
+(@pxref{IA-16 Function Attributes}), a pointer qualified with
+@code{__seg_ss} can be used to refer to memory in the caller's stack, rather
+than the program's data segment.
+
+@subsubsection Preprocessor symbols
+
+@xref{IA-16 Built-in Macros}.
 
 @subsection M32C Named Address Spaces
 @cindex @code{__far} M32C Named Address Spaces
@@ -4213,10 +4220,11 @@ These function attributes are supported by the IA-16 back end:
 @cindex @code{cdecl} function attribute, IA-16
 @cindex functions that pop the argument stack on IA-16
 @opindex mrtd
+@opindex mregparmcall
 On the IA-16 target, the @code{cdecl} attribute causes the compiler to
 assume that the calling function pops off the stack space used to
-pass arguments.  This is
-useful to override the effects of the @option{-mrtd} switch.
+pass arguments.  This is useful to override the effects of a @option{-mrtd}
+or @option{-mregparmcall} switch.
 
 @item stdcall
 @cindex @code{stdcall} function attribute, IA-16
@@ -4238,8 +4246,6 @@ An exception is that, if the number of arguments is variable, the @code{...}
 variable arguments will always go on the stack, and the calling function
 pops all pushed arguments.
 
-@code{regparmcall} support is still experimental.
-
 @item assume_ds_data
 @cindex @code{assume_ds_data} function attribute, IA-16
 This attribute, attached to a function, causes the compiler to assume that
@@ -4255,6 +4261,17 @@ This attribute has no effect if @code{ds} is a call-saved register
 This attribute, attached to a function, causes the compiler @emph{not} to
 assume that @code{ds} points to the program's data segment on function
 entry.  It has no effect if @code{ds} is a call-saved register.
+
+@item no_assume_ss_data
+@cindex @code{no_assume_ss_data} function attribute, IA-16
+This attribute, attached to a function, causes the compiler @emph{not} to
+assume that @code{ss} points to the program's data segment on function
+entry.  The function's stack parameters and variables are considered to be
+in a separate @code{__seg_ss} address space.  @xref{IA-16 Named Address
+Spaces}.
+
+@strong{Warning:} This feature is experimental, and may produce broken code.
+Use with caution.
 
 @item near_section
 @cindex @code{near_section} function attribute, IA-16
