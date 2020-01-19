@@ -68,6 +68,28 @@
 
 /* Storage Layout.  */
 
+/* Cached information for each compiled function */
+struct GTY (()) machine_function
+{
+  unsigned callcvt_cached_p : 1,
+	   data_seg_rtx_cached_p : 1;
+  unsigned cached_callcvt;
+  rtx data_seg_rtx;
+};
+
+#undef	TARGET_EXPAND_TO_RTL_HOOK
+#define	TARGET_EXPAND_TO_RTL_HOOK	ia16_expand_to_rtl_hook
+
+static void ia16_cache_function_info (bool);
+
+void ia16_expand_to_rtl_hook (void)
+{
+  /* Get cfun->machine->data_seg_rtx as early as possible!  */
+  ia16_cache_function_info (true);
+}
+
+/* Type Layout.  */
+
 /* Layout of Source Language Data Types */
 #undef  TARGET_DEFAULT_SHORT_ENUMS
 #define TARGET_DEFAULT_SHORT_ENUMS	hook_bool_void_true
@@ -135,12 +157,6 @@ struct ptt
   int features;
 };
 
-/* Cached information for each compiled function */
-struct GTY (()) machine_function
-{
-  unsigned cached_callcvt;
-};
-
 #undef	TARGET_PREFERRED_RELOAD_CLASS
 #define	TARGET_PREFERRED_RELOAD_CLASS ia16_preferred_reload_class
 
@@ -186,7 +202,10 @@ ia16_secondary_reload (bool in_p, rtx x, reg_class_t reload_class,
 }
 
 #undef TARGET_LRA_P
-#define TARGET_LRA_P hook_bool_void_true
+#define TARGET_LRA_P	ia16_lra_p
+
+/* In ia16-no-ss-data.c .  */
+extern bool ia16_lra_p (void);
 
 #undef TARGET_CANNOT_SUBSTITUTE_MEM_EQUIV_P
 #define TARGET_CANNOT_SUBSTITUTE_MEM_EQUIV_P ia16_cannot_substitute_mem_equiv_p
@@ -228,8 +247,6 @@ ia16_save_reg_p (unsigned int r)
 
       return frame_pointer_needed;
     }
-  if (r == DS_REG && ! ia16_in_ss_data_function_p ())
-    return ! ia16_in_ds_data_function_p ();
   if (! ia16_regno_in_class_p (r, QI_REGS))
     return (df_regs_ever_live_p (r) && !call_used_regs[r]);
   if (ia16_regno_in_class_p (r, UP_QI_REGS))
@@ -394,19 +411,40 @@ ia16_far_function_type_p (const_tree funtype)
     return TYPE_ADDR_SPACE (funtype) == ADDR_SPACE_FAR;
 }
 
-/* Determine the current function's calling convention, and cache this
-   information under cfun->machine.  */
+/* Determine the current function's calling convention.  Also obtain an RTX
+   for the initial %ds value, if necessary --- this is used if the current
+   function has %ss != .data.
+
+   Cache these pieces of information under cfun->machine.  */
 static void
-ia16_cache_function_info (void)
+ia16_cache_function_info (bool need_data_seg_rtx_p)
 {
-  if (! cfun->machine)
+  struct machine_function *machine = cfun->machine;
+
+  if (! machine->callcvt_cached_p)
     {
-      struct machine_function *machine
-	= ggc_cleared_alloc <machine_function> ();
       tree type = cfun->decl ? TREE_TYPE (cfun->decl) : NULL_TREE;
       machine->cached_callcvt = ia16_get_callcvt (type);
-      cfun->machine = machine;
+      machine->callcvt_cached_p = true;
     }
+
+  if (need_data_seg_rtx_p && ! machine->data_seg_rtx_cached_p)
+    {
+      if ((machine->cached_callcvt & IA16_CALLCVT_SS_DATA) != 0)
+	machine->data_seg_rtx = NULL_RTX;
+      else
+	machine->data_seg_rtx = get_hard_reg_initial_val (SEGmode, DS_REG);
+      machine->data_seg_rtx_cached_p = true;
+    }
+}
+
+/* Return an RTX for the program's data segment value (.data), or NULL_RTX
+   if none should be needed (%ss == .data).  */
+rtx
+ia16_data_seg_rtx (void)
+{
+  ia16_cache_function_info (true);
+  return cfun->machine->data_seg_rtx;
 }
 
 /* Return true iff we are currently compiling a far function.  */
@@ -415,7 +453,7 @@ ia16_in_far_function_p (void)
 {
   if (! cfun)
     return TARGET_CMODEL_IS_FAR_TEXT;
-  ia16_cache_function_info ();
+  ia16_cache_function_info (false);
   return (cfun->machine->cached_callcvt & IA16_CALLCVT_FAR) != 0;
 }
 
@@ -439,18 +477,11 @@ ia16_ds_data_function_type_p (const_tree funtype)
     return attrs && lookup_attribute ("assume_ds_data", attrs);
 }
 
-/* Return true iff TYPE is a type for a function which follows the default
-   ABI for %ds --- which says that %ds
-     * is considered (by the GCC middle-end) to be a call-used register,
-     * is assumed to point to the program's data segment on function entry,
-     * and is restored to the data segment on function exit.  */
-static int
-ia16_default_ds_abi_function_type_p (const_tree funtype)
+int
+ia16_ds_data_function_rtx_p (rtx addr)
 {
-  return TARGET_ALLOCABLE_DS_REG
-	 && call_used_regs[DS_REG]
-	 && ia16_ds_data_function_type_p (funtype)
-	 && ia16_ss_data_function_type_p (funtype);
+  tree type = ia16_get_function_type_for_addr (addr);
+  return ia16_ds_data_function_type_p (type);
 }
 
 int
@@ -458,7 +489,7 @@ ia16_in_ds_data_function_p (void)
 {
   if (! cfun)
     return TARGET_ASSUME_DS_DATA;
-  ia16_cache_function_info ();
+  ia16_cache_function_info (false);
   return (cfun->machine->cached_callcvt & IA16_CALLCVT_DS_DATA) != 0;
 }
 
@@ -480,36 +511,17 @@ ia16_in_ss_data_function_p (void)
 {
   if (! cfun)
     return TARGET_ASSUME_SS_DATA;
-  ia16_cache_function_info ();
+  ia16_cache_function_info (false);
   return (cfun->machine->cached_callcvt & IA16_CALLCVT_SS_DATA) != 0;
 }
 
-#define TARGET_DEFAULT_DS_ABI	(TARGET_ALLOCABLE_DS_REG \
-				 && call_used_regs[DS_REG] \
-				 && TARGET_ASSUME_DS_DATA \
-				 && TARGET_ASSUME_SS_DATA)
-
-static int
-ia16_in_default_ds_abi_function_p (void)
+/* Re-recognize INSN: match PATTERN (INSN), which has likely just been
+   modified, to the corresponding instruction pattern in the machine
+   description, and update INSN_CODE (INSN).  */
+void
+ia16_recog (rtx_insn *insn)
 {
-  if (! cfun)
-    return TARGET_DEFAULT_DS_ABI;
-  ia16_cache_function_info ();
-  return TARGET_ALLOCABLE_DS_REG
-	 && call_used_regs[DS_REG]
-	 && (cfun->machine->cached_callcvt
-	     & (IA16_CALLCVT_DS_DATA | IA16_CALLCVT_SS_DATA))
-	    == (IA16_CALLCVT_DS_DATA | IA16_CALLCVT_SS_DATA);
-}
-
-static int
-ia16_default_ds_abi_function_rtx_p (rtx addr)
-{
-  tree type = ia16_get_function_type_for_addr (addr);
-  if (type)
-    return ia16_default_ds_abi_function_type_p (type);
-  else
-    return TARGET_DEFAULT_DS_ABI;
+  INSN_CODE (insn) = recog (PATTERN (insn), insn, NULL);
 }
 
 static int
@@ -531,7 +543,7 @@ ia16_in_far_section_function_p (void)
 {
   if (! cfun)
     return 0;
-  ia16_cache_function_info ();
+  ia16_cache_function_info (false);
   return (cfun->machine->cached_callcvt & IA16_CALLCVT_FAR_SECTION) != 0;
 }
 
@@ -1231,7 +1243,7 @@ ia16_function_attribute_inlinable_p (const_tree fndecl)
   if ((their_cvt & IA16_CALLCVT_FAR_SECTION) != 0)
     return false;
 
-  ia16_cache_function_info ();
+  ia16_cache_function_info (false);
   our_cvt = cfun->machine->cached_callcvt;
 
   /* Whether the caller and/or callee is/are near_section is not very
@@ -3529,7 +3541,7 @@ ia16_asm_unique_section (tree decl, int reloc)
 static struct machine_function *
 ia16_init_machine_status (void)
 {
-  return NULL;
+  return ggc_cleared_alloc <machine_function> ();
 }
 
 static void
@@ -4521,24 +4533,27 @@ ia16_non_overlapping_mem_p (rtx m1, rtx m2)
 static void
 ia16_expand_reset_ds_internal (void)
 {
-  if (TARGET_PROTECTED_MODE)
+  rtx ds = gen_rtx_REG (SEGmode, DS_REG);
+  if (! ia16_in_ss_data_function_p ())
+    emit_move_insn (ds, ia16_data_seg_rtx ());
+  else if (TARGET_PROTECTED_MODE)
     emit_insn (gen__movphi_ds_ss_slow ());
   else
     emit_insn (gen__movhi_ds_ss_slow ());
-  emit_use (gen_rtx_REG (SEGmode, DS_REG));
+  emit_use (ds);
 }
 
 void
 ia16_expand_reset_ds_for_call (rtx addr)
 {
-  if (ia16_default_ds_abi_function_rtx_p (addr))
+  if (ia16_ds_data_function_rtx_p (addr))
     ia16_expand_reset_ds_internal ();
 }
 
 void
 ia16_expand_reset_ds_for_return (void)
 {
-  if (ia16_in_default_ds_abi_function_p ())
+  if (ia16_in_ds_data_function_p () && ia16_in_ss_data_function_p ())
     ia16_expand_reset_ds_internal ();
 }
 

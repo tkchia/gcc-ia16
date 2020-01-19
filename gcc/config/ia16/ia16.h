@@ -147,7 +147,6 @@
    COMPLEX_MODE_P(MODE) &&						\
      HARD_REGNO_NREGS_HAS_PADDING((REGNO), (MODE)) ? 0 :		\
    ia16_hard_regno_nregs[GET_MODE_SIZE(MODE)][REGNO] &&			\
-     ((REGNO) != DS_REG || ia16_in_ss_data_function_p ()) &&		\
      (! TARGET_PROTECTED_MODE || (MODE) == PHImode			\
       || ((REGNO) != DS_REG && (REGNO) != ES_REG)))
 
@@ -280,7 +279,7 @@ enum reg_class {	/*	 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
  * SEGMENT term,
  *	(unspec:<mode> [<expr> ...] <unspec_op>)
  * if this SEGMENT term is part of an address.  For IA-16, the form is
- *	(unspec:HI [<expr>] UNSPEC_SEG_OVERRIDE)
+ *	(unspec:SEG [<expr>] UNSPEC_SEG_OVERRIDE)
  * and we want to get <expr> loaded into a segment register (%ds or %es).
  */
 #define MODE_SEGMENT_REG_CLASS(outer_mode, inner_mode, unspec_op) \

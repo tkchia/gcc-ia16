@@ -50,136 +50,10 @@
 #include "recog.h"
 
 static int
-ia16_ds_data_function_rtx_p (rtx addr)
-{
-  tree type = ia16_get_function_type_for_addr (addr);
-  return ia16_ds_data_function_type_p (type);
-}
-
-static int
 ia16_ss_data_function_rtx_p (rtx addr)
 {
   tree type = ia16_get_function_type_for_addr (addr);
   return ia16_ss_data_function_type_p (type);
-}
-
-static rtx
-ia16_rectify_readonly_ss_mems (rtx x)
-{
-  const char *fmt;
-  int fmt_len, i;
-  enum rtx_code code;
-  bool copied = false;
-  rtx subx, new_subx;
-
-  if (! x)
-    return x;
-
-  code = GET_CODE (x);
-
-  if (code == MEM && MEM_READONLY_P (x)
-      && MEM_ADDR_SPACE (x) == ADDR_SPACE_SEG_SS)
-    {
-      x = shallow_copy_rtx (x);
-      set_mem_addr_space (x, ADDR_SPACE_GENERIC);
-      copied = true;
-    }
-
-  fmt = GET_RTX_FORMAT (code);
-  fmt_len = GET_RTX_LENGTH (code);
-
-  for (i = 0; i < fmt_len; ++i)
-    {
-      switch (fmt[i])
-	{
-	case 'e':
-	  subx = XEXP (x, i);
-	  new_subx = ia16_rectify_readonly_ss_mems (subx);
-	  if (new_subx != subx)
-	    {
-	      if (! copied)
-		{
-		  x = shallow_copy_rtx (x);
-		  copied = true;
-		}
-	      XEXP (x, i) = new_subx;
-	    }
-	  break;
-
-	case 'E':
-	  if (XVEC (x, i))
-	    {
-	      bool vec_copied = false;
-	      int vec_len = XVECLEN (x, i);
-	      int j;
-
-	      for (j = 0; j < vec_len; ++j)
-		{
-		  subx = XVECEXP (x, i, j);
-		  new_subx = ia16_rectify_readonly_ss_mems (subx);
-		  if (new_subx != subx)
-		    {
-		      if (! copied)
-			{
-			  x = shallow_copy_rtx (x);
-			  copied = true;
-			}
-		      if (! vec_copied)
-			{
-			  XVEC (x, i) = shallow_copy_rtvec (XVEC (x, i));
-			  vec_copied = true;
-			}
-		      XVECEXP (x, i, j) = new_subx;
-		    }
-		}
-	    }
-	  break;
-
-	default:
-	  break;
-	}
-    }
-
-  return x;
-}
-
-/* Re-recognize INSN: match PATTERN (INSN), which has likely just been
-   modified, to the corresponding instruction pattern in the machine
-   description, and update INSN_CODE (INSN).  */
-static void
-ia16_recog (rtx_insn *insn)
-{
-  INSN_CODE (insn) = recog (PATTERN (insn), insn, NULL);
-}
-
-/* If we are in an __attribute__ ((no_assume_ss_data)) function, look for
-   any (mem/u ...) RTXs --- which should refer to static constant memory ---
-   that erroneously point into the __seg_ss address space, and correct them
-   to refer to the generic address space instead.
-
-   FIXME: this correction should probably be done at an earlier stage.  At
-   least, it should happen before other RTL-level optimizations.  */
-static void
-ia16_rectify_mems_for_no_assume_ss (void)
-{
-  rtx_insn *insn;
-
-  if (ia16_in_ss_data_function_p ())
-    return;
-
-  for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
-    {
-      if (INSN_P (insn))
-	{
-	  rtx pat = PATTERN (insn);
-	  rtx new_pat = ia16_rectify_readonly_ss_mems (pat);
-	  if (new_pat != pat)
-	    {
-	      PATTERN (insn) = new_pat;
-	      ia16_recog (insn);
-	    }
-	}
-    }
 }
 
 /* If we are in an __attribute__ ((no_assume_ds_data)) function, and %ds is
@@ -1400,9 +1274,6 @@ ia16_rewrite_movw_as_xchgw (void)
 void
 ia16_machine_dependent_reorg (void)
 {
-  /* Do correctness adjustments.  */
-  ia16_rectify_mems_for_no_assume_ss ();
-
   /* Do correctness checks.  */
   ia16_verify_calls_from_no_assume_ds ();
   ia16_verify_calls_from_no_assume_ss ();
@@ -1433,8 +1304,12 @@ ia16_machine_dependent_reorg (void)
 
       if (TARGET_ALLOCABLE_DS_REG && call_used_regs[DS_REG])
 	{
-	  ia16_elide_unneeded_ss_stuff ();
-	  ia16_tweak_reset_ds ();
+	  if (ia16_in_ss_data_function_p ())
+	    {
+	      ia16_elide_unneeded_ss_stuff ();
+	      ia16_tweak_reset_ds ();
+	    }
+	  /* FIXME: also optimize when %ss != .data .  */
 	}
 
       free_bb_for_insn ();

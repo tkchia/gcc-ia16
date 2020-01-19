@@ -68,3 +68,9 @@ do_stuff (void)
 
   return 0;
 }
+
+int
+check_stuff (void)
+{
+  return 0;
+}

@@ -54,6 +54,200 @@
 struct target_rtl *ia16_ss_data_target_rtl = NULL,
 		  *ia16_no_ss_data_target_rtl = NULL;
 
+/* GCC invokes TARGET_LRA_P () some time after producing RTL, and just
+   before doing register allocation.
+
+   1) For %ss != .data, this is a good time to tag segment override terms ---
+      of the form `(unspec:HI [<data-seg-rtx>] UNSPEC_SEG_OVERRIDE)' ---
+      segment override terms onto `(mem ...)' addresses that go to the generic
+      address space.
+
+      (Exceptions are `(call (mem ...) ...)`, where the `(mem ...)' refer to
+      text segment addresses.)
+
+      To make sure that the <data-seg-rtx> is not eliminated or moved around
+      too much early on during RTL optimization (!):
+
+      a) I add a special-case hack to the "mov<mode>" insn pattern in ia16.md
+	 to `(use)' the <data-seg-rtx> whenever it is `(set)' (near the
+	 function entry); and
+
+      b) I also maintain its liveness throughout the function, _and_ also
+	 properly restore %ds, by adding
+		(set (reg:SEG DS_REG) <data-seg-rtx>)
+		(use (reg:SEG DS_REG))
+	 at every place where the function may exit.
+
+   2) Also take this chance to look for any `(mem/u ...)' RTXs --- which
+      should refer to static constant memory --- that erroneously point into
+      the __seg_ss address space, and correct them to point into the generic
+      address space.
+
+      (FIXME: this latter correction should probably be done at an earlier
+      stage.  At least, it should happen before any RTL-level
+      optimizations.)  */
+static rtx
+ia16_rectify_mems (rtx x, enum rtx_code outer_code)
+{
+  const char *fmt;
+  int fmt_len, i;
+  enum rtx_code code;
+  bool copied = false;
+  rtx subx, new_subx;
+
+  if (! x)
+    return x;
+
+  code = GET_CODE (x);
+
+  if (code == MEM)
+    {
+      if (MEM_ADDR_SPACE (x) == ADDR_SPACE_SEG_SS && MEM_READONLY_P (x))
+	{
+	  x = shallow_copy_rtx (x);
+	  set_mem_addr_space (x, ADDR_SPACE_GENERIC);
+	  copied = true;
+	}
+
+      if (ADDR_SPACE_GENERIC_P (MEM_ADDR_SPACE (x)) && outer_code != CALL)
+	{
+	  rtx addr = XEXP (x, 0);
+	  if (! ia16_have_seg_override_p (addr))
+	    {
+	      rtx data_seg = ia16_data_seg_rtx (), ovr;
+	      gcc_assert (data_seg);
+	      ovr = ia16_seg_override_term (data_seg);
+	      addr = gen_rtx_PLUS (HImode, addr, ovr);
+	      if (! copied)
+		{
+		  x = shallow_copy_rtx (x);
+		  copied = true;
+		}
+		XEXP (x, 0) = addr;
+	    }
+	}
+    }
+
+  fmt = GET_RTX_FORMAT (code);
+  fmt_len = GET_RTX_LENGTH (code);
+
+  for (i = 0; i < fmt_len; ++i)
+    {
+      switch (fmt[i])
+	{
+	case 'e':
+	  subx = XEXP (x, i);
+	  new_subx = ia16_rectify_mems (subx, code);
+	  if (new_subx != subx)
+	    {
+	      if (! copied)
+		{
+		  x = shallow_copy_rtx (x);
+		  copied = true;
+		}
+	      XEXP (x, i) = new_subx;
+	    }
+	  break;
+
+	case 'E':
+	  if (XVEC (x, i))
+	    {
+	      bool vec_copied = false;
+	      int vec_len = XVECLEN (x, i);
+	      int j;
+
+	      for (j = 0; j < vec_len; ++j)
+		{
+		  subx = XVECEXP (x, i, j);
+		  new_subx = ia16_rectify_mems (subx, code);
+		  if (new_subx != subx)
+		    {
+		      if (! copied)
+			{
+			  x = shallow_copy_rtx (x);
+			  copied = true;
+			}
+		      if (! vec_copied)
+			{
+			  XVEC (x, i) = shallow_copy_rtvec (XVEC (x, i));
+			  vec_copied = true;
+			}
+		      XVECEXP (x, i, j) = new_subx;
+		    }
+		}
+	    }
+	  break;
+
+	default:
+	  break;
+	}
+    }
+
+  return x;
+}
+
+bool
+ia16_lra_p (void)
+{
+  bool data_seg_used_p = false;
+  rtx_insn *insn;
+
+  if (! ia16_in_ss_data_function_p ())
+    {
+      for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
+	{
+	  if (INSN_P (insn))
+	    {
+	      rtx pat = PATTERN (insn);
+	      rtx new_pat = ia16_rectify_mems (pat, GET_CODE (insn));
+	      if (new_pat != pat)
+		{
+		  PATTERN (insn) = new_pat;
+		  ia16_recog (insn);
+		  df_insn_rescan (insn);
+		  data_seg_used_p = true;
+		}
+	    }
+	}
+    }
+
+  if (data_seg_used_p)
+    {
+      rtx data_seg = ia16_data_seg_rtx ();
+      rtx ds_reg = gen_rtx_REG (SEGmode, DS_REG);
+      edge e;
+      edge_iterator ei;
+
+      FOR_EACH_EDGE (e, ei, EXIT_BLOCK_PTR_FOR_FN (cfun)->preds)
+	{
+	  basic_block bb = e->src;
+	  rtx_insn *insn = BB_END (bb),
+		   *set_insn = make_insn_raw (gen_rtx_SET (ds_reg, data_seg)),
+		   *use_insn = make_insn_raw (gen_rtx_USE (SEGmode, ds_reg));
+
+	  while (insn != BB_HEAD (bb) && ! INSN_P (insn))
+	    insn = PREV_INSN (insn);
+
+	  if (! INSN_P (insn) || JUMP_P (insn)
+	      || (CALL_P (insn) && SIBLING_CALL_P (insn)))
+	    {
+	      add_insn_before (set_insn, insn, bb);
+	      add_insn_before (use_insn, insn, bb);
+	    }
+	  else
+	    {
+	      add_insn_after (set_insn, insn, bb);
+	      add_insn_after (use_insn, set_insn, bb);
+	    }
+
+	  df_insn_rescan (set_insn);
+	  df_insn_rescan (use_insn);
+	}
+    }
+
+  return true;
+}
+
 /* Given a type TYPE, return a version of the type which is in the __seg_ss
    address space (unless TYPE is already in a non-generic address space, or
    is void).  */

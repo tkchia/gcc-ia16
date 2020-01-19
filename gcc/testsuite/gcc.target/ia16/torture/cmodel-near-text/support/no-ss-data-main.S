@@ -1,9 +1,15 @@
-/* main() function for __attribute__ ((no_assume_ss_data)) test cases.  */
+/* main () function for __attribute__ ((no_assume_ss_data)) test cases.  */
 
 	.arch	i8086, jumps
 	.code16
 
 	.set	EVIL_STACK_SIZE, 0x400	/* size of away-from-%ds stack */
+
+	.data
+
+cookie:	.hword	0x6bd4			/* cookie value to help us check that
+					   do_stuff () _really_ restores %ds
+					   correctly */
 
 	.bss
 
@@ -42,6 +48,8 @@ main:
 	popw	%ss
 	movw	%bx,	%sp
 	sti
-	ret
+	cmpw	$0x6bd4, cookie
+	jnz	.fail
+	jmp	check_stuff
 .fail:
 	call	abort
