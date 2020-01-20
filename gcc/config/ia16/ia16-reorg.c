@@ -1309,7 +1309,6 @@ ia16_machine_dependent_reorg (void)
 	      ia16_elide_unneeded_ss_stuff ();
 	      ia16_tweak_reset_ds ();
 	    }
-	  /* FIXME: also optimize when %ss != .data .  */
 	}
 
       free_bb_for_insn ();

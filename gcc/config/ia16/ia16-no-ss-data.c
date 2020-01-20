@@ -66,14 +66,14 @@ struct target_rtl *ia16_ss_data_target_rtl = NULL,
       text segment addresses.)
 
       To make sure that the <data-seg-rtx> is not eliminated or moved around
-      too much early on during RTL optimization (!):
+      too much early on during RTL optimization (!), _and_ ensure that %ds
+      is properly restored on function exit:
 
       a) I add a special-case hack to the "mov<mode>" insn pattern in ia16.md
 	 to `(use)' the <data-seg-rtx> whenever it is `(set)' (near the
 	 function entry); and
 
-      b) I also maintain its liveness throughout the function, _and_ also
-	 properly restore %ds, by adding
+      b) I add insns
 		(set (reg:SEG DS_REG) <data-seg-rtx>)
 		(use (reg:SEG DS_REG))
 	 at every place where the function may exit.
@@ -186,10 +186,45 @@ ia16_rectify_mems (rtx x, enum rtx_code outer_code)
   return x;
 }
 
+static void
+add_ds_resets (void)
+{
+  rtx data_seg = ia16_data_seg_rtx ();
+  rtx ds_reg = gen_rtx_REG (SEGmode, DS_REG);
+  edge e;
+  edge_iterator ei;
+
+  FOR_EACH_EDGE (e, ei, EXIT_BLOCK_PTR_FOR_FN (cfun)->preds)
+    {
+      basic_block bb = e->src;
+      rtx_insn *insn = BB_END (bb),
+	       *set_insn = make_insn_raw (gen_rtx_SET (ds_reg, data_seg)),
+	       *use_insn = make_insn_raw (gen_rtx_USE (SEGmode, ds_reg));
+
+      while (insn != BB_HEAD (bb) && ! INSN_P (insn))
+	insn = PREV_INSN (insn);
+
+      if (INSN_P (insn)
+	  && (JUMP_P (insn)
+	      || (CALL_P (insn) && SIBLING_CALL_P (insn))))
+	{
+	  add_insn_before (set_insn, insn, bb);
+	  add_insn_before (use_insn, insn, bb);
+	}
+      else
+	{
+	  add_insn_after (set_insn, insn, bb);
+	  add_insn_after (use_insn, set_insn, bb);
+	}
+
+      df_insn_rescan (set_insn);
+      df_insn_rescan (use_insn);
+    }
+}
+
 bool
 ia16_lra_p (void)
 {
-  bool data_seg_used_p = false;
   rtx_insn *insn;
 
   if (! ia16_in_ss_data_function_p ())
@@ -205,44 +240,11 @@ ia16_lra_p (void)
 		  PATTERN (insn) = new_pat;
 		  ia16_recog (insn);
 		  df_insn_rescan (insn);
-		  data_seg_used_p = true;
 		}
 	    }
 	}
-    }
 
-  if (data_seg_used_p)
-    {
-      rtx data_seg = ia16_data_seg_rtx ();
-      rtx ds_reg = gen_rtx_REG (SEGmode, DS_REG);
-      edge e;
-      edge_iterator ei;
-
-      FOR_EACH_EDGE (e, ei, EXIT_BLOCK_PTR_FOR_FN (cfun)->preds)
-	{
-	  basic_block bb = e->src;
-	  rtx_insn *insn = BB_END (bb),
-		   *set_insn = make_insn_raw (gen_rtx_SET (ds_reg, data_seg)),
-		   *use_insn = make_insn_raw (gen_rtx_USE (SEGmode, ds_reg));
-
-	  while (insn != BB_HEAD (bb) && ! INSN_P (insn))
-	    insn = PREV_INSN (insn);
-
-	  if (! INSN_P (insn) || JUMP_P (insn)
-	      || (CALL_P (insn) && SIBLING_CALL_P (insn)))
-	    {
-	      add_insn_before (set_insn, insn, bb);
-	      add_insn_before (use_insn, insn, bb);
-	    }
-	  else
-	    {
-	      add_insn_after (set_insn, insn, bb);
-	      add_insn_after (use_insn, set_insn, bb);
-	    }
-
-	  df_insn_rescan (set_insn);
-	  df_insn_rescan (use_insn);
-	}
+      add_ds_resets ();
     }
 
   return true;
