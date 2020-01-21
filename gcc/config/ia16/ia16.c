@@ -1218,8 +1218,8 @@ ia16_set_default_type_attributes (tree type)
 #define	TARGET_INSERT_ATTRIBUTES ia16_insert_attributes
 
 /* In ia16-no-ss-data.c .  */
-extern GTY (()) struct target_rtl *ia16_ss_data_target_rtl;
-extern GTY (()) struct target_rtl *ia16_no_ss_data_target_rtl;
+extern GTY ((deletable)) struct target_rtl *ia16_ss_data_target_rtl;
+extern GTY ((deletable)) struct target_rtl *ia16_no_ss_data_target_rtl;
 extern void ia16_insert_attributes (tree, tree *);
 
 #undef	TARGET_FUNCTION_ATTRIBUTE_INLINABLE_P

@@ -51,6 +51,7 @@
 
 /* XXX: deep black magic ahead.  */
 
+/* These pointers may be NULL-ified by the GCC garbage collector.  */
 struct target_rtl *ia16_ss_data_target_rtl = NULL,
 		  *ia16_no_ss_data_target_rtl = NULL;
 
@@ -327,43 +328,54 @@ ia16_insert_attributes (tree node, tree *attr_ptr ATTRIBUTE_UNUSED)
     }
 }
 
+/* Return a pointer to a `struct target_rtl' with its mode_mem_attrs[]
+   structures specifying the address space AS.
+
+   For __attribute__ ((no_assume_ss_data)) functions, this fashions and uses
+   mode_mem_attrs[] structures which specify __seg_ss.  This causes
+   gen_rtx_MEM (, ) to return (mem ...) RTXs that refer to the __seg_ss
+   space on default.
+
+   Yep, this works, except when it does not.  */
+static struct target_rtl *
+ia16_target_rtl_as (addr_space_t as)
+{
+  int i;
+  struct target_rtl *r;
+
+  if (this_target_rtl->x_mode_mem_attrs[(int) VOIDmode]->addrspace == as)
+    return this_target_rtl;
+
+  r = ggc_alloc <target_rtl> ();
+  *r = *this_target_rtl;
+
+  for (i = 0; i < (int) MAX_MACHINE_MODE; ++i)
+    {
+      mem_attrs *as_attrs = ggc_alloc <mem_attrs> ();
+      *as_attrs = *this_target_rtl->x_mode_mem_attrs[i];
+      as_attrs->addrspace = as;
+      r->x_mode_mem_attrs[i] = as_attrs;
+    }
+
+  return r;
+}
+
 void
 ia16_set_current_function (tree decl)
 {
   tree type = decl ? TREE_TYPE (decl) : NULL_TREE;
   bool need_no_ss_data = ! ia16_ss_data_function_type_p (type);
-  struct target_rtl *r;
-
-  if (! ia16_ss_data_target_rtl)
-    ia16_ss_data_target_rtl = this_target_rtl;
 
   if (! need_no_ss_data)
-    r = ia16_ss_data_target_rtl;
-  else if (ia16_no_ss_data_target_rtl)
-    r = ia16_no_ss_data_target_rtl;
+    {
+      if (! ia16_ss_data_target_rtl)
+	ia16_ss_data_target_rtl = ia16_target_rtl_as (ADDR_SPACE_GENERIC);
+      this_target_rtl = ia16_ss_data_target_rtl;
+    }
   else
     {
-      int i;
-
-      /* For __attribute__ ((no_assume_ss_data)) functions, fashion and use
-	 mode_mem_attrs[] structures which specify __seg_ss.  This causes
-	 gen_rtx_MEM (, ) to return (mem ...) RTXs that refer to the
-	 __seg_ss space on default.
-
-	 Yep, this works, except when it does not.  */
-      r = ggc_alloc <target_rtl> ();
-      *r = *ia16_ss_data_target_rtl;
-
-      for (i = 0; i < (int) MAX_MACHINE_MODE; ++i)
-	{
-	  mem_attrs *seg_ss_attrs = ggc_alloc <mem_attrs> ();
-	  *seg_ss_attrs = *ia16_ss_data_target_rtl->x_mode_mem_attrs[i];
-	  seg_ss_attrs->addrspace = ADDR_SPACE_SEG_SS;
-	  r->x_mode_mem_attrs[i] = seg_ss_attrs;
-	}
-
-      ia16_no_ss_data_target_rtl = r;
+      if (! ia16_no_ss_data_target_rtl)
+	ia16_no_ss_data_target_rtl = ia16_target_rtl_as (ADDR_SPACE_SEG_SS);
+      this_target_rtl = ia16_no_ss_data_target_rtl;
     }
-
-  this_target_rtl = r;
 }
