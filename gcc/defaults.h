@@ -824,26 +824,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #endif
 #endif
 
-/* Decide whether a function's arguments should be processed
-   from first to last or from last to first.
-
-   They should if the stack and args grow in opposite directions, but
-   only if we have push insns.  */
-
-#ifdef PUSH_ROUNDING
-
-#ifndef PUSH_ARGS_REVERSED
-#if defined (STACK_GROWS_DOWNWARD) != defined (ARGS_GROW_DOWNWARD)
-#define PUSH_ARGS_REVERSED  PUSH_ARGS
-#endif
-#endif
-
-#endif
-
-#ifndef PUSH_ARGS_REVERSED
-#define PUSH_ARGS_REVERSED 0
-#endif
-
 /* Default value for the alignment (in bits) a C conformant malloc has to
    provide. This default is intended to be safe and always correct.  */
 #ifndef MALLOC_ABI_ALIGNMENT

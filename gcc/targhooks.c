@@ -140,6 +140,25 @@ default_promote_function_mode_always_promote (const_tree type,
   return promote_mode (type, mode, punsignedp);
 }
 
+/* Decide whether a function's arguments should be processed
+   from first to last or from last to first.
+
+   They should if the stack and args grow in opposite directions, but
+   only if we have push insns.  */
+
+bool
+default_push_args_reversed (const_tree funtype ATTRIBUTE_UNUSED)
+{
+#if defined PUSH_ARGS_REVERSED
+  return !! PUSH_ARGS_REVERSED;
+#elif defined (PUSH_ROUNDING) \
+      && (!! STACK_GROWS_DOWNWARD) != (!! ARGS_GROW_DOWNWARD)
+  return !! PUSH_ARGS;
+#else
+  return false;
+#endif
+}
+
 machine_mode
 default_cc_modes_compatible (machine_mode m1, machine_mode m2)
 {

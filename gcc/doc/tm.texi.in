@@ -3271,7 +3271,12 @@ A C expression.  If nonzero, function arguments will be evaluated from
 last to first, rather than from first to last.  If this macro is not
 defined, it defaults to @code{PUSH_ARGS} on targets where the stack
 and args grow in opposite directions, and 0 otherwise.
+
+Targets where different functions may accept arguments in different orders
+should use the hook @code{TARGET_PUSH_ARGS_REVERSED} instead.
 @end defmac
+
+@hook TARGET_PUSH_ARGS_REVERSED
 
 @defmac PUSH_ROUNDING (@var{npushed})
 A C expression that is the number of bytes actually pushed onto the

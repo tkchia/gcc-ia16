@@ -2525,9 +2525,12 @@ gimplify_call_expr (tree *expr_p, gimple_seq *pre_p, bool want_value)
   /* Gimplify the function arguments.  */
   if (nargs > 0)
     {
-      for (i = (PUSH_ARGS_REVERSED ? nargs - 1 : 0);
-           PUSH_ARGS_REVERSED ? i >= 0 : i < nargs;
-           PUSH_ARGS_REVERSED ? i-- : i++)
+      const_tree fntype = TREE_TYPE (fnptrtype);
+      bool push_args_reversed = targetm.calls.push_args_reversed (fntype);
+
+      for (i = (push_args_reversed ? nargs - 1 : 0);
+           push_args_reversed ? i >= 0 : i < nargs;
+           push_args_reversed ? i-- : i++)
         {
           enum gimplify_status t;
 

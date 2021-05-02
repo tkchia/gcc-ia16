@@ -4071,6 +4071,13 @@ The default is to not promote prototypes.",
  hook_bool_const_tree_false)
 
 DEFHOOK
+(push_args_reversed,
+ "If @code{true}, function arguments will be evaluated from last to\n\
+first, rather than from first to last.",
+ bool, (const_tree fntype),
+ default_push_args_reversed)
+
+DEFHOOK
 (struct_value_rtx,
  "This target hook should return the location of the structure value\n\
 address (normally a @code{mem} or @code{reg}), or 0 if the address is\n\
