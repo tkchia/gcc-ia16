@@ -2984,7 +2984,15 @@ are at negative offsets from the frame pointer.
 @defmac ARGS_GROW_DOWNWARD
 Define this macro if successive arguments to a function occupy decreasing
 addresses on the stack.
+
+Targets where different functions may accept arguments in different orders
+should use the target hook @code{TARGET_ARGS_GROW_DOWNWARD} instead.
 @end defmac
+
+@deftypefn {Target Hook} bool TARGET_ARGS_GROW_DOWNWARD (const_tree @var{fntype})
+If @code{true}, successive arguments to a function occupy decreasing
+addresses on the stack.
+@end deftypefn
 
 @defmac STARTING_FRAME_OFFSET
 Offset from the frame pointer to the first local variable slot to be allocated.
@@ -3745,7 +3753,7 @@ defined, it defaults to @code{PUSH_ARGS} on targets where the stack
 and args grow in opposite directions, and 0 otherwise.
 
 Targets where different functions may accept arguments in different orders
-should use the hook @code{TARGET_PUSH_ARGS_REVERSED} instead.
+should use the target hook @code{TARGET_PUSH_ARGS_REVERSED} instead.
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_PUSH_ARGS_REVERSED (const_tree @var{fntype})

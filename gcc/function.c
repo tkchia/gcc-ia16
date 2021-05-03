@@ -131,7 +131,8 @@ vec<tree, va_gc> *types_used_by_cur_var_decl;
 /* Forward declarations.  */
 
 static struct temp_slot *find_temp_slot_from_address (rtx);
-static void pad_to_arg_alignment (struct args_size *, int, struct args_size *);
+static void pad_to_arg_alignment (struct args_size *, int, struct args_size *,
+				  bool);
 static void pad_below (struct args_size *, machine_mode, tree);
 static void reorder_blocks_1 (rtx_insn *, tree, vec<tree> *);
 static int all_blocks (tree, tree *);
@@ -3670,6 +3671,7 @@ assign_bounds (vec<bounds_parm_data> &bndargs,
 static void
 assign_parms (tree fndecl)
 {
+  tree fntype = fndecl ? TREE_TYPE (fndecl) : NULL_TREE;
   struct assign_parm_data_all all;
   tree parm;
   vec<tree> fnargs;
@@ -3881,7 +3883,7 @@ assign_parms (tree fndecl)
   crtl->args.size = CEIL_ROUND (crtl->args.size,
 					   PARM_BOUNDARY / BITS_PER_UNIT);
 
-  if (ARGS_GROW_DOWNWARD)
+  if (targetm.calls.args_grow_downward (fntype))
     {
       crtl->args.arg_offset_rtx
 	= (all.stack_args_size.var == 0 ? GEN_INT (-all.stack_args_size.constant)
@@ -4110,10 +4112,11 @@ gimplify_parameters (void)
 void
 locate_and_pad_parm (machine_mode passed_mode, tree type, int in_regs,
 		     int reg_parm_stack_space, int partial,
-		     tree fndecl ATTRIBUTE_UNUSED,
+		     tree fndecl,
 		     struct args_size *initial_offset_ptr,
 		     struct locate_and_pad_arg_data *locate)
 {
+  tree fntype = fndecl ? TREE_TYPE (fndecl) : NULL_TREE;
   tree sizetree;
   enum direction where_pad;
   unsigned int boundary, round_boundary;
@@ -4181,7 +4184,7 @@ locate_and_pad_parm (machine_mode passed_mode, tree type, int in_regs,
   if (crtl->preferred_stack_boundary < boundary)
     crtl->preferred_stack_boundary = boundary;
 
-  if (ARGS_GROW_DOWNWARD)
+  if (targetm.calls.args_grow_downward (fntype))
     {
       locate->slot_offset.constant = -initial_offset_ptr->constant;
       if (initial_offset_ptr->var)
@@ -4201,7 +4204,7 @@ locate_and_pad_parm (machine_mode passed_mode, tree type, int in_regs,
 
       if (!in_regs || reg_parm_stack_space > 0)
 	pad_to_arg_alignment (&locate->slot_offset, boundary,
-			      &locate->alignment_pad);
+			      &locate->alignment_pad, true);
 
       locate->size.constant = (-initial_offset_ptr->constant
 			       - locate->slot_offset.constant);
@@ -4223,7 +4226,7 @@ locate_and_pad_parm (machine_mode passed_mode, tree type, int in_regs,
     {
       if (!in_regs || reg_parm_stack_space > 0)
 	pad_to_arg_alignment (initial_offset_ptr, boundary,
-			      &locate->alignment_pad);
+			      &locate->alignment_pad, false);
       locate->slot_offset = *initial_offset_ptr;
 
 #ifdef PUSH_ROUNDING
@@ -4257,7 +4260,7 @@ locate_and_pad_parm (machine_mode passed_mode, tree type, int in_regs,
 
 static void
 pad_to_arg_alignment (struct args_size *offset_ptr, int boundary,
-		      struct args_size *alignment_pad)
+		      struct args_size *alignment_pad, bool args_grow_downward)
 {
   tree save_var = NULL_TREE;
   HOST_WIDE_INT save_constant = 0;
@@ -4290,7 +4293,7 @@ pad_to_arg_alignment (struct args_size *offset_ptr, int boundary,
 				    ARGS_SIZE_TREE (*offset_ptr),
 				    sp_offset_tree);
 	  tree rounded;
-	  if (ARGS_GROW_DOWNWARD)
+	  if (args_grow_downward)
 	    rounded = round_down (offset, boundary / BITS_PER_UNIT);
 	  else
 	    rounded = round_up   (offset, boundary / BITS_PER_UNIT);
@@ -4305,7 +4308,7 @@ pad_to_arg_alignment (struct args_size *offset_ptr, int boundary,
       else
 	{
 	  offset_ptr->constant = -sp_offset +
-	    (ARGS_GROW_DOWNWARD
+	    (args_grow_downward
 	    ? FLOOR_ROUND (offset_ptr->constant + sp_offset, boundary_in_bytes)
 	    : CEIL_ROUND (offset_ptr->constant + sp_offset, boundary_in_bytes));
 
@@ -4923,6 +4926,8 @@ allocate_struct_function (tree fndecl, bool abstract_p)
 	}
 
       cfun->stdarg = stdarg_p (fntype);
+
+      cfun->args_grow_downward = targetm.calls.args_grow_downward (fntype);
 
       /* Assume all registers in stdarg functions need to be saved.  */
       cfun->va_list_gpr_size = VA_LIST_MAX_GPR_SIZE;

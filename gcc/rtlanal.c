@@ -597,17 +597,13 @@ rtx_addr_can_trap_p_1 (const_rtx x, HOST_WIDE_INT offset, HOST_WIDE_INT size,
 	      low_bound  = sp_offset - red_zone_size - stack_boundary;
 	      high_bound = ap_offset
 			   + FIRST_PARM_OFFSET (current_function_decl)
-#if !ARGS_GROW_DOWNWARD
-			   + crtl->args.size
-#endif
+			   + (cfun->args_grow_downward ? 0 : crtl->args.size)
 			   + stack_boundary;
 #else
 	      high_bound = sp_offset + red_zone_size + stack_boundary;
 	      low_bound  = ap_offset
 			   + FIRST_PARM_OFFSET (current_function_decl)
-#if ARGS_GROW_DOWNWARD
-			   - crtl->args.size
-#endif
+			   - (cfun->args_grow_downward ? crtl->args.size : 0)
 			   - stack_boundary;
 #endif
 	    }
@@ -621,17 +617,13 @@ rtx_addr_can_trap_p_1 (const_rtx x, HOST_WIDE_INT offset, HOST_WIDE_INT size,
 	      low_bound  = - red_zone_size - stack_boundary;
 	      high_bound = ap_offset
 			   + FIRST_PARM_OFFSET (current_function_decl)
-#if !ARGS_GROW_DOWNWARD
-			   + crtl->args.size
-#endif
+			   + (cfun->args_grow_downward ? 0 : crtl->args.size)
 			   + stack_boundary;
 #else
 	      high_bound = red_zone_size + stack_boundary;
 	      low_bound  = ap_offset
 			   + FIRST_PARM_OFFSET (current_function_decl)
-#if ARGS_GROW_DOWNWARD
-			   - crtl->args.size
-#endif
+			   - (cfun->args_grow_downward ? crtl->args.size : 0)
 			   - stack_boundary;
 #endif
 	    }
@@ -640,17 +632,20 @@ rtx_addr_can_trap_p_1 (const_rtx x, HOST_WIDE_INT offset, HOST_WIDE_INT size,
 	      /* We assume that accesses are safe to at least the
 		 next stack boundary.
 		 Examples are varargs and __builtin_return_address.  */
-#if ARGS_GROW_DOWNWARD
-	      high_bound = FIRST_PARM_OFFSET (current_function_decl)
-			   + stack_boundary;
-	      low_bound  = FIRST_PARM_OFFSET (current_function_decl)
-			   - crtl->args.size - stack_boundary;
-#else
-	      low_bound  = FIRST_PARM_OFFSET (current_function_decl)
-			   - stack_boundary;
-	      high_bound = FIRST_PARM_OFFSET (current_function_decl)
-			   + crtl->args.size + stack_boundary;
-#endif
+	      if (cfun->args_grow_downward)
+		{
+		  high_bound = FIRST_PARM_OFFSET (current_function_decl)
+			       + stack_boundary;
+		  low_bound  = FIRST_PARM_OFFSET (current_function_decl)
+			       - crtl->args.size - stack_boundary;
+		}
+	      else
+		{
+		  low_bound  = FIRST_PARM_OFFSET (current_function_decl)
+			       - stack_boundary;
+		  high_bound = FIRST_PARM_OFFSET (current_function_decl)
+			       + crtl->args.size + stack_boundary;
+		}
 	    }
 
 	  if (offset >= low_bound && offset <= high_bound - size)

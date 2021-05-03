@@ -1209,10 +1209,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define EPILOGUE_USES(REG) false
 #endif
 
-#ifndef ARGS_GROW_DOWNWARD
-#define ARGS_GROW_DOWNWARD 0
-#endif
-
 #ifndef STACK_GROWS_DOWNWARD
 #define STACK_GROWS_DOWNWARD 0
 #endif

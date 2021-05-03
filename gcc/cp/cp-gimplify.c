@@ -759,17 +759,21 @@ cp_gimplify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p)
 	 order and there's more than one argument other than 'this', gimplify
 	 them in order.  */
       ret = GS_OK;
-      if (PUSH_ARGS_REVERSED && CALL_EXPR_LIST_INIT_P (*expr_p)
+      if (CALL_EXPR_LIST_INIT_P (*expr_p)
 	  && call_expr_nargs (*expr_p) > 2)
 	{
-	  int nargs = call_expr_nargs (*expr_p);
-	  location_t loc = EXPR_LOC_OR_LOC (*expr_p, input_location);
-	  for (int i = 1; i < nargs; ++i)
+	  const_tree fntype = TREE_TYPE (TREE_TYPE (CALL_EXPR_FN (*expr_p)));
+	  if (targetm.calls.push_args_reversed (fntype))
 	    {
-	      enum gimplify_status t
-		= gimplify_arg (&CALL_EXPR_ARG (*expr_p, i), pre_p, loc);
-	      if (t == GS_ERROR)
-		ret = GS_ERROR;
+	      int nargs = call_expr_nargs (*expr_p);
+	      location_t loc = EXPR_LOC_OR_LOC (*expr_p, input_location);
+	      for (int i = 1; i < nargs; ++i)
+		{
+		  enum gimplify_status t
+		    = gimplify_arg (&CALL_EXPR_ARG (*expr_p, i), pre_p, loc);
+		  if (t == GS_ERROR)
+		    ret = GS_ERROR;
+		}
 	    }
 	}
       break;

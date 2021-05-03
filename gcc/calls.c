@@ -143,7 +143,7 @@ static void emit_call_1 (rtx, tree, tree, tree, HOST_WIDE_INT, HOST_WIDE_INT,
 			 cumulative_args_t);
 static void precompute_register_parameters (int, struct arg_data *, int *);
 static void store_bounds (struct arg_data *, struct arg_data *);
-static int store_one_arg (struct arg_data *, rtx, int, int, int);
+static int store_one_arg (struct arg_data *, rtx, int, int, int, bool);
 static void store_unaligned_arguments_into_pseudos (struct arg_data *, int);
 static int finalize_must_preallocate (int, int, struct arg_data *,
 				      struct args_size *);
@@ -158,20 +158,20 @@ static void initialize_argument_information (int, struct arg_data *,
 static void compute_argument_addresses (struct arg_data *, rtx, int);
 static rtx rtx_for_function_call (tree, tree);
 static void load_register_parameters (struct arg_data *, int, rtx *, int,
-				      int, int *);
+				      int, bool, int *);
 static rtx emit_library_call_value_1 (int, rtx, rtx, enum libcall_type,
 				      machine_mode, int, va_list);
 static int special_function_p (const_tree, int);
-static int check_sibcall_argument_overlap_1 (rtx);
-static int check_sibcall_argument_overlap (rtx_insn *, struct arg_data *, int);
+static int check_sibcall_argument_overlap_1 (rtx, bool);
+static int check_sibcall_argument_overlap (rtx_insn *, struct arg_data *, int, bool);
 
 static int combine_pending_stack_adjustment_and_call (int, struct args_size *,
 						      unsigned int);
 static tree split_complex_types (tree);
 
 #ifdef REG_PARM_STACK_SPACE
-static rtx save_fixed_argument_area (int, rtx, int *, int *);
-static void restore_fixed_argument_area (rtx, rtx, int, int);
+static rtx save_fixed_argument_area (int, rtx, int *, int *, bool);
+static void restore_fixed_argument_area (rtx, rtx, int, int, bool);
 #endif
 
 /* Force FUNEXP into a form suitable for the address of a CALL,
@@ -954,14 +954,16 @@ precompute_register_parameters (int num_actuals, struct arg_data *args,
      parameters, we must save and restore it.  */
 
 static rtx
-save_fixed_argument_area (int reg_parm_stack_space, rtx argblock, int *low_to_save, int *high_to_save)
+save_fixed_argument_area (int reg_parm_stack_space, rtx argblock,
+			  int *low_to_save, int *high_to_save,
+			  bool args_grow_downward)
 {
   int low;
   int high;
 
   /* Compute the boundary of the area that needs to be saved, if any.  */
   high = reg_parm_stack_space;
-  if (ARGS_GROW_DOWNWARD)
+  if (args_grow_downward)
     high += 1;
 
   if (high > highest_outgoing_arg_in_use)
@@ -992,7 +994,7 @@ save_fixed_argument_area (int reg_parm_stack_space, rtx argblock, int *low_to_sa
 			 BIGGEST_ALIGNMENT / UNITS_PER_WORD) - 1)))
 	  save_mode = BLKmode;
 
-	if (ARGS_GROW_DOWNWARD)
+	if (args_grow_downward)
 	  delta = -high;
 	else
 	  delta = low;
@@ -1020,13 +1022,15 @@ save_fixed_argument_area (int reg_parm_stack_space, rtx argblock, int *low_to_sa
 }
 
 static void
-restore_fixed_argument_area (rtx save_area, rtx argblock, int high_to_save, int low_to_save)
+restore_fixed_argument_area (rtx save_area, rtx argblock,
+			     int high_to_save, int low_to_save,
+			     bool args_grow_downward)
 {
   machine_mode save_mode = GET_MODE (save_area);
   int delta;
   rtx addr, stack_area;
 
-  if (ARGS_GROW_DOWNWARD)
+  if (args_grow_downward)
     delta = -high_to_save;
   else
     delta = low_to_save;
@@ -1983,7 +1987,8 @@ internal_arg_pointer_based_exp (const_rtx rtl, bool toplevel)
    sibcall.  */
 
 static bool
-mem_overlaps_already_clobbered_arg_p (rtx addr, unsigned HOST_WIDE_INT size)
+mem_overlaps_already_clobbered_arg_p (rtx addr, unsigned HOST_WIDE_INT size,
+				      bool args_grow_downward)
 {
   HOST_WIDE_INT i;
   rtx val;
@@ -2004,7 +2009,7 @@ mem_overlaps_already_clobbered_arg_p (rtx addr, unsigned HOST_WIDE_INT size)
     i += crtl->args.pretend_args_size;
 
 
-  if (ARGS_GROW_DOWNWARD)
+  if (args_grow_downward)
     i = -i - size;
 
   if (size > 0)
@@ -2033,7 +2038,7 @@ mem_overlaps_already_clobbered_arg_p (rtx addr, unsigned HOST_WIDE_INT size)
 static void
 load_register_parameters (struct arg_data *args, int num_actuals,
 			  rtx *call_fusage, int flags, int is_sibcall,
-			  int *sibcall_failure)
+			  bool args_grow_downward, int *sibcall_failure)
 {
   int i, j;
 
@@ -2120,7 +2125,7 @@ load_register_parameters (struct arg_data *args, int num_actuals,
 	      if (is_sibcall
 		  && size != 0
 		  && (mem_overlaps_already_clobbered_arg_p
-		      (XEXP (args[i].value, 0), size)))
+		      (XEXP (args[i].value, 0), size, args_grow_downward)))
 		*sibcall_failure = 1;
 
 	      if (size % UNITS_PER_WORD == 0
@@ -2168,7 +2173,8 @@ load_register_parameters (struct arg_data *args, int num_actuals,
 	     possible that it did a load from an argument slot that was
 	     already clobbered.  */
 	  if (is_sibcall
-	      && check_sibcall_argument_overlap (before_arg, &args[i], 0))
+	      && check_sibcall_argument_overlap (before_arg, &args[i], 0,
+						 args_grow_downward))
 	    *sibcall_failure = 1;
 
 	  /* Handle calls that pass values in multiple non-contiguous
@@ -2247,7 +2253,7 @@ combine_pending_stack_adjustment_and_call (int unadjusted_args_size,
    zero otherwise.  */
 
 static int
-check_sibcall_argument_overlap_1 (rtx x)
+check_sibcall_argument_overlap_1 (rtx x, bool args_grow_downward)
 {
   RTX_CODE code;
   int i, j;
@@ -2264,7 +2270,8 @@ check_sibcall_argument_overlap_1 (rtx x)
 
   if (code == MEM)
     return mem_overlaps_already_clobbered_arg_p (XEXP (x, 0),
-						 GET_MODE_SIZE (GET_MODE (x)));
+						 GET_MODE_SIZE (GET_MODE (x)),
+						 args_grow_downward);
 
   /* Scan all subexpressions.  */
   fmt = GET_RTX_FORMAT (code);
@@ -2272,13 +2279,15 @@ check_sibcall_argument_overlap_1 (rtx x)
     {
       if (*fmt == 'e')
 	{
-	  if (check_sibcall_argument_overlap_1 (XEXP (x, i)))
+	  if (check_sibcall_argument_overlap_1 (XEXP (x, i),
+						args_grow_downward))
 	    return 1;
 	}
       else if (*fmt == 'E')
 	{
 	  for (j = 0; j < XVECLEN (x, i); j++)
-	    if (check_sibcall_argument_overlap_1 (XVECEXP (x, i, j)))
+	    if (check_sibcall_argument_overlap_1 (XVECEXP (x, i, j),
+						  args_grow_downward))
 	      return 1;
 	}
     }
@@ -2294,7 +2303,8 @@ check_sibcall_argument_overlap_1 (rtx x)
 
 static int
 check_sibcall_argument_overlap (rtx_insn *insn, struct arg_data *arg,
-				int mark_stored_args_map)
+				int mark_stored_args_map,
+				bool args_grow_downward)
 {
   int low, high;
 
@@ -2305,12 +2315,13 @@ check_sibcall_argument_overlap (rtx_insn *insn, struct arg_data *arg,
 
   for (; insn; insn = NEXT_INSN (insn))
     if (INSN_P (insn)
-	&& check_sibcall_argument_overlap_1 (PATTERN (insn)))
+	&& check_sibcall_argument_overlap_1 (PATTERN (insn),
+					     args_grow_downward))
       break;
 
   if (mark_stored_args_map)
     {
-      if (ARGS_GROW_DOWNWARD)
+      if (args_grow_downward)
 	low = -arg->locate.slot_offset.constant - arg->locate.size.constant;
       else
 	low = arg->locate.slot_offset.constant;
@@ -2396,6 +2407,7 @@ expand_call (tree exp, rtx target, int ignore)
   tree fndecl = 0;
   /* The type of the function being called.  */
   tree fntype;
+  bool args_grow_downward;
   bool try_tail_call = CALL_EXPR_TAILCALL (exp);
   int pass;
 
@@ -2517,6 +2529,8 @@ expand_call (tree exp, rtx target, int ignore)
       flags |= flags_from_decl_or_type (fntype);
     }
   rettype = TREE_TYPE (exp);
+
+  args_grow_downward = targetm.calls.args_grow_downward (fntype);
 
   struct_value = targetm.calls.struct_value_rtx (fntype, 0);
 
@@ -2998,7 +3012,7 @@ expand_call (tree exp, rtx target, int ignore)
 		  if (! OUTGOING_REG_PARM_STACK_SPACE ((!fndecl ? fntype : TREE_TYPE (fndecl))))
 		    needed += reg_parm_stack_space;
 
-		  if (ARGS_GROW_DOWNWARD)
+		  if (args_grow_downward)
 		    highest_outgoing_arg_in_use
 		      = MAX (initial_highest_arg_in_use, needed + 1);
 		  else
@@ -3066,7 +3080,7 @@ expand_call (tree exp, rtx target, int ignore)
 		  else
 		    {
 		      argblock = push_block (GEN_INT (needed), 0, 0);
-		      if (ARGS_GROW_DOWNWARD)
+		      if (args_grow_downward)
 			argblock = plus_constant (Pmode, argblock, needed);
 		    }
 
@@ -3196,7 +3210,8 @@ expand_call (tree exp, rtx target, int ignore)
 	 is clobbered by argument setup for this call.  */
       if (ACCUMULATE_OUTGOING_ARGS && pass)
 	save_area = save_fixed_argument_area (reg_parm_stack_space, argblock,
-					      &low_to_save, &high_to_save);
+					      &low_to_save, &high_to_save,
+					      args_grow_downward);
 #endif
 
       /* Now store (and compute if necessary) all non-register parms.
@@ -3225,10 +3240,11 @@ expand_call (tree exp, rtx target, int ignore)
 
 	      if (store_one_arg (&args[i], argblock, flags,
 				 adjusted_args_size.var != 0,
-				 reg_parm_stack_space)
+				 reg_parm_stack_space, args_grow_downward)
 		  || (pass == 0
 		      && check_sibcall_argument_overlap (before_arg,
-							 &args[i], 1)))
+							 &args[i], 1,
+							 args_grow_downward)))
 		sibcall_failure = 1;
 	      }
 
@@ -3257,7 +3273,7 @@ expand_call (tree exp, rtx target, int ignore)
 	     /* On targets with weird calling conventions (e.g. PA) it's
 		hard to ensure that all cases of argument overlap between
 		stack and registers work.  Play it safe and bail out.  */
-	      if (ARGS_GROW_DOWNWARD && !STACK_GROWS_DOWNWARD)
+	      if (args_grow_downward && !STACK_GROWS_DOWNWARD)
 		{
 		  sibcall_failure = 1;
 		  break;
@@ -3265,10 +3281,11 @@ expand_call (tree exp, rtx target, int ignore)
 
 	      if (store_one_arg (&args[i], argblock, flags,
 				 adjusted_args_size.var != 0,
-				 reg_parm_stack_space)
+				 reg_parm_stack_space, args_grow_downward)
 		  || (pass == 0
 		      && check_sibcall_argument_overlap (before_arg,
-							 &args[i], 1)))
+							 &args[i], 1,
+							 args_grow_downward)))
 		sibcall_failure = 1;
 	    }
 
@@ -3361,7 +3378,8 @@ expand_call (tree exp, rtx target, int ignore)
 				     reg_parm_seen, pass == 0);
 
       load_register_parameters (args, num_actuals, &call_fusage, flags,
-				pass == 0, &sibcall_failure);
+				pass == 0, args_grow_downward,
+				&sibcall_failure);
 
       /* Save a pointer to the last insn before the call, so that we can
 	 later safely search backwards to find the CALL_INSN.  */
@@ -3425,7 +3443,8 @@ expand_call (tree exp, rtx target, int ignore)
 	 of the argument setup we probably clobbered our call address.
 	 In that case we can't do sibcalls.  */
       if (pass == 0
-	  && check_sibcall_argument_overlap (after_args, 0, 0))
+	  && check_sibcall_argument_overlap (after_args, 0, 0,
+					     args_grow_downward))
 	sibcall_failure = 1;
 
       /* If a non-BLKmode value is returned at the most significant end
@@ -3645,7 +3664,8 @@ expand_call (tree exp, rtx target, int ignore)
 #ifdef REG_PARM_STACK_SPACE
 	  if (save_area)
 	    restore_fixed_argument_area (save_area, argblock,
-					 high_to_save, low_to_save);
+					 high_to_save, low_to_save,
+					 args_grow_downward);
 #endif
 
 	  /* If we saved any argument areas, restore them.  */
@@ -3842,6 +3862,7 @@ emit_library_call_value_1 (int retval, rtx orgfun, rtx value,
      isn't present here, so we default to native calling abi here.  */
   tree fndecl ATTRIBUTE_UNUSED = NULL_TREE; /* library calls default to host calling abi ? */
   tree fntype ATTRIBUTE_UNUSED = NULL_TREE; /* library calls default to host calling abi ? */
+  bool args_grow_downward;
   int count;
   rtx argblock = 0;
   CUMULATIVE_ARGS args_so_far_v;
@@ -4155,7 +4176,7 @@ emit_library_call_value_1 (int retval, rtx orgfun, rtx value,
       if (! OUTGOING_REG_PARM_STACK_SPACE ((!fndecl ? fntype : TREE_TYPE (fndecl))))
 	needed += reg_parm_stack_space;
 
-      if (ARGS_GROW_DOWNWARD)
+      if (args_grow_downward)
 	highest_outgoing_arg_in_use = MAX (initial_highest_arg_in_use,
 					   needed + 1);
       else
@@ -4204,8 +4225,10 @@ emit_library_call_value_1 (int retval, rtx orgfun, rtx value,
       /* The argument list is the property of the called routine and it
 	 may clobber it.  If the fixed area has been used for previous
 	 parameters, we must save and restore it.  */
+      args_grow_downward = targetm.calls.args_grow_downward (fntype);
       save_area = save_fixed_argument_area (reg_parm_stack_space, argblock,
-					    &low_to_save, &high_to_save);
+					    &low_to_save, &high_to_save,
+					    fntype);
     }
 #endif
 
@@ -4245,7 +4268,7 @@ emit_library_call_value_1 (int retval, rtx orgfun, rtx value,
 	      /* If this is being stored into a pre-allocated, fixed-size,
 		 stack area, save any previous data at that location.  */
 
-	      if (ARGS_GROW_DOWNWARD)
+	      if (args_grow_downward)
 		{
 		  /* stack_slot is negative, but we want to index stack_usage_map
 		     with positive values.  */
@@ -4554,7 +4577,8 @@ emit_library_call_value_1 (int retval, rtx orgfun, rtx value,
 #ifdef REG_PARM_STACK_SPACE
       if (save_area)
 	restore_fixed_argument_area (save_area, argblock,
-				     high_to_save, low_to_save);
+				     high_to_save, low_to_save,
+				     args_grow_downward);
 #endif
 
       /* If we saved any argument areas, restore them.  */
@@ -4715,7 +4739,8 @@ store_bounds (struct arg_data *arg, struct arg_data *parm)
 
 static int
 store_one_arg (struct arg_data *arg, rtx argblock, int flags,
-	       int variable_size ATTRIBUTE_UNUSED, int reg_parm_stack_space)
+	       int variable_size ATTRIBUTE_UNUSED, int reg_parm_stack_space,
+	       bool args_grow_downward)
 {
   tree pval = arg->tree_value;
   rtx reg = 0;
@@ -4737,7 +4762,7 @@ store_one_arg (struct arg_data *arg, rtx argblock, int flags,
 	 save any previous data at that location.  */
       if (argblock && ! variable_size && arg->stack)
 	{
-	  if (ARGS_GROW_DOWNWARD)
+	  if (args_grow_downward)
 	    {
 	      /* stack_slot is negative, but we want to index stack_usage_map
 		 with positive values.  */
@@ -4859,7 +4884,8 @@ store_one_arg (struct arg_data *arg, rtx argblock, int flags,
   if ((flags & ECF_SIBCALL)
       && MEM_P (arg->value)
       && mem_overlaps_already_clobbered_arg_p (XEXP (arg->value, 0),
-					       arg->locate.size.constant))
+					       arg->locate.size.constant,
+					       args_grow_downward))
     sibcall_failure = 1;
 
   /* Don't allow anything left on stack from computation

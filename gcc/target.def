@@ -4071,6 +4071,13 @@ The default is to not promote prototypes.",
  hook_bool_const_tree_false)
 
 DEFHOOK
+(args_grow_downward,
+ "If @code{true}, successive arguments to a function occupy decreasing\n\
+addresses on the stack.",
+ bool, (const_tree fntype),
+ default_args_grow_downward)
+
+DEFHOOK
 (push_args_reversed,
  "If @code{true}, function arguments will be evaluated from last to\n\
 first, rather than from first to last.",

@@ -382,6 +382,10 @@ struct GTY(()) function {
 
   /* Set when the tail call has been identified.  */
   unsigned int tail_call_marked : 1;
+
+  /* Nonzero if the current function's successive arguments occupy
+     decreasing addresses on the stack. */
+  unsigned int args_grow_downward : 1;
 };
 
 /* Add the decl D to the local_decls list of FUN.  */
