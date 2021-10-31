@@ -98,7 +98,8 @@
 	    "%Tdos-m%(cmodel_ld);" \
 	  ":%Tdos-m%(cmodel_s_ld)" \
 	"}"		\
-      "}"		\
+      "} "		\
+      "%{!mno-post-link:--oformat elf32-i386}" /* XXX temporary hack */ \
     "}"			\
   "} "			\
   "%{melks-libc:"	\
@@ -148,6 +149,12 @@
   { "cmodel_sl_ld", "%{mcmodel=medium:msl.ld;mcmodel=small:ssl.ld;:tsl.ld}" },\
   { "cmodel_long_ld", "%{mcmodel=*:%*.ld;:tiny.ld}" }
 
+#ifndef HAVE_DOS_BASED_FILE_SYSTEM
+# define POST_LINK_SPEC_OBJCOPY "ia16-elf-objcopy"
+#else
+# define POST_LINK_SPEC_OBJCOPY "i16objco"
+#endif
+
 #define POST_LINK_SPEC	\
   "%{!mno-post-link:"	\
     "%{melks-libc:"	\
@@ -157,4 +164,5 @@
 	       "%{maout-chmem=*:--chmem %*} " \
 	       "%{maout-stack=*:--stack %*} " \
 	       "%{maout-heap=*:--heap %*} " \
-	       "%{o*:%*} %{!o*:a.out}}}"
+	       "%{o*:%*} %{!o*:a.out};" \
+      ":" POST_LINK_SPEC_OBJCOPY " -O binary %{o*:%*} %{!o*:a.out}}}"
