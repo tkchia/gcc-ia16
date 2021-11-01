@@ -72,8 +72,8 @@ ia16-no-ss-data.o: $(srcdir)/config/ia16/ia16-no-ss-data.c \
 	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $<
 
 MULTILIB_OPTIONS=mprotected-mode melks-libc \
-	mcmodel=medium mrtd/mregparmcall march=any_186
-MULTILIB_DIRNAMES=pmode elkslibc medium rtd regparmcall any_186
+	mcmodel=medium mrtd/mregparmcall march=any_186 msegelf
+MULTILIB_DIRNAMES=pmode elkslibc medium rtd regparmcall any_186 segelf
 MULTILIB_MATCHES=mprotected-mode=melks \
 	march?any_186=march?i80186 march?any_186=march?i80188 \
 	march?any_186=march?v20 march?any_186=march?v30 \
@@ -87,23 +87,34 @@ ia16_all_multilibs=$(strip \
 	    $(foreach mm,- mcmodel=medium,\
 	      $(foreach cc,- mrtd mregparmcall,\
 		$(foreach ar,- march=any_186, \
-		  $(pm)/$(el)/$(mm)/$(cc)/$(ar))))))))))
+		  $(foreach se,- msegelf, \
+		    $(pm)/$(el)/$(mm)/$(cc)/$(ar)/$(se)))))))))))
 #
 # (1) `-mprotected-mode -melks-libc' is the same as just `-melks-libc'.
-# (2) Build 80186+ multilibs only for the `regparmcall' convention.
-# (3) For now, do not build 186+-specific multilibs at all for -melks-libc,
-#     -mprotected-mode, or -mcmodel=medium.
+# (2) `-msegelf -melks-libc' is also the same as just `-melks-libc'.
+# (3) Build 80186+ multilibs only for the `regparmcall' convention.
+# (4) For now, do not build 186+-specific multilibs at all for -melks-libc
+#     or -mcmodel=medium.
 #	-- tkchia
 #
 ia16_multilib_map=$(strip \
-  $(filter-out march=any_186,\
-    $(subst mrtd/march=any_186,mrtd,\
-      $(subst mprotected-mode/march=any_186,mprotected-mode,\
-	$(subst melks-libc/march=any_186,melks-libc,\
-	  $(subst mcmodel=medium/march=any_186,mcmodel=medium,\
-	    $(subst /mregparmcall/march=any_186,/mregparmcall,\
-	      $(subst mprotected-mode/melks-libc,melks-libc,\
-		$1))))))))
+		    $(patsubst /%,%,\
+		      $(patsubst %/,%,\
+			$(call ia16_multilib_map_1,$1))))
+ia16_multilib_map_1=$(call ia16_multilib_map_2,\
+		      $(if $(findstring melks-libc,$1),\
+			   $(subst //,/,$(subst mprotected-mode,,$1)),$1))
+ia16_multilib_map_2=$(call ia16_multilib_map_3,\
+		      $(if $(findstring melks-libc,$1),\
+			   $(subst //,/,$(subst msegelf,,$1)),$1))
+ia16_multilib_map_3=$(call ia16_multilib_map_4,\
+		      $(if $(findstring mregparmcall,$1),\
+			   $1,$(subst //,/,$(subst march=any_186,,$1))))
+ia16_multilib_map_4=$(call ia16_multilib_map_5,\
+		      $(if $(findstring melks-libc,$1),\
+			   $(subst //,/,$(subst march=any_186,,$1)),$1))
+ia16_multilib_map_5=$(if $(findstring mcmodel=medium,$1),\
+			 $(subst //,/,$(subst march=any_186,,$1)),$1)
 MULTILIB_REQUIRED=$(strip \
 	$(foreach ml,$(ia16_all_multilibs),\
 	  $(filter $(call ia16_multilib_map,$(ml)),$(ml))))
