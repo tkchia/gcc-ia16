@@ -259,3 +259,7 @@ Use Intel assembler dialect (experimental).
 ; mainly for debugging, and is not yet "officially" documented.
 mno-post-link
 Target RejectNegative Undocumented
+
+Wfar-cast-null
+Target Warning Var(target_warn_far_cast_null) Init(0)
+Warn if a generic pointer which might be NULL is cast to a far pointer (experimental).

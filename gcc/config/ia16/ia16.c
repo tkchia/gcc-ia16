@@ -2263,7 +2263,14 @@ ia16_far_pointer_offset (rtx op)
 static rtx
 ia16_as_convert (rtx op, tree from_type, tree to_type)
 {
+  tree from = NULL_TREE;
   addr_space_t from_as, to_as;
+
+  if (! TYPE_P (from_type))
+    {
+      from = from_type;
+      from_type = TREE_TYPE (from_type);
+    }
 
   gcc_assert (POINTER_TYPE_P (from_type));
   gcc_assert (POINTER_TYPE_P (to_type));
@@ -2292,10 +2299,17 @@ ia16_as_convert (rtx op, tree from_type, tree to_type)
 
       if (from_as == ADDR_SPACE_GENERIC)
 	{
+	  wide_int zero = wi::zero (16);
+
 	  if (FUNC_OR_METHOD_TYPE_P (from_type))
 	    seg_reg_no = CS_REG;
 	  else if (! ia16_in_ss_data_function_p ())
 	    seg_reg_no = DS_REG;
+
+	  if (from && target_warn_far_cast_null
+	      && ! expr_not_equal_to (from, zero))
+	    warning (OPT_Wfar_cast_null, "generic pointer which may be NULL "
+					 "being cast to far pointer");
 	}
 
       emit_move_insn (gen_rtx_SUBREG (HImode, op2, 0), op);

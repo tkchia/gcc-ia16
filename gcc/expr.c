@@ -8259,7 +8259,12 @@ expand_expr_real_2 (sepops ops, rtx target, machine_mode tmode,
 	if (targetm.addr_space.subset_p (as_to, as_from)
 	    || targetm.addr_space.subset_p (as_from, as_to))
 	  {
+#ifndef TARGET_ADDR_SPACE_WEIRD_P
 	    op0 = targetm.addr_space.convert (op0, treeop0_type, type);
+#else
+	    /* Special case for ia16-elf.  */
+	    op0 = targetm.addr_space.convert (op0, treeop0, type);
+#endif
 	  }
         else
           {
