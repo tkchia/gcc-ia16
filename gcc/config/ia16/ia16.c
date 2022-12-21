@@ -4510,6 +4510,14 @@ ia16_asm_function_section (tree decl, enum node_frequency freq, bool startup,
   return NULL;
 }
 
+#undef TARGET_DEBUG_UNWIND_INFO
+#define        TARGET_DEBUG_UNWIND_INFO        ia16_debug_unwind_info
+static enum unwind_info_type
+ia16_debug_unwind_info (void)
+{
+  return UI_NONE;
+}
+
 /* Output of Data */
 #undef  TARGET_ASM_BYTE_OP
 #undef  TARGET_ASM_ALIGNED_HI_OP

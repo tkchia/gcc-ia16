@@ -67,7 +67,7 @@ extern const char *cpp_sys_defs_spec_function (int, const char **);
     "mr=msdos:-D__MSDOS__}"
 
 #define ASM_SPEC	\
-  "%{msegelf:--32-segelf}"
+  "%{msegelf:--16-segelf}"
 
 /* Our stub built-in specs now only support the building of libgcc, but can
    no longer link complete programs.  Assume that the C library (e.g.

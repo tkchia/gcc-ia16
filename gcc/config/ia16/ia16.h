@@ -578,10 +578,15 @@ extern const char * const ia16_register_prefix[],
 	fprintf (stream, "\t.p2align\t%u,,%u\n", power, max_skip)
 
 /* Controlling Debugging Information Format  */
-/* Macros Affecting All Debugging Formats  */
+#define DWARF2_DEBUGGING_INFO 1
+
 #undef PREFERRED_DEBUGGING_TYPE
-/* Macros for SDB and DWARF Output  */
-#undef DWARF2_DEBUGGING_INFO
+#define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
+
+#define DWARF2_UNWIND_INFO 0
+
+/* POINTER_SIZE is 16-bit, but symbol addresses are 32-bit. */
+#define DWARF2_ADDR_SIZE 4
 
 #define REGISTER_TARGET_PRAGMAS() ia16_register_pragmas ()
 
