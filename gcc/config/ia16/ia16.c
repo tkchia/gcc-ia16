@@ -2806,11 +2806,20 @@ struct processor_costs {
   int (*const ea_calc)(rtx r1, rtx r2, rtx c, rtx r9);
 				/* cost of calculating an address.  */
   const int move;		/* cost of reg-reg mov instruction.  */
+  const int seg_move;		/* cost of reg->segment mov instruction.  */
   const int imm_load[2];	/* cost of loading imm (QI, HI) to register.  */
   const int imm_store[2];	/* cost of storing imm (QI, HI) to memory.  */
   const int int_load[2];	/* cost of loading integer register
 				   from memory in QImode and HImode.  */
   const int int_store[2];	/* cost of storing integer register
+				   to memory in QImode and HImode */
+  const int acc_load[2];	/* cost of loading accumulator register
+				   from memory in QImode and HImode.  */
+  const int acc_store[2];	/* cost of storing accumulator register
+				   to memory in QImode and HImode */
+  const int seg_load[2];	/* cost of loading segment register
+				   from memory in QImode and HImode.  */
+  const int seg_store[2];	/* cost of storing segment register
 				   to memory in QImode and HImode */
   const int move_ratio;		/* The threshold of number of scalar
 				   memory-to-memory move insns.  */
@@ -3042,27 +3051,6 @@ ia16_i808x_address_cost (rtx r1, rtx r2, rtx c, rtx r9)
   return (cost);
 }
 
-/* Return the cost of an address when optimizing for a NEC V30MZ.
- */
-static int
-ia16_v30mz_address_cost (rtx r1, rtx r2, rtx c, rtx r9 ATTRIBUTE_UNUSED)
-{
-  int cost = 0;
-
-  /* If two registers are required, add one cycle. */
-  if (r1 && r2)
-    cost += C (1);
-
-  if (c)
-    cost += ia16_constant_cost (c, Pmode, MEM);
-
-  /* If r1 == r2, a "movw" instruction is needed.  */
-  if (rtx_equal_p (r1, r2))
-    cost += IA16_COST (move);
-
-  return (cost);
-}
-
 /* Return the cost of an address when optimizing for size rather than speed. */
 static int
 ia16_size_address_cost (rtx r1, rtx r2, rtx c, rtx r9)
@@ -3089,6 +3077,36 @@ ia16_size_address_cost (rtx r1, rtx r2, rtx c, rtx r9)
   return (cost);
 }
 
+
+/* Return the cost of an address when optimizing for a NEC V30MZ.
+ */
+static int
+ia16_v30mz_address_cost (rtx r1, rtx r2, rtx c, rtx r9 ATTRIBUTE_UNUSED)
+{
+  int cost = 0;
+
+  if (r1)
+    {
+      if (r2)
+	{
+	  /* If two registers are required, add one cycle. */
+	  cost += C (1);
+
+	  /* If r1 == r2, a "movw" instruction is needed.  */
+	  if (rtx_equal_p (r1, r2))
+	    cost += IA16_COST (move);
+        }
+    }
+
+  if (c)
+    cost += ia16_constant_cost (c, Pmode, MEM);
+
+  if (ia16_seg_override_cost_likely_p (r9, r1, r2))
+    cost += C (1);
+
+  return cost;
+}
+
 /* Size costs for IA-16 instructions.  Used when optimizing for size.
  * EA sizes are not included except for xlat.
  */
@@ -3096,10 +3114,15 @@ struct processor_costs ia16_size_costs = {
   /* byte_fetch */	1,
   /* ea_calc */		ia16_size_address_cost,
   /* move */		C (2),
+  /* seg_move */	C (2),
   /* imm_load */	{ C (1), C (1) },
   /* imm_store */	{ C (2), C (2) },
   /* int_load */	{ C (2), C (2) },
   /* int_store */	{ C (2), C (2) },
+  /* acc_load */	{ C (1), C (1) },
+  /* acc_store */	{ C (1), C (1) },
+  /* seg_load */	{ C (2), C (2) },
+  /* seg_store */	{ C (2), C (2) },
   /* move_ratio */	C (4),
   /* add */		{ C (2), C (2), C (2) },
   /* add_imm */		{ C (2), C (2) },
@@ -3134,10 +3157,15 @@ static struct processor_costs ia16_i8086_costs = {
   /* byte_fetch	*/	2,
   /* ea_calc */		ia16_i808x_address_cost,
   /* move */		C (2),
+  /* seg_move */	C (2),
   /* imm_load */	{ C (4), C (4) },
   /* imm_store */	{ C (10), C (10) },
   /* int_load */	{ C (8), C (8) },
   /* int_store */	{ C (9), C (9) },
+  /* acc_load */	{ C (5), C (5) },
+  /* acc_store */	{ C (5), C (5) },
+  /* seg_load */	{ C (8), C (8) },
+  /* seg_store */	{ C (9), C (9) },
   /* move_ratio */	C (4),
   /* add */		{ C (3), C (9), C (16) },
   /* add_imm */		{ C (4), C (17) },
@@ -3170,10 +3198,15 @@ static struct processor_costs ia16_i8088_costs = {
   /* byte_fetch */	4,
   /* ea_calc */		ia16_i808x_address_cost,
   /* move */		C (2),
+  /* seg_move */	C (2),
   /* imm_load */	{ C (4), C (4) },
   /* imm_store */	{ C (10), C (14) },
   /* int_load */	{ C (8), C (12) },
   /* int_store */	{ C (9), C (13) },
+  /* acc_load */	{ C (5), C (9) },
+  /* acc_store */	{ C (5), C (9) },
+  /* seg_load */	{ C (8), C (12) },
+  /* seg_store */	{ C (9), C (13) },
   /* move_ratio */	C (4),
   /* add */		{ C (3), C (13), C (24) },
   /* add_imm */		{ C (4), C (25) },
@@ -3207,10 +3240,15 @@ static struct processor_costs ia16_i80186_costs = {
   /* byte_fetch	*/	2,
   /* ea_calc */		ia16_default_address_cost,
   /* move */		C (2),
+  /* seg_move */	C (2),
   /* imm_load */	{ C (3), C (4) },
   /* imm_store */	{ C (12), C (13) },
   /* int_load */	{ C (9), C (9) },
   /* int_store */	{ C (12), C (12) },
+  /* acc_load */	{ C (8), C (8) },
+  /* acc_store */	{ C (9), C (9) },
+  /* seg_load */	{ C (9), C (9) },
+  /* seg_store */	{ C (11), C (11) },
   /* move_ratio */	C (4),
   /* add */		{ C (3), C (10), C (15) },
   /* add_imm */		{ C (4), C (16) },
@@ -3244,10 +3282,15 @@ static struct processor_costs ia16_i80286_costs = {
   /* byte_fetch */	1, /* guess */
   /* ea_calc */		ia16_default_address_cost,
   /* move */		C (2),
+  /* seg_move */	C (2),
   /* imm_load */	{ C (2), C (2) },
   /* imm_store */	{ C (3), C (3) },
   /* int_load */	{ C (5), C (5) },
   /* int_store */	{ C (3), C (3) },
+  /* acc_load */	{ C (5), C (5) },
+  /* acc_store */	{ C (3), C (3) },
+  /* seg_load */	{ C (5), C (5) },
+  /* seg_store */	{ C (3), C (3) },
   /* move_ratio */	C (4),
   /* add */		{ C (2), C (7), C (7) },
   /* add_imm */		{ C (3), C (7) },
@@ -3281,10 +3324,15 @@ static struct processor_costs ia16_nec_v30_costs = {
   /* byte_fetch */	2,
   /* ea_calc */		ia16_default_address_cost,
   /* move */		C (2),
+  /* seg_move */	C (2),
   /* imm_load */	{ C (4), C (4) },
   /* imm_store */	{ C (11), C (11) },
   /* int_load */	{ C (11), C (11) },
   /* int_store */	{ C (9), C (9) },
+  /* acc_load */	{ C (10), C (10) },
+  /* acc_store */	{ C (9), C (9) },
+  /* seg_load */	{ C (11), C (11) },
+  /* seg_store */	{ C (10), C (10) },
   /* move_ratio */	C (4),
   /* add */		{ C (2), C (11), C (16) },
   /* add_imm */		{ C (4), C (18) },
@@ -3317,10 +3365,15 @@ static struct processor_costs ia16_nec_v20_costs = {
   /* byte_fetch */	4,
   /* ea_calc */		ia16_default_address_cost,
   /* move */		C (2),
+  /* seg_move */	C (2),
   /* imm_load */	{ C (4), C (4) },
   /* imm_store */	{ C (11), C (15) },
   /* int_load */	{ C (11), C (15) },
   /* int_store */	{ C (9), C (13) },
+  /* acc_load */	{ C (10), C (14) },
+  /* acc_store */	{ C (9), C (13) },
+  /* seg_load */	{ C (11), C (15) },
+  /* seg_store */	{ C (10), C (14) },
   /* move_ratio */	C (4),
   /* add */		{ C (2), C (15), C (24) },
   /* add_imm */		{ C (4), C (26) },
@@ -3353,10 +3406,15 @@ static struct processor_costs ia16_nec_v30mz_costs = {
   /* byte_fetch */	1,
   /* ea_calc */		ia16_v30mz_address_cost,
   /* move */		C (1),
+  /* seg_move */	C (2),
   /* imm_load */	{ C (1), C (1) },
   /* imm_store */	{ C (1), C (1) },
   /* int_load */	{ C (1), C (1) },
   /* int_store */	{ C (1), C (1) },
+  /* acc_load */	{ C (1), C (1) },
+  /* acc_store */	{ C (1), C (1) },
+  /* seg_load */	{ C (3), C (3) },
+  /* seg_store */	{ C (2), C (2) },
   /* move_ratio */	C (4),
   /* add */		{ C (1), C (3), C (2) },
   /* add_imm */		{ C (1), C (3) },
@@ -3438,8 +3496,13 @@ ia16_branch_cost (bool speed_p, bool predictable_p ATTRIBUTE_UNUSED)
 
 static int
 ia16_register_move_cost (machine_mode mode, reg_class_t from ATTRIBUTE_UNUSED,
-			 reg_class_t to ATTRIBUTE_UNUSED)
+			 reg_class_t to)
 {
+  if (to == SEGMENT_REGS
+      || to == ES_REGS
+      || to == DS_REGS)
+    return IA16_COST (seg_move) * ia16_mode_hwords (mode);
+
   return IA16_COST (move) * ia16_mode_hwords (mode);
 }
 
@@ -3452,35 +3515,62 @@ ia16_register_move_cost (machine_mode mode, reg_class_t from ATTRIBUTE_UNUSED,
  * cheaper to copy to/from memory.
  */
 static int
-ia16_memory_move_cost (machine_mode mode, reg_class_t rclass ATTRIBUTE_UNUSED,
-		       bool in)
+ia16_memory_move_cost (machine_mode mode, reg_class_t rclass, bool in)
 {
   int cost;
 
-  if (in)
+  if (rclass == AX_REGS)
     {
-      if (GET_MODE_SIZE (mode) == 1)
-	cost = IA16_COST (int_load[M_QI]);
+      if (in)
+	{
+	  if (GET_MODE_SIZE (mode) == 1)
+	    cost = IA16_COST (acc_load[M_QI]);
+	  else
+	    cost = IA16_COST (acc_load[M_HI]) * ia16_mode_hwords (mode);
+	}
       else
-	cost = IA16_COST (int_load[M_HI]) * ia16_mode_hwords (mode);
+	{
+	  if (GET_MODE_SIZE (mode) == 1)
+	    cost = IA16_COST (acc_store[M_QI]);
+	  else
+	    cost = IA16_COST (acc_store[M_HI]) * ia16_mode_hwords (mode);
+	}
+    }
+  else if (rclass == SEGMENT_REGS
+	   || rclass == ES_REGS
+	   || rclass == DS_REGS)
+    {
+      if (in)
+	{
+	  if (GET_MODE_SIZE (mode) == 1)
+	    cost = IA16_COST (seg_load[M_QI]);
+	  else
+	    cost = IA16_COST (seg_load[M_HI]) * ia16_mode_hwords (mode);
+	}
+      else
+	{
+	  if (GET_MODE_SIZE (mode) == 1)
+	    cost = IA16_COST (seg_store[M_QI]);
+	  else
+	    cost = IA16_COST (seg_store[M_HI]) * ia16_mode_hwords (mode);
+	}
     }
   else
     {
-      if (GET_MODE_SIZE (mode) == 1)
-	cost = IA16_COST (int_store[M_QI]);
+      if (in)
+	{
+	  if (GET_MODE_SIZE (mode) == 1)
+	    cost = IA16_COST (int_load[M_QI]);
+	  else
+	    cost = IA16_COST (int_load[M_HI]) * ia16_mode_hwords (mode);
+	}
       else
-	cost = IA16_COST (int_store[M_HI]) * ia16_mode_hwords (mode);
-    }
-
-  if (rclass == AX_REGS
-      || rclass == SEGMENT_REGS
-      || rclass == ES_REGS
-      || rclass == DS_REGS)
-    {
-      if (cost > COSTS_N_INSNS (1))
-	cost -= COSTS_N_INSNS (1);
-      else
-	cost = 1;
+	{
+	  if (GET_MODE_SIZE (mode) == 1)
+	    cost = IA16_COST (int_store[M_QI]);
+	  else
+	    cost = IA16_COST (int_store[M_HI]) * ia16_mode_hwords (mode);
+	}
     }
 
   return cost;
