@@ -3934,6 +3934,21 @@ convert_debug_memory_address (machine_mode mode, rtx x,
   machine_mode xmode = GET_MODE (x);
 
 #ifndef POINTERS_EXTEND_UNSIGNED
+# ifdef TARGET_ADDR_SPACE_WEIRD_P
+#  ifdef TARGET_ADDR_SPACE_CONVERT_WEIRD_MEMORY_ADDRESS
+  /* Special case for ia16-elf pointer -> address and address -> pointer
+     conversions.  Is there a better way?  */
+  if (xmode != mode && TARGET_ADDR_SPACE_WEIRD_P (as))
+  {
+    x = TARGET_ADDR_SPACE_CONVERT_WEIRD_MEMORY_ADDRESS (mode, x, as,
+                                                        false, true);
+    if (!x)
+      return x;
+    xmode = GET_MODE (x);
+  }
+  else
+#  endif
+# endif
   gcc_assert (mode == Pmode
 	      || mode == targetm.addr_space.address_mode (as));
   gcc_assert (xmode == mode || xmode == VOIDmode);
