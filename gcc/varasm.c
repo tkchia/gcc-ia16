@@ -282,6 +282,10 @@ get_section (const char *name, unsigned int flags, tree decl)
   slot = section_htab->find_slot_with_hash (name, htab_hash_string (name),
 					    INSERT);
   flags |= SECTION_NAMED;
+  if (decl != nullptr
+      && DECL_P (decl)
+      && lookup_attribute ("retain", DECL_ATTRIBUTES (decl)))
+    flags |= SECTION_RETAIN;
   if (*slot == NULL)
     {
       sect = ggc_alloc<section> ();
@@ -314,6 +318,11 @@ get_section (const char *name, unsigned int flags, tree decl)
 	      sect->common.flags |= (SECTION_WRITE | SECTION_RELRO);
 	      return sect;
 	    }
+          /* If the SECTION_RETAIN bit doesn't match, return and switch
+             to a new section later.  */
+	  if ((sect->common.flags & SECTION_RETAIN)
+	      != (flags & SECTION_RETAIN))
+	    return sect;
 	  /* Sanity check user variables for flag changes.  */
 	  if (sect->named.decl != NULL
 	      && DECL_P (sect->named.decl)
@@ -441,6 +450,7 @@ resolve_unique_section (tree decl, int reloc ATTRIBUTE_UNUSED,
   if (DECL_SECTION_NAME (decl) == NULL
       && targetm_common.have_named_sections
       && (flag_function_or_data_sections
+	  || lookup_attribute ("retain", DECL_ATTRIBUTES (decl))
 	  || DECL_COMDAT_GROUP (decl)))
     {
       targetm.asm_out.unique_section (decl, reloc);
@@ -1201,6 +1211,10 @@ get_block_for_decl (tree decl)
       align_variable (decl, 0);
   sect = get_variable_section (decl, true);
   if (SECTION_STYLE (sect) == SECTION_NOSWITCH)
+    return NULL;
+
+  if (bool (lookup_attribute ("retain", DECL_ATTRIBUTES (decl)))
+      != bool (sect->common.flags & SECTION_RETAIN))
     return NULL;
 
   return get_block_for_section (sect);
@@ -6245,6 +6259,7 @@ default_elf_asm_named_section (const char *name, unsigned int flags,
      part of a COMDAT groups, in which case GAS requires the full
      declaration every time.  */
   if (!(HAVE_COMDAT_GROUP && (flags & SECTION_LINKONCE))
+      && !(flags & SECTION_RETAIN)
       && (flags & SECTION_DECLARED))
     {
       fprintf (asm_out_file, "\t.section\t%s\n", name);
@@ -6271,6 +6286,8 @@ default_elf_asm_named_section (const char *name, unsigned int flags,
     *f++ = TLS_SECTION_ASM_FLAG;
   if (HAVE_COMDAT_GROUP && (flags & SECTION_LINKONCE))
     *f++ = 'G';
+  if (flags & SECTION_RETAIN)
+    *f++ = 'R';
   *f = '\0';
 
   fprintf (asm_out_file, "\t.section\t%s,\"%s\"", name, flagchars);
@@ -7132,6 +7149,9 @@ output_section_asm_op (const void *directive)
 void
 switch_to_section (section *new_section)
 {
+  /* FIXME: The "two sections with the same name but different SETION_RETAIN
+     flag statuses" case does not emit a warning. */
+
   if (in_section == new_section)
     return;
 
