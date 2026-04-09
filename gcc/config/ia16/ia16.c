@@ -2449,6 +2449,8 @@ ia16_far_pointer_offset (rtx op)
   /* Use (subreg ...) if we can.  Otherwise use (truncate ...).  */
   if (REG_P (op))
     return gen_rtx_SUBREG (HImode, op, 0);
+  else if (CONST_INT_P (op))
+    return GEN_INT (INTVAL (op) & 0xffff);
   else
     return gen_rtx_TRUNCATE (HImode, op);
 }
