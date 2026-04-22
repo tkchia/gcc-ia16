@@ -347,7 +347,8 @@ enum reg_class {	/*	 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 */
 
 extern int ia16_function_args_grow_downward (const_tree funtype);
 
-#define RETURN_ADDR_RTX(COUNT, FRAME) ia16_return_addr_rtx (COUNT, FRAME)				       	      \
+#define RETURN_ADDR_RTX(COUNT, FRAME) ia16_return_addr_rtx (COUNT, FRAME)
+#define INCOMING_RETURN_ADDR_RTX ia16_incoming_return_addr_rtx ()
 
 /* Exception Handling Support */
 /* XXX needs work.  */
@@ -579,9 +580,14 @@ extern const char * const ia16_register_prefix[],
 
 /* Controlling Debugging Information Format  */
 /* Macros Affecting All Debugging Formats  */
-#undef PREFERRED_DEBUGGING_TYPE
+#define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 /* Macros for SDB and DWARF Output  */
-#undef DWARF2_DEBUGGING_INFO
+#ifndef DWARF2_DEBUGGING_INFO
+#define DWARF2_DEBUGGING_INFO 1
+#endif
+#define DWARF2_UNWIND_INFO 0
+#define DWARF2_ASM_LINE_DEBUG_INFO 1
+#define DWARF2_ASM_VIEW_DEBUG_INFO 1
 
 #define REGISTER_TARGET_PRAGMAS() ia16_register_pragmas ()
 

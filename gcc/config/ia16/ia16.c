@@ -888,6 +888,16 @@ ia16_return_addr_rtx (int count, rtx frame)
   return gen_rtx_MEM (Pmode, addr);
 }
 
+/*
+ * Return an RTX for the incoming return address at function entry, before
+ * the prologue.
+ */
+rtx
+ia16_incoming_return_addr_rtx (void)
+{
+  return gen_rtx_MEM (Pmode, stack_pointer_rtx);
+}
+
 /* Eliminating Frame Pointer and Arg Pointer */
 
 #undef	TARGET_FRAME_POINTER_REQUIRED
