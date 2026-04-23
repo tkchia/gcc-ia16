@@ -3935,8 +3935,12 @@ convert_debug_memory_address (machine_mode mode, rtx x,
 
 #ifndef POINTERS_EXTEND_UNSIGNED
   gcc_assert (mode == Pmode
-	      || mode == targetm.addr_space.address_mode (as));
-  gcc_assert (xmode == mode || xmode == VOIDmode);
+	      || mode == targetm.addr_space.address_mode (as)
+	      || mode == targetm.addr_space.pointer_mode (as));
+  gcc_assert (xmode == mode
+	      || xmode == VOIDmode
+	      || xmode == targetm.addr_space.address_mode (as)
+	      || xmode == targetm.addr_space.pointer_mode (as));
 #else
   rtx temp;
 
@@ -5301,7 +5305,10 @@ expand_debug_locations (void)
 			|| (GET_MODE (val) == VOIDmode
 			    && (CONST_SCALAR_INT_P (val)
 				|| GET_CODE (val) == CONST_FIXED
-				|| GET_CODE (val) == LABEL_REF)));
+				|| GET_CODE (val) == LABEL_REF))
+			|| mode == targetm.addr_space.pointer_mode
+				    (TYPE_ADDR_SPACE
+				      (TREE_TYPE (TREE_TYPE (value)))));
 	  }
 
 	INSN_VAR_LOCATION_LOC (insn) = val;
