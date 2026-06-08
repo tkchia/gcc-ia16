@@ -382,6 +382,7 @@ extern void no_asm_to_stream (FILE *);
 #define SECTION_RELRO	 0x1000000	/* data is readonly after relocation processing */
 #define SECTION_EXCLUDE  0x2000000	/* discarded by the linker */
 #define SECTION_MACH_DEP 0x4000000	/* subsequent bits reserved for target */
+#define SECTION_RETAIN	 0x8000000	/* retained by the linker */
 
 /* This SECTION_STYLE is used for unnamed sections that we can switch
    to using a special assembler directive.  */

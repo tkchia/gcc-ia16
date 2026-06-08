@@ -328,6 +328,7 @@ static tree handle_flatten_attribute (tree *, tree, tree, int, bool *);
 static tree handle_error_attribute (tree *, tree, tree, int, bool *);
 static tree handle_used_attribute (tree *, tree, tree, int, bool *);
 static tree handle_unused_attribute (tree *, tree, tree, int, bool *);
+static tree handle_retain_attribute (tree *, tree, tree, int, bool *);
 static tree handle_externally_visible_attribute (tree *, tree, tree, int,
 						 bool *);
 static tree handle_no_reorder_attribute (tree *, tree, tree, int,
@@ -684,6 +685,8 @@ const struct attribute_spec c_common_attribute_table[] =
 			      handle_used_attribute, false },
   { "unused",                 0, 0, false, false, false,
 			      handle_unused_attribute, false },
+  { "retain",                 0, 0, true,  false, false,
+			      handle_retain_attribute, false },
   { "externally_visible",     0, 0, true,  false, false,
 			      handle_externally_visible_attribute, false },
   { "no_reorder",	      0, 0, true, false, false,
@@ -7061,6 +7064,27 @@ handle_unused_attribute (tree *node, tree name, tree ARG_UNUSED (args),
       if (!(flags & (int) ATTR_FLAG_TYPE_IN_PLACE))
 	*node = build_variant_type_copy (*node);
       TREE_USED (*node) = 1;
+    }
+
+  return NULL_TREE;
+}
+
+/* Handle a "retain" attribute; arguments as in
+   struct attribute_spec.handler.  */
+
+static tree
+handle_retain_attribute (tree *pnode, tree name, tree ARG_UNUSED (args),
+			 int ARG_UNUSED (flags), bool *no_add_attrs)
+{
+  tree node = *pnode;
+
+  if (TREE_CODE (node) == FUNCTION_DECL
+      || (VAR_P (node) && TREE_STATIC (node)))
+    ;
+  else
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
     }
 
   return NULL_TREE;
