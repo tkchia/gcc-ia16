@@ -482,7 +482,7 @@ CUMULATIVE_ARGS;
 #define BSS_SECTION_ASM_OP	"\t.bss"
 #define CRT_CALL_STATIC_FUNCTION(section_op, function) \
 	__IA16___CRT_CALL_STATIC_FUNCTION (section_op, function) /* ia16-c.c */
-#define JUMP_TABLES_IN_TEXT_SECTION 0
+#define JUMP_TABLES_IN_TEXT_SECTION TARGET_CS_JUMP_TABLES
 
 /* Position Independent Code.  */
 /* skipped.  */

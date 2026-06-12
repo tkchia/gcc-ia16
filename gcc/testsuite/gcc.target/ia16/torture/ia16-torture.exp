@@ -39,6 +39,7 @@ dg-init
 	{ -O0 -mprotected-mode } \
 	{ -O0 -mrtd } \
 	{ -O0 -mregparmcall } \
+	{ -O0 -mcs-jump-tables } \
 	{ -O0 -mcmodel=small } \
 	{ -O0 -mcmodel=small -mmsdos-handle-v1 } \
 	{ -O0 -mcmodel=small -mprotected-mode } \
@@ -46,18 +47,21 @@ dg-init
 	{ -O0 -mcmodel=small -mrtd -mmsdos-handle-v1 } \
 	{ -O0 -mcmodel=small -mregparmcall } \
 	{ -O0 -mcmodel=small -mregparmcall -mmsdos-handle-v1 } \
+	{ -O0 -mcmodel=small -mcs-jump-tables } \
 	{ -O0 -mcmodel=medium } \
 	{ -O0 -mcmodel=medium -mmsdos-handle-v1 } \
 	{ -O0 -mcmodel=medium -ffunction-sections -fdata-sections } \
 	{ -O0 -mcmodel=medium -mprotected-mode } \
 	{ -O0 -mcmodel=medium -mrtd } \
 	{ -O0 -mcmodel=medium -mregparmcall } \
+	{ -O0 -mcmodel=medium -mcs-jump-tables } \
 	{ -O1 } \
 	{ -O1 -funroll-loops } \
 	{ -O1 -frename-registers } \
 	{ -O1 -funroll-loops -fno-rename-registers } \
 	{ -O1 -mrtd } \
 	{ -O1 -mregparmcall } \
+	{ -O1 -mcs-jump-tables } \
 	{ -O1 -mprotected-mode } \
 	{ -O1 -mprotected-mode -funroll-loops } \
 	{ -O1 -mprotected-mode -frename-registers } \
@@ -84,6 +88,7 @@ dg-init
 	{ -O1 -mcmodel=small -mprotected-mode -mregparmcall } \
 	{ -O1 -mcmodel=small -mprotected-mode -mregparmcall \
 	  -mmsdos-handle-v1 } \
+	{ -O1 -mcmodel=small -mcs-jump-tables } \
 	{ -O1 -mcmodel=medium } \
 	{ -O1 -mcmodel=medium -mmsdos-handle-v1 } \
 	{ -O1 -mcmodel=medium -ffunction-sections -fdata-sections } \
@@ -99,12 +104,14 @@ dg-init
 	  -fno-rename-registers } \
 	{ -O1 -mcmodel=medium -mprotected-mode -mrtd } \
 	{ -O1 -mcmodel=medium -mprotected-mode -mregparmcall } \
+	{ -O1 -mcmodel=medium -mcs-jump-tables } \
 	{ -O2 } \
 	{ -O2 -funroll-loops } \
 	{ -O2 -frename-registers } \
 	{ -O2 -funroll-loops -fno-rename-registers } \
 	{ -O2 -mrtd } \
 	{ -O2 -mregparmcall } \
+	{ -O2 -mcs-jump-tables } \
 	{ -O2 -mprotected-mode } \
 	{ -O2 -mprotected-mode -funroll-loops } \
 	{ -O2 -mprotected-mode -frename-registers } \
@@ -124,6 +131,7 @@ dg-init
 	  -fno-rename-registers } \
 	{ -O2 -mcmodel=small -mprotected-mode -mrtd } \
 	{ -O2 -mcmodel=small -mprotected-mode -mregparmcall } \
+	{ -O2 -mcmodel=small -mcs-jump-tables } \
 	{ -O2 -mcmodel=medium } \
 	{ -O2 -mcmodel=medium -mmsdos-handle-v1 } \
 	{ -O2 -mcmodel=medium -ffunction-sections -fdata-sections } \
@@ -139,12 +147,14 @@ dg-init
 	  -fno-rename-registers } \
 	{ -O2 -mcmodel=medium -mprotected-mode -mrtd } \
 	{ -O2 -mcmodel=medium -mprotected-mode -mregparmcall } \
+	{ -O2 -mcmodel=medium -mcs-jump-tables } \
 	{ -Os } \
 	{ -Os -funroll-loops } \
 	{ -Os -frename-registers } \
 	{ -Os -funroll-loops -fno-rename-registers } \
 	{ -Os -mrtd } \
 	{ -Os -mregparmcall } \
+	{ -Os -mcs-jump-tables } \
 	{ -Os -flto } \
 	{ -Os -finline-functions } \
 	{ -Os -mprotected-mode } \
@@ -172,6 +182,7 @@ dg-init
 	{ -Os -mcmodel=small -mprotected-mode -mregparmcall } \
 	{ -Os -mcmodel=small -mprotected-mode -flto } \
 	{ -Os -mcmodel=small -mprotected-mode -finline-functions } \
+	{ -Os -mcmodel=small -mcs-jump-tables } \
 	{ -Os -mcmodel=medium } \
 	{ -Os -mcmodel=medium -mmsdos-handle-v1 } \
 	{ -Os -mcmodel=medium -ffunction-sections -fdata-sections } \
@@ -187,12 +198,14 @@ dg-init
 	  -fno-rename-registers } \
 	{ -Os -mcmodel=medium -mprotected-mode -mrtd } \
 	{ -Os -mcmodel=medium -mprotected-mode -mregparmcall } \
+	{ -Os -mcmodel=medium -mcs-jump-tables } \
 	{ -O3 } \
 	{ -O3 -funroll-loops } \
 	{ -O3 -frename-registers } \
 	{ -O3 -funroll-loops -fno-rename-registers } \
 	{ -O3 -mrtd } \
 	{ -O3 -mregparmcall } \
+	{ -O3 -mcs-jump-tables } \
 	{ -O3 -mprotected-mode } \
 	{ -O3 -mprotected-mode -funroll-loops } \
 	{ -O3 -mprotected-mode -frename-registers } \
@@ -212,6 +225,7 @@ dg-init
 	  -fno-rename-registers } \
 	{ -O3 -mcmodel=small -mprotected-mode -mrtd } \
 	{ -O3 -mcmodel=small -mprotected-mode -mregparmcall } \
+	{ -O3 -mcmodel=small -mcs-jump-tables } \
 	{ -O3 -mcmodel=medium } \
 	{ -O3 -mcmodel=medium -mmsdos-handle-v1 } \
 	{ -O3 -mcmodel=medium -ffunction-sections -fdata-sections } \
@@ -226,7 +240,8 @@ dg-init
 	{ -O3 -mcmodel=medium -mprotected-mode -funroll-loops \
 	  -fno-rename-registers } \
 	{ -O3 -mcmodel=medium -mprotected-mode -mrtd } \
-	{ -O3 -mcmodel=medium -mprotected-mode -mregparmcall } ]
+	{ -O3 -mcmodel=medium -mprotected-mode -mregparmcall } \
+	{ -O3 -mcmodel=medium -mcs-jump-tables } ]
 
 #Initialize use of torture lists. 
 torture-init

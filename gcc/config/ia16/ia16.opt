@@ -173,6 +173,10 @@ Alternate (experimental) calling convention (callee cannot assume %ss points to 
 mcallee-assume-ss-data-segment
 Target RejectNegative InverseMask(NO_ASSUME_SS_DATA, ASSUME_SS_DATA) Undocumented
 
+mcs-jump-tables
+Target Report Mask(CS_JUMP_TABLES)
+Place jump tables for switch statements in text segments (experimental).
+
 mfar-function-if-far-return-type
 Target RejectNegative
 Ignored.

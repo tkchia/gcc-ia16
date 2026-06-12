@@ -767,6 +767,7 @@ Objective-C and Objective-C++ Dialects}.
 -melks -mr=elks -melks-libc -mr=@var{rt} -mcmodel=medium @gol
 -mnewlib-nano-stdio @gol
 -msegelf -mno-callee-assume-ss-data-segment -masm=intel @gol
+-mno-post-link -mcs-jump-tables @gol
 -maout-total=@var{total} -maout-chmem=@var{chmem} @gol
 -mfar-function-if-far-return-type}
 
@@ -16892,6 +16893,11 @@ transform the linker output into a usable target executable.  The output
 from @option{-mno-post-link} will likely be an intermediate ELF file.
 
 This switch is mainly for experimentation purposes.
+
+@item -mcs-jump-tables
+@opindex -mcs-jump-tables
+Place dispatch tables for switch statements in the same text segments as
+the corresponding jumps.
 @end table
 
 @subsubsection Deprecated IA-16 Options
