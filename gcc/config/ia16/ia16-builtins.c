@@ -88,21 +88,6 @@ ia16_gimplify_va_arg_expr (tree valist, tree type, gimple_seq *pre_p,
   return std_gimplify_va_arg_expr (valist, type, pre_p, post_p);
 }
 
-static void
-overload_gcc_builtin (enum ia16_builtin resolver_code,
-		      enum built_in_function impl_code,
-		      const char *resolver_name, const char *impl_name)
-{
-  tree resolver_decl = builtin_decl_explicit (impl_code), impl_decl;
-  tree fntype = TREE_TYPE (resolver_decl);
-  DECL_BUILT_IN_CLASS (resolver_decl) = BUILT_IN_MD;
-  DECL_FUNCTION_CODE (resolver_decl) = (enum built_in_function) resolver_code;
-  ia16_builtin_decls[resolver_code] = resolver_decl;
-  impl_decl = add_builtin_function (impl_name, fntype, impl_code,
-				    BUILT_IN_NORMAL, NULL, NULL_TREE);
-  set_builtin_decl (impl_code, impl_decl, false);
-}
-
 void
 ia16_init_builtins (void)
 {
@@ -161,7 +146,7 @@ ia16_init_builtins (void)
 			       IA16_BUILTIN_STATIC_FAR_CAST, BUILT_IN_MD, NULL,
 			       NULL_TREE);
   TREE_READONLY (func) = 1;
-  ia16_builtin_decls[IA16_BUILTIN_FP_OFF] = func;
+  ia16_builtin_decls[IA16_BUILTIN_STATIC_FAR_CAST] = func;
 
   func = add_builtin_function ("__builtin_ia16_near_data_segment",
 			       intSEG_ftype_void,
@@ -277,25 +262,52 @@ ia16_fallback_far_cast (tree op)
 }
 
 tree
-ia16_resolve_overloaded_builtin (unsigned loc ATTRIBUTE_UNUSED,
-				 tree fndecl, void *arglist)
+ia16_resolve_overloaded_builtin (unsigned loc, tree fndecl, void *arglist)
 {
   unsigned fcode = DECL_FUNCTION_CODE (fndecl);
   vec<tree, va_gc>& args = * (vec<tree, va_gc> *) arglist;
-  tree op;
+  tree op, type, deref_type, far_deref_type, far_ptr_type,
+       rfndecl, void_far_ptr_expr;
 
   switch (fcode)
     {
     case IA16_BUILTIN_STATIC_FAR_CAST:
-      gcc_assert (args.length () == 1);
-      /* If the argument is already a far pointer, just return the pointer
-	 (with a suitable dummy cast).  Otherwise let ia16_fold_builtin (...)
-	 below process this built-in call.  */
+      if (args.length () != 1)
+	{
+	  error_at (loc, "%qs expects 1 argument but %u given",
+			 "__builtin_ia16_static_far_cast",
+			 (unsigned) args.length ());
+	  return error_mark_node;
+	}
+
+      /* 1) If the argument is already a far pointer, just return the pointer.
+	 2) If the argument is a near pointer to non-void, call the actual
+	    built-in -- which returns a void __far * -- then cast to a far
+	    pointer to non-void.
+	 3) Otherwise let ia16_fold_builtin (...) below process this built-in
+	    call.  */
       op = args[0];
-      if (POINTER_TYPE_P (TREE_TYPE (op))
-	  && TYPE_ADDR_SPACE (TREE_TYPE (TREE_TYPE (op))) == ADDR_SPACE_FAR)
-	return fold_build1 (NOP_EXPR, ia16_void_far_ptr_type_node, op);
-      return NULL_TREE;
+      type = TREE_TYPE (op);
+
+      if (! POINTER_TYPE_P (type))
+	return NULL_TREE;  /* ?!? */
+
+      deref_type = TREE_TYPE (type);
+      if (TYPE_ADDR_SPACE (deref_type) == ADDR_SPACE_FAR)
+	return op;
+
+      if (VOID_TYPE_P (deref_type))
+	return NULL_TREE;  /* NOTE: this is case 3! */
+
+      far_deref_type
+	= build_qualified_type (deref_type,
+				ENCODE_QUAL_ADDR_SPACE (ADDR_SPACE_FAR));
+      far_ptr_type = build_pointer_type (far_deref_type);
+
+      rfndecl = targetm.builtin_decl (fcode, true);
+      op = fold_build1 (NOP_EXPR, ptr_type_node, op);
+      void_far_ptr_expr = build_call_expr (rfndecl, 1, op);
+      return fold_build1 (NOP_EXPR, far_ptr_type, void_far_ptr_expr);
 
     default:
       return NULL_TREE;
