@@ -267,7 +267,7 @@ ia16_resolve_overloaded_builtin (unsigned loc, tree fndecl, void *arglist)
   unsigned fcode = DECL_FUNCTION_CODE (fndecl);
   vec<tree, va_gc>& args = * (vec<tree, va_gc> *) arglist;
   tree op, type, deref_type, far_deref_type, far_ptr_type,
-       rfndecl, void_far_ptr_expr;
+       qual_void_type, qual_ptr_type, rfndecl, void_far_ptr_expr;
 
   switch (fcode)
     {
@@ -305,7 +305,10 @@ ia16_resolve_overloaded_builtin (unsigned loc, tree fndecl, void *arglist)
       far_ptr_type = build_pointer_type (far_deref_type);
 
       rfndecl = targetm.builtin_decl (fcode, true);
-      op = fold_build1 (NOP_EXPR, ptr_type_node, op);
+      qual_void_type = build_qualified_type (void_type_node,
+					     TYPE_QUALS (deref_type));
+      qual_ptr_type = build_pointer_type (qual_void_type);
+      op = fold_build1 (NOP_EXPR, qual_ptr_type, op);
       void_far_ptr_expr = build_call_expr (rfndecl, 1, op);
       return fold_build1 (NOP_EXPR, far_ptr_type, void_far_ptr_expr);
 
