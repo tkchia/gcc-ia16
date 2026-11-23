@@ -99,7 +99,7 @@ case ${host} in
 esac
 
 case ${host} in
-  aarch64*-*-linux*)
+  aarch64*-*-linux* | aarch64-*-darwin* | arm64*-*-darwin*)
     case ${target} in
       aarch64*-*-*)
 	host_extra_gcc_objs="driver-aarch64.o"
@@ -248,6 +248,10 @@ case ${host} in
     host_exeext=.exe
     out_host_hook_obj=host-mingw32.o
     host_lto_plugin_soname=liblto_plugin-0.dll
+    ;;
+  aarch64-*-darwin* | arm64-*-darwin*)
+    out_host_hook_obj="${out_host_hook_obj} host-aarch64-darwin.o"
+    host_xmake_file="${host_xmake_file} aarch64/x-darwin"
     ;;
   i[34567]86-*-darwin* | x86_64-*-darwin*)
     out_host_hook_obj="${out_host_hook_obj} host-i386-darwin.o"
